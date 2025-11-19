@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.2" />
+        <PackageReference Include="FluentAssertions" Version="6.12.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+        <PackageReference Include="Moq" Version="4.20.70" />
+        <PackageReference Include="xunit" Version="2.9.2" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit" />
+    </ItemGroup>
+
+    <!-- Unit tests should reference the specific layers they are testing, not the Web project. -->
+    <ItemGroup>
+      <ProjectReference Include="..\ServiceBookingSystem.Application\ServiceBookingSystem.Application.csproj" />
+      <ProjectReference Include="..\ServiceBookingSystem.Core\ServiceBookingSystem.Core.csproj" />
+      <ProjectReference Include="..\ServiceBookingSystem.Data\ServiceBookingSystem.Data.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Application\" />
+    </ItemGroup>
+
+</Project>

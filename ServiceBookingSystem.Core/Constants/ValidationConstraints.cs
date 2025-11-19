@@ -12,6 +12,8 @@ public static class ValidationConstraints
     {
         public const int NameMinLength = 3;
         public const int NameMaxLength = 100;
+        
+        public const int DescriptionMaxLength = 4000;
     }
 
     public static class Service

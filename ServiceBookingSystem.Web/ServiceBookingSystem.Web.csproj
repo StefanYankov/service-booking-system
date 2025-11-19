@@ -29,4 +29,9 @@
       <None Remove="logs\service-booking-20251119.log" />
     </ItemGroup>
 
+    <!-- Make internal types visible to the integration test project -->
+    <ItemGroup>
+        <InternalsVisibleTo Include="ServiceBookingSystem.IntegrationTests" />
+    </ItemGroup>
+
 </Project>
