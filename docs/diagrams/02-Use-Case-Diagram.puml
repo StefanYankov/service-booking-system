@@ -1,0 +1,77 @@
+﻿@startuml
+' Title for the diagram
+title Use Case Diagram
+
+' Skin parameters for a professional look
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #LightGreen
+    BorderColor #666666
+}
+skinparam rectangle {
+    BorderColor #666666
+}
+
+' To make the layout cleaner
+left to right direction
+
+' --- Actors ---
+' An actor represents a role a user can play.
+actor Visitor
+actor Customer
+actor Provider
+actor Administrator
+
+' The system boundary box
+rectangle "Service Booking System" {
+
+  ' --- Use Cases (Goals of the Actors) ---
+
+  ' Grouping for clarity
+  package "General Access" {
+    usecase "View Services" as UC_View
+    usecase "Register Account" as UC_Register
+  }
+
+  package "Customer Actions" {
+    usecase "Manage Own Profile" as UC_Profile
+    usecase "Book Service" as UC_Book
+    usecase "Write Review" as UC_Review
+  }
+
+  package "Provider Actions" {
+    usecase "Create & Manage Services" as UC_ManageSvc
+    usecase "View Bookings on Own Services" as UC_ViewBookings
+  }
+
+  package "Administration" {
+    usecase "Manage Users" as UC_ManageUsers
+    usecase "Manage All Services" as UC_ManageAllSvc
+    usecase "Manage Categories" as UC_ManageCats
+  }
+}
+
+' --- Relationships ---
+' An arrow from an actor to a use case means the actor can perform that action.
+
+Visitor --> UC_View
+Visitor --> UC_Register
+
+' Customers can do everything a visitor can, plus their own actions.
+' For clarity, we only show the most direct relationships.
+Customer --> UC_Profile
+Customer --> UC_Book
+Customer --> UC_Review
+Customer --> UC_View 
+
+' Providers can also manage their profile.
+Provider --> UC_Profile
+Provider --> UC_ManageSvc
+Provider --> UC_ViewBookings
+
+' Administrator has overarching permissions.
+Administrator --> UC_ManageUsers
+Administrator --> UC_ManageAllSvc
+Administrator --> UC_ManageCats
+
+@enduml

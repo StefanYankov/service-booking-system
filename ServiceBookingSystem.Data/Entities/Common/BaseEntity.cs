@@ -3,17 +3,15 @@
 namespace ServiceBookingSystem.Data.Entities.Common;
 
 /// <summary>
-/// Base class for entities with audit information.
+/// A base class for all entities in the system.
+/// It provides a primary key property.
 /// </summary>
-/// <typeparam name="TKey">The type of the primary key.</typeparam>
-public class BaseEntity<TKey> : IAuditInfo
+/// <typeparam name="TKey">The type of the primary key (e.g., int, string, Guid).</typeparam>
+public abstract class BaseEntity<TKey>
 {
+    /// <summary>
+    /// Gets or sets the primary key for this entity.
+    /// </summary>
     [Key]
-    public TKey Id { get; set; }
-
-    // <inheritDoc />
-    public DateTime CreatedOn { get; set; }
-
-    // <inheritDoc />
-    public DateTime? ModifiedOn { get; set; }
+    public required TKey Id { get; set; }
 }

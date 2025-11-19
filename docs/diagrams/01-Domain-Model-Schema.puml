@@ -1,0 +1,94 @@
+﻿@startuml
+' Title for the diagram
+title High-Level Domain Model
+
+' Skin parameters for a cleaner, more professional look
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam class {
+    ArrowColor #666666
+    BorderColor #666666
+}
+skinparam note {
+    BackgroundColor #LightYellow
+    BorderColor #666666
+}
+
+' --- Explanatory Note for Custom Entities ---
+note as ConventionNote
+  <b>Diagram Convention:</b>
+  For clarity, common base properties
+  (like Id, CreatedOn, IsDeleted)
+  are omitted from the custom domain
+  entities below (Category, Service, etc.).
+end note
+
+' --- Identity & User Management ---
+' These are core to the domain, so we show them with key properties.
+
+class ApplicationUser {
+  + string Id
+  + string FirstName
+  + string LastName
+  + string Email
+  + string PhoneNumber
+}
+
+class ApplicationRole {
+  + string Id
+  + string Name
+  + string? Description
+}
+
+' --- Core Domain Entities ---
+' We only list the properties unique to each business concept.
+
+class Category {
+  + string Name
+  + string? Description
+}
+
+class Service {
+  + string Name
+  + string Description
+  + decimal Price
+  + bool IsOnline
+  + bool IsActive
+}
+
+class OperatingHour {
+  + DayOfWeek DayOfWeek
+  + TimeOnly StartTime
+  + TimeOnly EndTime
+}
+
+class ServiceImage {
+  + string ImageUrl
+  + bool IsThumbnail
+}
+
+class Review {
+  + int Rating
+  + string? Comment
+}
+
+
+' --- Relationships ---
+' Using standard UML cardinality: * means "many" (0 or more)
+
+' Identity Relationship
+ApplicationUser "*" -- "*" ApplicationRole : (has)
+
+' Business Relationships
+ApplicationUser "1" -- "*" Service : (Provider)
+ApplicationUser "1" -- "*" Review : (Customer)
+
+Category "1" -- "*" Service
+
+Service "1" -- "*" OperatingHour
+Service "1" -- "*" ServiceImage
+Service "1" -- "*" Review
+
+@enduml
