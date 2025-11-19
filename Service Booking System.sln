@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "diagrams", "diagrams", "{31
 		docs\diagrams\02-Use-Case-Diagram-Use_Case_Diagram.png = docs\diagrams\02-Use-Case-Diagram-Use_Case_Diagram.png
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceBookingSystem.Core", "ServiceBookingSystem.Core\ServiceBookingSystem.Core.csproj", "{196FF7A0-B435-42A1-94DB-BA5FED5ADC40}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{545B41BC-6CAA-4F90-BE11-2271D4AAADF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{545B41BC-6CAA-4F90-BE11-2271D4AAADF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{545B41BC-6CAA-4F90-BE11-2271D4AAADF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{196FF7A0-B435-42A1-94DB-BA5FED5ADC40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{196FF7A0-B435-42A1-94DB-BA5FED5ADC40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{196FF7A0-B435-42A1-94DB-BA5FED5ADC40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{196FF7A0-B435-42A1-94DB-BA5FED5ADC40}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{31AF065D-1CA3-483E-A924-580FB0A67B8B} = {B73B7717-47A5-4547-9B63-8676E633C506}
