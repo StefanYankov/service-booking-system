@@ -1,0 +1,81 @@
+﻿# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (MonoDevelop/Xamarin Studio)
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Visual Studio 2015 cache/options directory
+.vs/
+
+# Visual Studio 2017 cache/options directory
+.vs/
+
+# Visual Studio 2019 cache/options directory
+.vs/
+
+# Visual Studio 2022 cache/options directory
+.vs/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+
+# Build Results of an ATL Project
+[Dd]ebugPS/
+[Rr]eleasePS/
+dlldata.c
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# Folders containing files produced by building clean (e.g. "dotnet build --configuration Release")
+*/bin/
+*/obj/
+
+# Rider
+.idea/
+
+# Dotnet coverage reports
+**/TestResults/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Gemini
+GEMINI.md

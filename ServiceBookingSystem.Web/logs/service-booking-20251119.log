@@ -1,0 +1,11 @@
+2025-11-19 10:21:32.881 +02:00 [INF] Starting web host
+2025-11-19 10:21:34.455 +02:00 [WRN] Failed to determine the https port for redirect.
+2025-11-19 10:21:34.728 +02:00 [INF] User is viewing the Home page at "2025-11-19T08:21:34.7230177Z"
+2025-11-19 10:21:35.012 +02:00 [INF] HTTP GET / responded 200 in 590.3585 ms
+2025-11-19 10:21:35.189 +02:00 [INF] HTTP GET /Service_Booking_System.styles.css responded 404 in 8.9152 ms
+2025-11-19 10:21:35.206 +02:00 [INF] HTTP GET /js/site.js responded 200 in 24.4761 ms
+2025-11-19 10:21:35.221 +02:00 [INF] HTTP GET /css/site.css responded 200 in 40.3236 ms
+2025-11-19 10:21:35.261 +02:00 [INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 200 in 74.5951 ms
+2025-11-19 10:21:35.261 +02:00 [INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 200 in 163.5901 ms
+2025-11-19 10:21:35.261 +02:00 [INF] HTTP GET /lib/jquery/dist/jquery.min.js responded 200 in 76.6611 ms
+2025-11-19 10:21:35.564 +02:00 [INF] HTTP GET /favicon.ico responded 200 in 1.7395 ms
