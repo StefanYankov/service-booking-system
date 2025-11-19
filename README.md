@@ -9,35 +9,29 @@ Lecturer: Asst. Prof. Lachezar Tomov, PhD
 
 ## Project Introduction
 
-The **Service Booking System** is a web application built with ASP.NET Core. It provides a platform where providers can offer services (e.g., guitar lessons) and customers can book available time slots. The system is designed with a clean, layered architecture and follows modern .NET development best practices.
+The **Service Booking System** is a web application built with ASP.NET Core. It provides a platform where providers can offer services (e.g., guitar lessons) and customers can book available time slots. The system is designed with a clean, layered architecture and follows .NET development best practices.
 
 ## Table of Contents
 
 - [Project Goal](#project-goal)
-- [Architecture & Technologies](#architecture--technologies)
+- [System Architecture & Design](#system-architecture--design)
 - [User Roles](#user-roles)
-- [Database Schema](#database-schema)
-- [Setup & Progress](#setup--progress)
+- [Project Status & Key Features](#project-status--key-features)
 
 ## Project Goal
 
-The project's main goal is to create a robust and scalable platform for booking services. This includes managing provider and customer roles, defining services and their availability, and handling bookings. The application will feature a traditional multi-page web application (MVC) and a separate RESTful API for programmatic access.
+The project's main goal is to build a functional service booking platform by applying professional, modern ASP.NET Core development practices. The focus is on creating a maintainable application with a clean, layered architecture that separates concerns effectively.
 
-## Architecture & Technologies
+## System Architecture & Design
 
 The application is built using a layered architecture to ensure a clean separation of concerns.
 
 -   **Backend**: **ASP.NET Core 9.0**
--   **Architecture**: Layered (Web, Application, Data)
+-   **Architecture**: Layered (`Core`, `Data`, `Application`, `Web`)
 -   **Database**: **Entity Framework Core** with **Microsoft SQL Server**
 -   **Logging**: **Serilog**
 -   **Authentication**: **ASP.NET Core Identity**
-
-## User Roles
-
--   **Administrator**: The System Owner/Manager. Has global control over the entire application.
--   **Provider**: The Service Seller/Offeror. Registers themselves and provides the services.
--   **Customer**: The Service Buyer/Booker. Registers themselves to book available services.
+-   **Testing**: **xUnit**, **Moq**, and **FluentAssertions**
 
 ### Use Case Diagram
 
@@ -53,25 +47,34 @@ The database schema is designed to support the core features of the application.
 
 *(The project's `/docs/diagrams` folder contains the detailed PlantUML source files for these diagrams.)*
 
-## Setup & Progress
+## User Roles
 
-### Completed Steps:
+-   **Administrator**: The System Owner/Manager. Has global control over the entire application.
+-   **Provider**: The Service Seller/Offeror. Registers themselves and provides the services.
+-   **Customer**: The Service Buyer/Booker. Registers themselves to book available services.
 
-1.  **Project Setup**: Solution created with three projects: `.Web` (MVC UI), `.Data` (Data Access Layer), and a placeholder for the `.Application` layer.
-2.  **Logging**: Serilog is configured for structured logging to the console and rolling files.
-3.  **Database Configuration**: Entity Framework Core is configured to connect to a Microsoft SQL Server database.
-4.  **Identity Setup**:
-    -   ASP.NET Core Identity is configured using custom `ApplicationUser` and `ApplicationRole` entities.
-    -   The Identity database schema has been created via an initial EF Core migration.
-5.  **Core Domain Entities**:
-    -   Created core business entities: `Category`, `Service`, `OperatingHour`, `ServiceImage`, and `Review`.
-    -   Established relationships between entities (e.g., a Service has a Category, a Provider, and multiple Reviews).
-6.  **Data Persistence Patterns**:
-    -   Implemented a flexible base entity hierarchy (`BaseEntity`, `AuditableEntity`, `DeletableEntity`) to support both hard and soft deletes.
-    -   Implemented a robust **Soft-Delete** pattern using EF Core's Global Query Filters to ensure data is never permanently lost.
-    -   Resolved database cascade-delete cycles to ensure schema integrity.
-7.  **Documentation**:
-    -   Created initial `README.md` to track project progress.
+## Project Status & Key Features
+
+The project is currently in the foundational stage, with the following key architectural patterns and features implemented:
+
+1.  **Layered Architecture**: Solution structured into four layers: `.Core` (shared contracts), `.Data` (data access), `.Application` (business logic), and `.Web` (presentation).
+2.  **Logging Setup**: Configured Serilog for centralized logging to both the console and rolling files, establishing a foundation for structured logging.
+3.  **Identity & Authentication**: ASP.NET Core Identity is configured with custom `ApplicationUser` and `ApplicationRole` entities.
+4.  **Database & Entities**:
+    -   A complete domain model has been defined using Entity Framework Core.
+    -   Relationships and database constraints (e.g., cascade-delete behavior) have been configured.
+5.  **Data Persistence Patterns**:
+    -   Implemented a flexible base entity hierarchy (`BaseEntity`, `AuditableEntity`, `DeletableEntity`).
+    -   Implemented a **Soft-Delete** pattern using EF Core's Global Query Filters.
+6.  **Database Seeding**:
+    -   Implemented a decoupled, composite seeder pattern using an `ISeeder` contract.
+    -   Created seeders for essential data (`Roles`, `Administrator` user).
+7.  **Automated Testing Strategy**:
+    -   Set up dedicated **Unit Test** and **Integration Test** projects using xUnit.
+    -   Implemented integration tests for the database seeding process against an in-memory database.
+    -   Implemented isolated unit tests for individual seeder classes using mocks.
+8.  **Documentation**:
+    -   Created a professional `README.md` to track project architecture and progress.
     -   Created high-level UML diagrams for the Domain Model and System Use Cases.
 
 ---
