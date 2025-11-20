@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Identity;
 using ServiceBookingSystem.Data.Seeders;
+using ServiceBookingSystem.Application;
 using Serilog;
+using ServiceBookingSystem.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,9 +35,9 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Registering the individual seeders with the DI container.
-builder.Services.AddTransient<RolesSeeder>();
-builder.Services.AddTransient<AdministratorSeeder>();
+// --- Register services from other layers ---
+builder.Services.AddDataServices();      
+builder.Services.AddApplicationServices();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
