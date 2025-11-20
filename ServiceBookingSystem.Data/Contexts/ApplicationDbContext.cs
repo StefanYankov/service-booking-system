@@ -41,11 +41,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     {
         base.OnModelCreating(builder);
 
-        // --- Manual Relationship Configuration to Prevent Cascade Cycles ---
-        // This is required to solve the "multiple cascade paths" issue with SQL Server.
-        // By default, EF Core creates ON DELETE CASCADE for required relationships.
-        // We are manually overriding this behavior for specific relationships to break the cycle.
         
+        builder.Entity<Category>()
+            .HasIndex(c => c.Name)
+            .IsUnique();
+        
+        // --- Manual Relationship Configuration to Prevent Cascade Cycles ---
+ 
         builder.Entity<Service>()
             .HasOne(s => s.Provider)
             .WithMany() // Using an empty WithMany specifies a one-way navigation

@@ -13,5 +13,5 @@ public abstract class BaseEntity<TKey>
     /// Gets or sets the primary key for this entity.
     /// </summary>
     [Key]
-    public required TKey Id { get; set; }
+    public TKey Id { get; set; }
 }
