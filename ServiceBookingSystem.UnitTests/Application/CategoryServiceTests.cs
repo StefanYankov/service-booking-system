@@ -121,6 +121,31 @@ public class CategoryServiceTests : IDisposable
         Assert.Null(result);
     }
 
+    [Fact]
+    public async Task GetByIdAsync_WhenCategoryIsSoftDeleted_ShouldReturnNull()
+    {
+        // Arrange:
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Gadgets and devices"
+        };
+
+        dbContext.Categories.Add(category);
+        await dbContext.SaveChangesAsync();
+        await categoryService.DeleteAsync(category.Id);
+
+        // Act:
+        // New clean context and service to simulate a separate request.
+        await using var assertContext = new ApplicationDbContext(dbContextOptions);
+        var assertService = new CategoryService(assertContext);
+
+        var result = await assertService.GetByIdAsync(category.Id);
+
+        // Assert:
+        Assert.Null(result);
+    }
+
     // --- GetAllAsync tests---
 
     [Fact]
@@ -196,6 +221,43 @@ public class CategoryServiceTests : IDisposable
         Assert.Equal("C - Third", pagedResult.Items[0].Name);
         Assert.Equal("B - Second", pagedResult.Items[1].Name);
         Assert.Equal("A - First", pagedResult.Items[2].Name);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenItemsAreSoftDeleted_ShouldOnlyReturnActiveItems()
+    {
+        // Arrange:
+        var activeCategory1 = new Category
+        {
+            Name = "Active Category 1"
+        };
+        var deletedCategory = new Category
+        {
+            Name = "Deleted Category",
+            IsDeleted = true,
+            DeletedOn = DateTime.UtcNow
+        };
+        var activeCategory2 = new Category
+        {
+            Name = "Active Category 2"
+        };
+
+        await dbContext.Categories.AddRangeAsync(activeCategory1, deletedCategory, activeCategory2);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        await using var assertContext = new ApplicationDbContext(dbContextOptions);
+        var assertService = new CategoryService(assertContext);
+        var parameters = new PagingAndSortingParameters();
+        var result = await assertService.GetAllAsync(parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.Items.Count);
+        Assert.DoesNotContain(result.Items, c => c.Name == "Deleted Category");
+        Assert.Contains(result.Items, c => c.Name == "Active Category 1");
+        Assert.Contains(result.Items, c => c.Name == "Active Category 2");
     }
 
     // --- UpdateAsync Tests ---
@@ -288,7 +350,7 @@ public class CategoryServiceTests : IDisposable
         var softDeletedCategory = await assertContext.Categories
             .IgnoreQueryFilters() // This special method bypasses the soft-delete filter for verification.
             .FirstOrDefaultAsync(c => c.Id == category.Id);
-                
+
         Assert.NotNull(softDeletedCategory);
         Assert.True(softDeletedCategory.IsDeleted);
     }

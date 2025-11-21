@@ -7,7 +7,7 @@ using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Identity;
 using ServiceBookingSystem.Data.Seeders;
 
-namespace ServiceBookingSystem.IntegrationTests;
+namespace ServiceBookingSystem.IntegrationTests.Data.Seeders;
 
 public class SeedingTests : IClassFixture<CustomWebApplicationFactory>
 {
