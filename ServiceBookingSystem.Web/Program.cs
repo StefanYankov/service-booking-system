@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using ServiceBookingSystem.Data.Contexts;
-using ServiceBookingSystem.Data.Entities.Identity;
 using ServiceBookingSystem.Data.Seeders;
 using ServiceBookingSystem.Application;
 using Serilog;
@@ -18,25 +14,12 @@ builder.Host.UseSerilog((context, configuration) =>
         .WriteTo.File("logs/service-booking-.log", rollingInterval: RollingInterval.Day)
 );
 
-// --- Adding services to the container ---
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
-
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.Password.RequireDigit = false;
-        options.Password.RequireLowercase = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequiredLength = 6;
-    })
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
 // --- Register services from other layers ---
-builder.Services.AddDataServices();      
+
+// This single call now registers DbContext, Identity, and all seeders from the Data layer.
+builder.Services.AddDataServices(builder.Configuration);
+
+// This call registers all services from the Application layer.
 builder.Services.AddApplicationServices();
 
 builder.Services.AddControllersWithViews();

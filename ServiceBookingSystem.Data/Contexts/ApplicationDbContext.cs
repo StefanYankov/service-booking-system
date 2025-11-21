@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ServiceBookingSystem.Data.Entities.Common;
@@ -32,16 +33,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<ServiceImage> ServiceImages { get; set; }
     public DbSet<Review> Reviews { get; set; }
 
-    /// <summary>
-    /// Configures the schema, conventions, and models for the database context.
-    /// This method is called by the framework when the model is being created.
-    /// </summary>
-    /// <param name="builder">The builder being used to construct the model for this context.</param>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        
         builder.Entity<Category>()
             .HasIndex(c => c.Name)
             .IsUnique();

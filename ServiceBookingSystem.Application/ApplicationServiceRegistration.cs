@@ -17,6 +17,7 @@ public static class ApplicationServiceRegistration
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IUsersService, UsersService>();
         // services.AddScoped<IServiceService, ServiceService>(); // Future
         // services.AddScoped<IReviewService, ReviewService>();   // Future
 

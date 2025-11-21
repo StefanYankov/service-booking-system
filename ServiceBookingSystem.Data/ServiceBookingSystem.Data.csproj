@@ -6,6 +6,12 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <!-- This FrameworkReference gives this class library access to the ASP.NET Core shared framework, -->
+    <!-- which is required for configuring services like Identity. -->
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
     <ItemGroup>
       <Folder Include="Entities\Domain\" />
       <Folder Include="Migrations\" />

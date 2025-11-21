@@ -40,7 +40,7 @@ public class CategoryService : ICategoryService
     }
 
     /// <inheritdoc/>
-    public async Task<CategoryViewDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<CategoryViewDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var category = await this.dbContext.Categories
             .AsNoTracking()
