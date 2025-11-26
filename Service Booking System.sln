@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceBookingSystem.Integr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceBookingSystem.UnitTests", "ServiceBookingSystem.UnitTests\ServiceBookingSystem.UnitTests.csproj", "{BDA0BBF5-77F8-49A4-BFEA-8677D64878DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceBookingSystem.Infrastructure", "ServiceBookingSystem.Infrastructure\ServiceBookingSystem.Infrastructure.csproj", "{4E6AEDDE-8F59-4827-8D0B-81965757B01D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{BDA0BBF5-77F8-49A4-BFEA-8677D64878DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDA0BBF5-77F8-49A4-BFEA-8677D64878DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDA0BBF5-77F8-49A4-BFEA-8677D64878DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E6AEDDE-8F59-4827-8D0B-81965757B01D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E6AEDDE-8F59-4827-8D0B-81965757B01D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E6AEDDE-8F59-4827-8D0B-81965757B01D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E6AEDDE-8F59-4827-8D0B-81965757B01D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{31AF065D-1CA3-483E-A924-580FB0A67B8B} = {B73B7717-47A5-4547-9B63-8676E633C506}

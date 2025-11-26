@@ -31,6 +31,8 @@ public static class DataServiceRegistration
 
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
+                options.User.RequireUniqueEmail = true;
+                
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;
                 options.Password.RequireUppercase = false;

@@ -24,4 +24,6 @@ public static class ErrorMessages
     /// Generic message for the maximum string length validation.
     /// </summary>
     public const string StringLengthMaxRange = "The {0} field must be between no longer than {1} characters long.";
+    
+    public const string AtLeastOneRoleIsRequired = "At least one role must be assigned.";
 }

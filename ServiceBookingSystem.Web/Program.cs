@@ -2,6 +2,7 @@ using ServiceBookingSystem.Data.Seeders;
 using ServiceBookingSystem.Application;
 using Serilog;
 using ServiceBookingSystem.Data;
+using ServiceBookingSystem.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,9 @@ builder.Services.AddDataServices(builder.Configuration);
 
 // This call registers all services from the Application layer.
 builder.Services.AddApplicationServices();
+
+// This call registers all services from the Infrastructure layer (e.g., Email Service).
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

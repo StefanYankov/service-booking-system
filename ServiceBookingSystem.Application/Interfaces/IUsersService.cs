@@ -11,16 +11,16 @@ namespace ServiceBookingSystem.Application.Interfaces;
 public interface IUsersService
 {
     /// <summary>
-    /// Asynchronously creates a new user and assigns them to an initial role.
+    /// Asynchronously creates a new user and assigns them to their initial roles.
     /// This method is intended for administrative use.
     /// </summary>
-    /// <param name="dto">A Data Transfer Object containing the new user's information, including password and role.</param>
+    /// <param name="dto">A Data Transfer Object containing the new user's information, including password and roles.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result is an <see cref="IdentityResult"/>
     /// containing the outcome of the create operation, including any validation errors.
     /// </returns>
     Task<IdentityResult> CreateUserAsync(UserCreateDto dto);
-
+    
     /// <summary>
     /// Asynchronously updates an existing user's profile information.
     /// </summary>
@@ -36,16 +36,22 @@ public interface IUsersService
     Task<IdentityResult> UpdateUserAsync(UserUpdateDto dto);
 
     /// <summary>
-    /// Asynchronously retrieves a paginated list of all users in the system.
+    /// Asynchronously retrieves a paginated list of users, with optional filtering and sorting.
     /// </summary>
-    /// <param name="parameters">The parameters for paging and sorting the results.</param>
+    /// <param name="parameters">
+    /// An object containing the query parameters:
+    /// - <c>PageNumber</c>: The page number to retrieve.
+    /// - <c>PageSize</c>: The number of items per page.
+    /// - <c>SortBy</c>: The property to sort the results by (e.g., "username", "email").
+    /// - <c>SortDirection</c>: The direction to sort ("asc" or "desc").
+    /// - <c>SearchTerm</c>: An optional search term to filter users by first name, last name, username, or email.
+    /// </param>
     /// <param name="cancellationToken">A token to allow the operation to be cancelled.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paged result
-    /// with the list of users for the current page and pagination metadata.
+    /// with the list of matching users for the current page and pagination metadata.
     /// </returns>
-    Task<PagedResult<UserViewDto>> GetAllUsersAsync(PagingAndSortingParameters parameters,
-        CancellationToken cancellationToken = default);
+    Task<PagedResult<UserViewDto>> GetAllUsersAsync(UserQueryParameters parameters, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously retrieves a single user by their unique identifier.
@@ -72,7 +78,7 @@ public interface IUsersService
     /// </summary>
     /// <remarks>
     /// This is a full replacement operation. Any roles the user currently has that are not in the provided list will be removed.
-    /// If the provided list of roles is empty, the user will be removed from all roles.
+    ///  If the provided list of roles is empty, the user will be removed from all roles.
     /// </remarks>
     /// <param name="userId">The unique identifier of the user to update.</param>
     /// <param name="roles">A complete list of role names to be assigned to the user.</param>
@@ -80,7 +86,7 @@ public interface IUsersService
     /// <exception cref="EntityNotFoundException">Thrown if a user with the specified <paramref name="userId"/> does not exist.</exception>
     /// <exception cref="AppException">Thrown if any of the provided role names in the <paramref name="roles"/> list are invalid or do not exist in the system.</exception>
     Task<IdentityResult> UpdateUserRolesAsync(string userId, List<string> roles);
-
+    
     /// <summary>
     /// Asynchronously disables a user's account, preventing them from logging in.
     /// </summary>
