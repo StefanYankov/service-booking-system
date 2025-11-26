@@ -37,13 +37,13 @@ The application is built using a layered architecture to ensure a clean separati
 
 The following diagram provides a high-level overview of the system's functionality and the roles of its different users.
 
-!Use Case Diagram
+![Use Case Diagram](./docs/diagrams/02-Use-Case-Diagram.png)
 
 ### Domain Model Diagram
 
 The database schema is designed to support the core features of the application. It utilizes a flexible base entity hierarchy and a robust soft-delete pattern to ensure data integrity and history.
 
-!Domain Model Diagram
+![Domain Model Diagram](./docs/diagrams/01-Domain-Model-Diagram.png)
 
 *(The project's `/docs/diagrams` folder contains the detailed PlantUML source files for these diagrams.)*
 
