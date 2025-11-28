@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using ServiceBookingSystem.Application.DTOs.Identity.User;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
@@ -16,6 +17,7 @@ public class UsersService : IUsersService
     private readonly IEmailService emailService;
     private readonly ITemplateService templateService;
     private readonly IConfiguration configuration;
+    private readonly ILogger<UsersService> logger;
 
 
     public UsersService(
@@ -23,24 +25,28 @@ public class UsersService : IUsersService
         RoleManager<ApplicationRole> roleManager,
         IEmailService emailService,
         ITemplateService templateService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<UsersService> logger)
     {
         this.userManager = userManager;
         this.roleManager = roleManager;
         this.emailService = emailService;
         this.templateService = templateService;
         this.configuration = configuration;
+        this.logger = logger;
     }
 
     /// <inheritdoc/>
     public async Task<IdentityResult> CreateUserAsync(UserCreateDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
-
+        
+        logger.LogDebug("Attempting to create user with Email: {Email}", dto.Email);
         foreach (var roleName in dto.Roles)
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
+                logger.LogWarning("Attempted to create user with non-existent role: {RoleName}", roleName);
                 return IdentityResult.Failed(new IdentityError
                 {
                     Code = "RoleNotFound",
@@ -62,6 +68,8 @@ public class UsersService : IUsersService
 
         if (result.Succeeded)
         {
+            logger.LogInformation("User {UserId} with Email {Email} created successfully", user.Id, user.Email);
+
             await userManager.AddToRolesAsync(user, dto.Roles);
 
             var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -78,6 +86,11 @@ public class UsersService : IUsersService
 
             _ = emailService.SendEmailAsync(user.Email, "Confirm your email", emailBody);
         }
+        else
+        {
+            logger.LogWarning("Failed to create user with Email {Email}. Errors: {Errors}", dto.Email,
+                result.Errors.Select(e => e.Description));
+        }
 
         return result;
     }
@@ -87,6 +100,11 @@ public class UsersService : IUsersService
         UserQueryParameters parameters,
         CancellationToken cancellationToken = default)
     {
+        logger.LogDebug(
+            "Fetching users with parameters: PageNumber={PageNumber}, PageSize={PageSize}, SortBy={SortBy}, SortDirection={SortDirection}, SearchTerm={SearchTerm}",
+            parameters.PageNumber, parameters.PageSize, parameters.SortBy, parameters.SortDirection,
+            parameters.SearchTerm);
+        
         ArgumentNullException.ThrowIfNull(parameters);
 
         var baseQuery = userManager.Users;
@@ -102,7 +120,7 @@ public class UsersService : IUsersService
                 (u.UserName != null && u.UserName.ToLower().Contains(searchTerm))
             );
         }
-        
+
         var orderedQuery = baseQuery.OrderBy(u => u.UserName);
 
         if (!string.IsNullOrWhiteSpace(parameters.SortBy))
@@ -116,12 +134,13 @@ public class UsersService : IUsersService
                     break;
             }
         }
+
         var totalCount = await orderedQuery.CountAsync(cancellationToken);
-        
+
         var pagedQuery = orderedQuery
             .Skip((parameters.PageNumber - 1) * parameters.PageSize)
             .Take(parameters.PageSize);
-        
+
         var users = await pagedQuery.ToListAsync(cancellationToken);
 
         var userDtos = new List<UserViewDto>();
@@ -207,6 +226,7 @@ public class UsersService : IUsersService
     public async Task<IdentityResult> UpdateUserAsync(UserUpdateDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
+        logger.LogDebug("Attempting to update user with ID: {UserId}", dto.Id);
 
         var userToUpdate = await userManager.FindByIdAsync(dto.Id);
 
@@ -221,17 +241,26 @@ public class UsersService : IUsersService
 
         if (!string.Equals(userToUpdate.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
         {
+            logger.LogDebug("User {UserId} email change detected. Old: {OldEmail}, New: {NewEmail}", dto.Id,
+                userToUpdate.Email, dto.Email);
+
             var setEmailResult = await userManager.SetEmailAsync(userToUpdate, dto.Email);
             if (!setEmailResult.Succeeded)
             {
+                logger.LogWarning("Failed to set new email for User {UserId}. Errors: {Errors}", dto.Id,
+                    setEmailResult.Errors.Select(e => e.Description));
                 return setEmailResult;
             }
 
             var setUserNameResult = await userManager.SetUserNameAsync(userToUpdate, dto.Email);
             if (!setUserNameResult.Succeeded)
             {
+                logger.LogWarning("Failed to set new username for User {UserId}. Errors: {Errors}", dto.Id,
+                    setUserNameResult.Errors.Select(e => e.Description));
                 return setUserNameResult;
             }
+
+            logger.LogInformation("User {UserId} email and username updated to {NewEmail}", dto.Id, dto.Email);
 
             if (!string.IsNullOrWhiteSpace(userToUpdate.Email))
             {
@@ -251,12 +280,24 @@ public class UsersService : IUsersService
             }
         }
 
-        return await userManager.UpdateAsync(userToUpdate);
+        var updateResult = await userManager.UpdateAsync(userToUpdate);
+        if (updateResult.Succeeded)
+        {
+            logger.LogInformation("User {UserId} properties updated successfully", dto.Id);
+        }
+        else
+        {
+            logger.LogWarning("Failed to update user {UserId} properties. Errors: {Errors}", dto.Id,
+                updateResult.Errors.Select(e => e.Description));
+        }
+
+        return updateResult;
     }
 
     /// <inheritdoc/>
     public async Task<IdentityResult> UpdateUserRolesAsync(string userId, List<string> roles)
     {
+        logger.LogDebug("Attempting to update roles for User {UserId} to: {Roles}", userId, roles);
         ArgumentNullException.ThrowIfNull(roles);
 
         var user = await userManager.FindByIdAsync(userId);
@@ -269,6 +310,8 @@ public class UsersService : IUsersService
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
+                logger.LogWarning("Attempted to assign non-existent role {RoleName} to User {UserId}", roleName,
+                    userId);
                 return IdentityResult.Failed(new IdentityError
                 {
                     Code = "RoleNotFound",
@@ -281,19 +324,27 @@ public class UsersService : IUsersService
 
         // User's current roles.
         var currentRoles = await userManager.GetRolesAsync(user);
+        logger.LogDebug("User {UserId} current roles: {CurrentRoles}", userId, currentRoles);
 
         // Roles to add are the new roles that are not in the current roles list.
         var rolesToAdd = roles.Except(currentRoles).ToList();
 
         //  Roles to remove are the current roles that are not in the new roles list.
         var rolesToRemove = currentRoles.Except(roles).ToList();
+        logger.LogDebug("For User {UserId}: Roles to add: {RolesToAdd}, Roles to remove: {RolesToRemove}", userId,
+            rolesToAdd, rolesToRemove);
+
         if (rolesToAdd.Any())
         {
             var addResult = await userManager.AddToRolesAsync(user, rolesToAdd);
             if (!addResult.Succeeded)
             {
+                logger.LogWarning("Failed to add roles {RolesToAdd} to User {UserId}. Errors: {Errors}", rolesToAdd,
+                    userId, addResult.Errors.Select(e => e.Description));
                 return addResult;
             }
+
+            logger.LogInformation("Successfully added roles {RolesToAdd} to User {UserId}", rolesToAdd, userId);
         }
 
         if (rolesToRemove.Any())
@@ -301,8 +352,13 @@ public class UsersService : IUsersService
             var removeResult = await userManager.RemoveFromRolesAsync(user, rolesToRemove);
             if (!removeResult.Succeeded)
             {
+                logger.LogWarning("Failed to remove roles {RolesToRemove} from User {UserId}. Errors: {Errors}",
+                    rolesToRemove, userId, removeResult.Errors.Select(e => e.Description));
                 return removeResult;
             }
+
+            logger.LogInformation("Successfully removed roles {RolesToRemove} from User {UserId}", rolesToRemove,
+                userId);
         }
 
         return IdentityResult.Success;
@@ -311,6 +367,7 @@ public class UsersService : IUsersService
     /// <inheritdoc/>
     public async Task<IdentityResult> DisableUserAsync(string userId)
     {
+        logger.LogDebug("Attempting to disable User {UserId}", userId);
         var user = await userManager.FindByIdAsync(userId);
 
         if (user is null)
@@ -321,6 +378,7 @@ public class UsersService : IUsersService
         var currentLockoutEnd = await userManager.GetLockoutEndDateAsync(user);
         if (currentLockoutEnd.HasValue && currentLockoutEnd.Value > DateTimeOffset.UtcNow)
         {
+            logger.LogDebug("User {UserId} is already disabled. No action taken.", userId);
             return IdentityResult.Success;
         }
 
@@ -328,15 +386,23 @@ public class UsersService : IUsersService
 
         if (result.Succeeded)
         {
+            logger.LogInformation("User {UserId} has been disabled successfully", userId);
+
             if (!string.IsNullOrWhiteSpace(user.Email))
             {
-                var emailBody = await templateService.RenderTemplateAsync("AccountDisabled.html", new Dictionary<string, string>
-                {
-                    { "UserName", user.FirstName }
-                });
-            
+                var emailBody = await templateService.RenderTemplateAsync("AccountDisabled.html",
+                    new Dictionary<string, string>
+                    {
+                        { "UserName", user.FirstName }
+                    });
+
                 _ = emailService.SendEmailAsync(user.Email, "Account Disabled Notification", emailBody);
             }
+        }
+        else
+        {
+            logger.LogWarning("Failed to disable User {UserId}. Errors: {Errors}", userId,
+                result.Errors.Select(e => e.Description));
         }
 
         return result;

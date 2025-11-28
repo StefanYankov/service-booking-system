@@ -1,15 +1,13 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using ServiceBookingSystem.Application.DTOs.Identity.User;
-using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Identity;
 using ServiceBookingSystem.Application.Services;
-using ServiceBookingSystem.Core.Exceptions;
 
 namespace ServiceBookingSystem.UnitTests.Application.UsersServiceTests;
 
@@ -23,6 +21,7 @@ public partial class UsersServiceTests : IDisposable
     private readonly Mock<ITemplateService> templateServiceMock;
     private readonly IConfiguration configuration;
     private readonly UsersService usersService;
+    private readonly ILogger<UsersService> logger;
 
 
     public UsersServiceTests()
@@ -31,7 +30,8 @@ public partial class UsersServiceTests : IDisposable
 
         this.emailServiceMock = new Mock<IEmailService>();
         this.templateServiceMock = new Mock<ITemplateService>();
-
+        this.logger = NullLogger<UsersService>.Instance; 
+        
         var inMemorySettings = new Dictionary<string, string?>
         {
             { "WebAppSettings:BaseUrl", "http://localhost:7045" }
@@ -46,7 +46,8 @@ public partial class UsersServiceTests : IDisposable
             roleManager,
             emailServiceMock.Object,
             templateServiceMock.Object,
-            configuration);
+            configuration,
+            logger);
 
         SeedData().GetAwaiter().GetResult();
     }
