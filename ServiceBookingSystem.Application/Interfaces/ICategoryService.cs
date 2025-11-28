@@ -13,10 +13,10 @@ public interface ICategoryService
     /// <param name="cancellationToken">A token to allow the operation to be cancelled.</param>
     /// <returns>
     /// A task that represents the asynchronous operation.
-    /// The task result contains the unique identifier of the newly created category.
+    /// The task result contains a DTO of the newly created category, including its server-generated ID.
     /// </returns>
     /// <exception cref="DuplicateEntityException">Thrown when a category with the same name already exists.</exception>
-    Task<int> CreateAsync(CategoryCreateDto dto, CancellationToken cancellationToken = default);
+    Task<CategoryViewDto> CreateAsync(CategoryCreateDto dto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously retrieves a category by its unique identifier.
@@ -24,7 +24,7 @@ public interface ICategoryService
     /// <param name="id">The unique identifier of the category.</param>
     /// <param name="cancellationToken">A token to allow the operation to be cancelled.</param>
     /// <returns>
-    /// A task that represents the asynchronous operation.
+    ///  A task that represents the asynchronous operation.
     /// The task result contains the category view DTO if found; otherwise, null.
     /// </returns>
     Task<CategoryViewDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
@@ -46,10 +46,13 @@ public interface ICategoryService
     /// </summary>
     /// <param name="dto">A Data Transfer Object containing the updated information for the category.</param>
     /// <param name="cancellationToken">A token to allow the operation to be cancelled.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// The task result contains a DTO of the updated category.
+    /// </returns>
     /// <exception cref="EntityNotFoundException">Thrown when the category with the specified ID does not exist.</exception>
     /// <exception cref="DuplicateEntityException">Thrown when the category is being renamed to a name that is already in use by another category.</exception>
-    Task UpdateAsync(CategoryUpdateDto dto, CancellationToken cancellationToken = default);
+    Task<CategoryViewDto> UpdateAsync(CategoryUpdateDto dto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously soft-deletes a category.

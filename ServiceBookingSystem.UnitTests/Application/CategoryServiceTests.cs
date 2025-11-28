@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ServiceBookingSystem.Application.DTOs.Category;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Services;
@@ -14,6 +16,7 @@ public class CategoryServiceTests : IDisposable
     private readonly DbContextOptions<ApplicationDbContext> dbContextOptions;
     private readonly ApplicationDbContext dbContext;
     private readonly CategoryService categoryService;
+    private readonly ILogger<CategoryService> logger;
 
     public CategoryServiceTests()
     {
@@ -23,8 +26,8 @@ public class CategoryServiceTests : IDisposable
             .Options;
 
         dbContext = new ApplicationDbContext(dbContextOptions);
-
-        categoryService = new CategoryService(dbContext);
+        this.logger = NullLogger<CategoryService>.Instance;
+        categoryService = new CategoryService(dbContext, logger);
     }
 
     /// <summary>
@@ -40,7 +43,7 @@ public class CategoryServiceTests : IDisposable
 
     // --- CreateAsync Tests ---
     [Fact]
-    public async Task CreateAsync_WithValidData_ShouldCreateCategoryAndReturnId()
+    public async Task CreateAsync_WithValidData_ShouldCreateCategoryAndReturnDto()
     {
         // Arrange:
         var validDto = new CategoryCreateDto
@@ -50,14 +53,17 @@ public class CategoryServiceTests : IDisposable
         };
 
         // Act:
-        var id = await categoryService.CreateAsync(validDto);
+        var resultDto = await categoryService.CreateAsync(validDto);
 
         //Assert:
-        Assert.True(id > 0);
-        var categoryInDb = await dbContext.Categories.FirstOrDefaultAsync(c => c.Name == validDto.Name);
+        Assert.NotNull(resultDto);
+        Assert.True(resultDto.Id > 0);
+        Assert.Equal(validDto.Name, resultDto.Name);
+
+        var categoryInDb = await dbContext.Categories.FindAsync(resultDto.Id);
         Assert.NotNull(categoryInDb);
-        Assert.Equal("Electronics", categoryInDb.Name);
-        Assert.Equal("Gadgets and devices", categoryInDb.Description);
+        Assert.Equal(validDto.Name, categoryInDb.Name);
+        Assert.Equal(validDto.Description, categoryInDb.Description);
     }
 
     [Fact]
@@ -136,9 +142,10 @@ public class CategoryServiceTests : IDisposable
         await categoryService.DeleteAsync(category.Id);
 
         // Act:
-        // New clean context and service to simulate a separate request.
+        //  clean context and service to simulate a separate request.
         await using var assertContext = new ApplicationDbContext(dbContextOptions);
-        var assertService = new CategoryService(assertContext);
+        var assertLogger = NullLogger<CategoryService>.Instance; 
+        var assertService = new CategoryService(assertContext, assertLogger);
 
         var result = await assertService.GetByIdAsync(category.Id);
 
@@ -183,7 +190,7 @@ public class CategoryServiceTests : IDisposable
         Assert.NotNull(pagedResult.Items);
         Assert.Equal(10, pagedResult.Items.Count); // This page should have exactly 10 items.
 
-        // The default sort order is by Id. Since we added them in order, we can predict the content.
+        // The default sort order is by ID. Since we added them in order, we can predict the content.
         // Page 2 should contain items 11 through 20.
         Assert.Equal("Category 11", pagedResult.Items.First().Name);
         Assert.Equal("Category 20", pagedResult.Items.Last().Name);
@@ -247,7 +254,8 @@ public class CategoryServiceTests : IDisposable
 
         // Act:
         await using var assertContext = new ApplicationDbContext(dbContextOptions);
-        var assertService = new CategoryService(assertContext);
+        var assertLogger = NullLogger<CategoryService>.Instance;
+        var assertService = new CategoryService(assertContext,assertLogger);
         var parameters = new PagingAndSortingParameters();
         var result = await assertService.GetAllAsync(parameters);
 
