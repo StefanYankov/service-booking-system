@@ -31,5 +31,10 @@ public static class ValidationConstraints
         public const int NameMaxLength = 200;
 
         public const int DescriptionMaxLength = 4000;
+
+        public const int AddressStreetMaximumLength = 255;
+        public const int AddressCityMaximumLength = 100;
+        public const int PostalCodeMaximumLength = 10;
+
     }
 }

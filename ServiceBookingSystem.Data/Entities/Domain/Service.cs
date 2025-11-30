@@ -40,6 +40,11 @@ public class Service : DeletableEntity<int>
     /// Gets or sets a value indicating whether the service is active and bookable.
     /// </summary>
     public bool IsActive { get; set; } = true;
+    
+    /// <summary>
+    /// Gets or sets the duration of the service in minutes.
+    /// </summary>
+    public int DurationInMinutes { get; set; }
 
     // --- Foreign Keys and Navigation Properties ---
 
