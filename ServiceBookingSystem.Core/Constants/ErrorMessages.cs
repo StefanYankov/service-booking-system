@@ -26,4 +26,6 @@ public static class ErrorMessages
     public const string StringLengthMaxRange = "The {0} field must be between no longer than {1} characters long.";
     
     public const string AtLeastOneRoleIsRequired = "At least one role must be assigned.";
+    
+    public const string AtLeastOneMinuteDuration = "Duration must be at least 1 minute.";
 }

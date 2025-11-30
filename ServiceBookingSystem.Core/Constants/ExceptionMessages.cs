@@ -18,5 +18,7 @@ public static class ExceptionMessages
     /// Expects two format arguments: {0} = entity name, {1} = entity key.
     /// </summary>
     public const string EntityNotFound = "The requested {0} with ID '{1}' was not found.";
-    
+
+    public const string InvalidProviderId = "Provider ID cannot be null or whitespace.";
+
 }
