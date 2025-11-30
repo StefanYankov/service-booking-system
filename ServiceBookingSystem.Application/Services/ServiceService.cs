@@ -116,23 +116,27 @@ public class ServiceService : IServiceService
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc/>
     public async Task DeleteServiceAsync(int serviceId, string providerId,
         CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc/>
     public async Task<ServiceViewDto?> GetServiceByIdAsync(int serviceId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc/>
     public async Task<IEnumerable<ServiceViewDto>> GetServicesByCategoryAsync(int categoryId,
         CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc/>
     public async Task<IEnumerable<ServiceViewDto>> GetServicesByProviderAsync(string providerId,
         CancellationToken cancellationToken = default)
     {
