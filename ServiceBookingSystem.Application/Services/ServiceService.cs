@@ -37,32 +37,33 @@ public class ServiceService : IServiceService
         {
             throw new ArgumentException(ExceptionMessages.InvalidProviderId, nameof(providerId));
         }
-        
+
         logger.LogDebug(
             "Attempting to create a new Service with Name: {ServiceName} to a provider with an ID {providerId}",
             dto.Name, providerId);
-        
+
         var providerDto = await usersService.GetUserByIdAsync(providerId);
         if (providerDto == null)
         {
             logger.LogWarning("User {UserId} attempted to create a service but the user does not exist.", providerId);
             throw new EntityNotFoundException(nameof(ApplicationUser), providerId);
         }
-        
+
         if (!providerDto.Roles.Contains("Provider"))
         {
-            logger.LogWarning("User {UserId} attempted to create a service without being in the 'Provider' role.", providerId);
+            logger.LogWarning("User {UserId} attempted to create a service without being in the 'Provider' role.",
+                providerId);
             throw new AuthorizationException(providerId, "CreateService");
         }
-        
+
         var categoryDto = await categoryService.GetByIdAsync(dto.CategoryId, cancellationToken);
-        
+
         if (categoryDto == null)
         {
             logger.LogWarning("Attempted to create service with non-existent CategoryId {CategoryId}", dto.CategoryId);
             throw new EntityNotFoundException(nameof(Category), dto.CategoryId);
         }
-        
+
         var service = new Service
         {
             Name = dto.Name,
@@ -76,19 +77,20 @@ public class ServiceService : IServiceService
             ProviderId = providerId,
             CategoryId = dto.CategoryId
         };
-        
+
         await dbContext.Services.AddAsync(service, cancellationToken);
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("Service {ServiceId} created with name {ServiceName} for provider {ProviderId}", service.Id, service.Name, providerId);
+            logger.LogInformation("Service {ServiceId} created with name {ServiceName} for provider {ProviderId}",
+                service.Id, service.Name, providerId);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex,"Failed to create service with name {ServiceName}", dto.Name);
+            logger.LogError(ex, "Failed to create service with name {ServiceName}", dto.Name);
             throw;
         }
-        
+
         var returnDto = new ServiceViewDto
         {
             Id = service.Id,
@@ -113,7 +115,86 @@ public class ServiceService : IServiceService
     public async Task<ServiceViewDto> UpdateServiceAsync(ServiceUpdateDto dto, string providerId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(dto);
+
+        if (string.IsNullOrWhiteSpace(providerId))
+        {
+            throw new ArgumentException(ExceptionMessages.InvalidProviderId, nameof(providerId));
+        }
+
+        logger.LogDebug(
+            "Attempting to update a new Service with Name: {ServiceName}, ID: {ServiceId} to a provider with an ID {providerId}",
+            dto.Name, dto.Id, providerId);
+
+        var serviceToUpdate = await dbContext.Services.FindAsync(new object[] { dto.Id }, cancellationToken);
+        if (serviceToUpdate == null)
+        {
+            logger.LogWarning("Attempted to update non-existent Service {ServiceId}", dto.Id);
+            throw new EntityNotFoundException(nameof(Service), dto.Id);
+        }
+
+        if (serviceToUpdate.ProviderId != providerId)
+        {
+            logger.LogWarning("User {UserId} attempted to update Service {ServiceId} owned by {OwnerId}", providerId,
+                serviceToUpdate.Id, serviceToUpdate.ProviderId);
+            throw new AuthorizationException(providerId, $"Update ServiceId '{serviceToUpdate.Id}'");
+        }
+        
+        var categoryDto = await categoryService.GetByIdAsync(dto.CategoryId, cancellationToken);
+        if (categoryDto == null)
+        {
+            logger.LogWarning("Attempted to update Service {ServiceId} with non-existent CategoryId {CategoryId}", serviceToUpdate.Id, dto.CategoryId);
+            throw new EntityNotFoundException(nameof(Category), dto.CategoryId);
+        }
+    
+        serviceToUpdate.Name = dto.Name;
+        serviceToUpdate.Description = dto.Description;
+        serviceToUpdate.Price = dto.Price;
+        serviceToUpdate.DurationInMinutes = dto.DurationInMinutes;
+        serviceToUpdate.CategoryId = dto.CategoryId;
+        serviceToUpdate.IsOnline = dto.IsOnline;
+        serviceToUpdate.IsActive = dto.IsActive;
+        serviceToUpdate.StreetAddress = dto.StreetAddress;
+        serviceToUpdate.City = dto.City;
+        serviceToUpdate.PostalCode = dto.PostalCode;
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Service {ServiceId} was successfully updated by provider {ProviderId}", serviceToUpdate.Id, providerId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update Service {ServiceId}", serviceToUpdate.Id);
+            throw;
+        }
+        
+        var providerDto = await usersService.GetUserByIdAsync(providerId);
+
+        if (providerDto == null)
+        {
+            logger.LogError("Data integrity issue: Provider {ProviderId} for Service {ServiceId} not found after update.", providerId, serviceToUpdate.Id);
+            throw new InvalidOperationException($"A data integrity issue was detected. Provider '{providerId}' could not be found.");
+        }
+
+        var returnDto = new ServiceViewDto
+        {
+            Id = serviceToUpdate.Id,
+            Name = serviceToUpdate.Name,
+            Description = serviceToUpdate.Description,
+            Price = serviceToUpdate.Price,
+            DurationInMinutes = serviceToUpdate.DurationInMinutes,
+            IsOnline = serviceToUpdate.IsOnline,
+            StreetAddress = serviceToUpdate.StreetAddress,
+            City = serviceToUpdate.City,
+            PostalCode = serviceToUpdate.PostalCode,
+            IsActive = serviceToUpdate.IsActive,
+            ProviderId = serviceToUpdate.ProviderId,
+            ProviderName = $"{providerDto.FirstName} {providerDto.LastName}", 
+            CategoryId = serviceToUpdate.CategoryId,
+            CategoryName = categoryDto.Name
+        };
+        return returnDto;
     }
 
     /// <inheritdoc/>
