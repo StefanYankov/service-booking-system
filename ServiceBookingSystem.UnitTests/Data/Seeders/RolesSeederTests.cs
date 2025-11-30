@@ -1,81 +1,79 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Moq;
+using Microsoft.Extensions.Logging.Abstractions;
 using ServiceBookingSystem.Data.Common;
+using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Identity;
 using ServiceBookingSystem.Data.Seeders;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServiceBookingSystem.UnitTests.Data.Seeders;
 
-public class RolesSeederTests
+public class RolesSeederTests : IDisposable
 {
-    private readonly Mock<RoleManager<ApplicationRole>> mockRoleManager;
-    private readonly Mock<ILogger<RolesSeeder>> mockLogger;
-    private readonly Mock<IServiceProvider> mockServiceProvider;
-    private readonly RolesSeeder rolesSeeder;
+    private readonly ServiceProvider serviceProvider;
+    private readonly ApplicationDbContext dbContext;
 
     public RolesSeederTests()
     {
-        // --- ARRANGE (Common Setup) ---
+        // --- ARRANGE (Common Setup using a real in-memory Identity setup) ---
 
-        var mockRoleStore = new Mock<IRoleStore<ApplicationRole>>();
-        mockRoleManager = new Mock<RoleManager<ApplicationRole>>(
-            mockRoleStore.Object, 
-            null!, // optionsAccessor
-            null!, // passwordHasher
-            null!, // userValidators
-            null!, // passwordValidators
-            null!, // keyNormalizer
-            null!, // errors
-            null!, // services
-            new Mock<ILogger<UserManager<ApplicationUser>>>().Object); // logger
+        var services = new ServiceCollection();
 
-        mockLogger = new Mock<ILogger<RolesSeeder>>();
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
 
-        mockServiceProvider = new Mock<IServiceProvider>();
-        mockServiceProvider
-            .Setup(sp => sp.GetService(typeof(RoleManager<ApplicationRole>)))
-            .Returns(mockRoleManager.Object);
-        mockServiceProvider
-            .Setup(sp => sp.GetService(typeof(ILogger<RolesSeeder>)))
-            .Returns(mockLogger.Object);
+        services.AddIdentity<ApplicationUser, ApplicationRole>()
+            .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        rolesSeeder = new RolesSeeder();
+        services.AddSingleton<ILogger<RolesSeeder>>(NullLogger<RolesSeeder>.Instance);
+    
+        services.AddSingleton<ILogger<RoleManager<ApplicationRole>>>(NullLogger<RoleManager<ApplicationRole>>.Instance);
+
+        serviceProvider = services.BuildServiceProvider();
+        dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
     }
 
     [Fact]
     public async Task SeedAsync_WhenRolesDoNotExist_ShouldCreateAllRoles()
     {
-        // ARRANGE 
-        mockRoleManager
-            .Setup(rm => rm.RoleExistsAsync(It.IsAny<string>()))
-            .ReturnsAsync(false);
+        // Arrange:
+        var seeder = new RolesSeeder();
 
-        mockRoleManager
-            .Setup(rm => rm.CreateAsync(It.IsAny<ApplicationRole>()))
-            .ReturnsAsync(IdentityResult.Success);
+        // Act:
+        await seeder.SeedAsync(serviceProvider);
 
-        // ACT
-        await rolesSeeder.SeedAsync(mockServiceProvider.Object);
-
-        // ASSERT
-        mockRoleManager.Verify(rm => rm.CreateAsync(It.Is<ApplicationRole>(r => r.Name == RoleConstants.Administrator)), Times.Once);
-        mockRoleManager.Verify(rm => rm.CreateAsync(It.Is<ApplicationRole>(r => r.Name == RoleConstants.Provider)), Times.Once);
-        mockRoleManager.Verify(rm => rm.CreateAsync(It.Is<ApplicationRole>(r => r.Name == RoleConstants.Customer)), Times.Once);
+        // Assert:
+        Assert.True(await dbContext.Roles.AnyAsync(r => r.Name == RoleConstants.Administrator));
+        Assert.True(await dbContext.Roles.AnyAsync(r => r.Name == RoleConstants.Provider));
+        Assert.True(await dbContext.Roles.AnyAsync(r => r.Name == RoleConstants.Customer));
     }
 
     [Fact]
-    public async Task SeedAsync_WhenRolesAlreadyExist_ShouldNotCreateAnyRoles()
+    public async Task SeedAsync_WhenRolesAlreadyExist_ShouldNotCreateDuplicates()
     {
-        // ARRANGE (Test-Specific Setup)
-        mockRoleManager
-            .Setup(rm => rm.RoleExistsAsync(It.IsAny<string>()))
-            .ReturnsAsync(true);
+        // Arrange:
+        var seeder = new RolesSeeder();
+        
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+        await roleManager.CreateAsync(new ApplicationRole(RoleConstants.Administrator));
 
-        // ACT
-        await rolesSeeder.SeedAsync(mockServiceProvider.Object);
+        // Act:
+        await seeder.SeedAsync(serviceProvider);
 
-        // ASSERT
-        mockRoleManager.Verify(rm => rm.CreateAsync(It.IsAny<ApplicationRole>()), Times.Never);
+        // Assert:
+        Assert.True(await dbContext.Roles.AnyAsync(r => r.Name == RoleConstants.Administrator));
+        Assert.True(await dbContext.Roles.AnyAsync(r => r.Name == RoleConstants.Provider));
+        Assert.True(await dbContext.Roles.AnyAsync(r => r.Name == RoleConstants.Customer));
+        
+        Assert.Equal(1, await dbContext.Roles.CountAsync(r => r.Name == RoleConstants.Administrator));
+        Assert.Equal(3, await dbContext.Roles.CountAsync());
+    }
+    
+    public void Dispose()
+    {
+        serviceProvider.Dispose();
+        dbContext.Dispose();
     }
 }
