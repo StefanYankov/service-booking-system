@@ -536,7 +536,7 @@ namespace ServiceBookingSystem.Data.Migrations
                     b.HasOne("ServiceBookingSystem.Data.Entities.Domain.Service", "Service")
                         .WithMany("Reviews")
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Customer");
