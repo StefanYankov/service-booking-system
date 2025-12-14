@@ -55,6 +55,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             .WithMany() // One-way navigation
             .HasForeignKey(r => r.CustomerId)
             .OnDelete(DeleteBehavior.Restrict); // Prevents cascade delete
+        
+        builder.Entity<Review>()
+            .HasOne(r => r.Service)
+            .WithMany(s => s.Reviews)
+            .HasForeignKey(r => r.ServiceId)
+            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
 
         // --- Global Query Filter for Soft Deletes ---
         var deletableEntityTypes = builder.Model.GetEntityTypes()
@@ -72,6 +78,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
         builder.Entity<ServiceImage>()
             .HasQueryFilter(si => !si.Service.IsDeleted);
+        
+        builder.Entity<Review>()
+            .HasQueryFilter(r => !r.Service.IsDeleted);
     }
 
     /// <summary>

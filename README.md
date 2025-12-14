@@ -64,6 +64,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   A **Soft-Delete** pattern implemented using EF Core's Global Query Filters.
 4.  **Core Business Services**:
     -   A fully-featured `UserService` for administrative user management (CRUD, role management, disabling users).
+    -   A `ServiceService` for full CRUD management of services, including paging, sorting, and soft-delete support.
     -   A `CategoryService` for managing service categories.
     -   A `ServiceService` for full CRUD management of services, including paging, sorting, and soft-delete support.
 5.  **Infrastructure Layer & External Services**:
