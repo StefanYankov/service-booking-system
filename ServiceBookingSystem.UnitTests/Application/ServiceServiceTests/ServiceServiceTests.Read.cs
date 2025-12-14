@@ -1,4 +1,5 @@
-﻿using ServiceBookingSystem.Data.Entities.Domain;
+﻿using ServiceBookingSystem.Application.DTOs.Shared;
+using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
 
 namespace ServiceBookingSystem.UnitTests.Application.ServiceServiceTests;
@@ -12,17 +13,8 @@ public partial class ServiceServiceTests
         const string providerId = "provider-id";
         const int serviceId = 1;
 
-        var provider = new ApplicationUser
-        {
-            Id = providerId,
-            FirstName = "John",
-            LastName = "Doe"
-        };
-        var category = new Category
-        {
-            Id = 1,
-            Name = "Test Category"
-        };
+        var provider = new ApplicationUser { Id = providerId, FirstName = "John", LastName = "Doe" };
+        var category = new Category { Id = 1, Name = "Test Category" };
         var service = new Service
         {
             Id = serviceId,
@@ -143,8 +135,17 @@ public partial class ServiceServiceTests
         const string providerId = "provider-id";
         const int serviceId = 3;
 
-        var provider = new ApplicationUser { Id = providerId, FirstName = "John", LastName = "Doe" };
-        var category = new Category { Id = 1, Name = "Test Category" };
+        var provider = new ApplicationUser
+        {
+            Id = providerId,
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Test Category"
+        };
         var service = new Service
         {
             Id = serviceId,
@@ -172,5 +173,118 @@ public partial class ServiceServiceTests
             .Any(e => e.Entity.Id == serviceId); // Verify that the ChangeTracker is NOT tracking the service entity
             
         Assert.False(isTracked, "Entity should not be tracked when using AsNoTracking()");
+    }
+    
+    [Fact]
+    public async Task GetServicesByCategoryAsync_WithValidCategoryId_ShouldReturnPagedAndSortedServices()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        var category1 = new Category
+        {
+            Id = 1,
+            Name = "Category 1"
+        };
+        var category2 = new Category
+        {
+            Id = 2,
+            Name = "Category 2"
+        };
+
+        var service1 = new Service 
+        {
+            Name = "B Service", 
+            Description = "Desc 1",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            Price = 200
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "C Service",
+            Description = "Desc 2",
+            ProviderId = "provider-1",
+            CategoryId = 2
+        }; // Wrong category
+        var service3 = new Service 
+        {
+            Name = "A Service",
+            Description = "Desc 3",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            Price = 100
+        };
+        var service4 = new Service 
+        {
+            Name = "D Service",
+            Description = "Desc 4",
+            ProviderId = "provider-1", 
+            CategoryId = 1,
+            IsDeleted = true
+        }; // Soft-deleted
+
+        await this.dbContext.Users.AddAsync(provider);
+        await this.dbContext.Categories.AddRangeAsync(category1, category2);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3, service4);
+        await this.dbContext.SaveChangesAsync();
+
+        var parameters = new PagingAndSortingParameters
+        {
+            PageNumber = 1,
+            PageSize = 5,
+            SortBy = "Name",
+            SortDirection = "asc"
+        };
+
+        // Act:
+        var result = await this.serviceService.GetServicesByCategoryAsync(1, parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount); // Total non-deleted services in category 1
+        Assert.Equal(2, result.Items.Count()); // Items on the current page
+        Assert.Equal("A Service", result.Items.First().Name); // Check sorting
+        Assert.Equal("B Service", result.Items.Last().Name);
+        Assert.True(result.Items.All(s => s.CategoryId == 1));
+    }
+
+    [Fact]
+    public async Task GetServicesByCategoryAsync_WithCategoryHavingNoServices_ShouldReturnEmptyPagedResult()
+    {
+        // Arrange:
+        var category = new Category { Id = 1, Name = "Empty Category" };
+        await this.dbContext.Categories.AddAsync(category);
+        await this.dbContext.SaveChangesAsync();
+        var parameters = new PagingAndSortingParameters();
+
+        // Act:
+        var result = await this.serviceService.GetServicesByCategoryAsync(1, parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetServicesByCategoryAsync_WithNonExistentCategoryId_ShouldReturnEmptyPagedResult()
+    {
+        // Arrange:
+        const int nonExistentCategoryId = 999;
+        var parameters = new PagingAndSortingParameters();
+
+        // Act:
+        var result = await this.serviceService.GetServicesByCategoryAsync(nonExistentCategoryId, parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
     }
 }

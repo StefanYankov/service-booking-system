@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ServiceBookingSystem.Application.DTOs.Service;
+using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Core.Constants;
 using ServiceBookingSystem.Core.Exceptions;
@@ -288,14 +289,73 @@ public class ServiceService : IServiceService
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ServiceViewDto>> GetServicesByCategoryAsync(int categoryId,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedResult<ServiceViewDto>> GetServicesByCategoryAsync(int categoryId,
+        PagingAndSortingParameters parameters, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        logger
+            .LogDebug(
+                "Fetching services for Category ID: {CategoryId} with parameters: PageNumber={PageNumber}, PageSize={PageSize}, SortBy={SortBy}, SortDirection={SortDirection}",
+                categoryId, parameters.PageNumber, parameters.PageSize, parameters.SortBy, parameters.SortDirection);
+
+        var baseQuery = dbContext.Services
+            .AsNoTracking()
+            .Where(s => s.CategoryId == categoryId);
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
+
+        var query = baseQuery
+            .Include(s => s.Provider)
+            .Include(s => s.Category)
+            .AsQueryable();
+
+        var sortBy = parameters.SortBy?.ToLower();
+        var isDescending = parameters.SortDirection?.ToLower() == "desc";
+
+        // Add more sorting options as needed
+        switch (sortBy)
+        {
+            case "name":
+                query = isDescending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name);
+                break;
+            case "price":
+                query = isDescending ? query.OrderByDescending(s => s.Price) : query.OrderBy(s => s.Price);
+                break;
+            default:
+                query = query.OrderByDescending(s => s.CreatedOn);
+                break;
+        }
+
+        var pagedQuery = query
+            .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize);
+
+        var items = await pagedQuery
+            .Select(s => new ServiceViewDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Description = s.Description,
+                Price = s.Price,
+                DurationInMinutes = s.DurationInMinutes,
+                IsOnline = s.IsOnline,
+                StreetAddress = s.StreetAddress,
+                City = s.City,
+                PostalCode = s.PostalCode,
+                IsActive = s.IsActive,
+                ProviderId = s.ProviderId,
+                ProviderName = $"{s.Provider.FirstName} {s.Provider.LastName}",
+                CategoryId = s.CategoryId,
+                CategoryName = s.Category.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ServiceViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ServiceViewDto>> GetServicesByProviderAsync(string providerId,
+    public async Task<PagedResult<ServiceViewDto>> GetServicesByProviderAsync(
+        string providerId,
+        PagingAndSortingParameters parameters,
         CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
