@@ -10,4 +10,8 @@
       <ProjectReference Include="..\ServiceBookingSystem.Data\ServiceBookingSystem.Data.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="DTOs\Booking\" />
+    </ItemGroup>
+
 </Project>
