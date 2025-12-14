@@ -358,6 +358,62 @@ public class ServiceService : IServiceService
         PagingAndSortingParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        logger
+            .LogDebug(
+                "Fetching services for Provider ID: {ProviderId} with parameters: PageNumber={PageNumber}, PageSize={PageSize}, SortBy={SortBy}, SortDirection={SortDirection}",
+                providerId, parameters.PageNumber, parameters.PageSize, parameters.SortBy, parameters.SortDirection);
+
+        var baseQuery = dbContext.Services
+            .AsNoTracking()
+            .Where(s => s.ProviderId == providerId);
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
+
+        var query = baseQuery
+            .Include(s => s.Provider)
+            .Include(s => s.Category)
+            .AsQueryable();
+
+        var sortBy = parameters.SortBy?.ToLower();
+        var isDescending = parameters.SortDirection?.ToLower() == "desc";
+
+        switch (sortBy)
+        {
+            case "name":
+                query = isDescending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name);
+                break;
+            case "price":
+                query = isDescending ? query.OrderByDescending(s => s.Price) : query.OrderBy(s => s.Price);
+                break;
+            default:
+                query = query.OrderByDescending(s => s.CreatedOn);
+                break;
+        }
+
+        var pagedQuery = query
+            .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize);
+
+        var items = await pagedQuery
+            .Select(s => new ServiceViewDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Description = s.Description,
+                Price = s.Price,
+                DurationInMinutes = s.DurationInMinutes,
+                IsOnline = s.IsOnline,
+                StreetAddress = s.StreetAddress,
+                City = s.City,
+                PostalCode = s.PostalCode,
+                IsActive = s.IsActive,
+                ProviderId = s.ProviderId,
+                ProviderName = $"{s.Provider.FirstName} {s.Provider.LastName}",
+                CategoryId = s.CategoryId,
+                CategoryName = s.Category.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ServiceViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
     }
 }

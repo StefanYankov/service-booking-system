@@ -13,8 +13,17 @@ public partial class ServiceServiceTests
         const string providerId = "provider-id";
         const int serviceId = 1;
 
-        var provider = new ApplicationUser { Id = providerId, FirstName = "John", LastName = "Doe" };
-        var category = new Category { Id = 1, Name = "Test Category" };
+        var provider = new ApplicationUser
+        {
+            Id = providerId,
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Test Category"
+        };
         var service = new Service
         {
             Id = serviceId,
@@ -258,7 +267,11 @@ public partial class ServiceServiceTests
     public async Task GetServicesByCategoryAsync_WithCategoryHavingNoServices_ShouldReturnEmptyPagedResult()
     {
         // Arrange:
-        var category = new Category { Id = 1, Name = "Empty Category" };
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Empty Category"
+        };
         await this.dbContext.Categories.AddAsync(category);
         await this.dbContext.SaveChangesAsync();
         var parameters = new PagingAndSortingParameters();
@@ -286,5 +299,308 @@ public partial class ServiceServiceTests
         Assert.NotNull(result);
         Assert.Empty(result.Items);
         Assert.Equal(0, result.TotalCount);
+    }
+    
+    [Fact]
+    public async Task GetServicesByProviderAsync_WithValidProviderId_ShouldReturnPagedAndSortedServices()
+    {
+        // Arrange:
+        var provider1 = new ApplicationUser
+        {
+            Id = "provider-1",
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        
+        var provider2 = new ApplicationUser
+        {
+            Id = "provider-2",
+            FirstName = "Jane",
+            LastName = "Smith"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Category 1"
+        };
+
+        var service1 = new Service 
+        {
+            Name = "B Service", 
+            Description = "Desc 1",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            Price = 200
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "C Service",
+            Description = "Desc 2",
+            ProviderId = "provider-2", // Wrong provider
+            CategoryId = 1
+        };
+        
+        var service3 = new Service 
+        {
+            Name = "A Service",
+            Description = "Desc 3",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            Price = 100
+        };
+        
+        var service4 = new Service 
+        {
+            Name = "D Service",
+            Description = "Desc 4",
+            ProviderId = "provider-1", 
+            CategoryId = 1,
+            IsDeleted = true // Soft-deleted
+        };
+
+        await this.dbContext.Users.AddRangeAsync(provider1, provider2);
+        await this.dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3, service4);
+        await this.dbContext.SaveChangesAsync();
+
+        var parameters = new PagingAndSortingParameters
+        {
+            PageNumber = 1,
+            PageSize = 5,
+            SortBy = "Price",
+            SortDirection = "asc"
+        };
+
+        // Act:
+        var result = await this.serviceService.GetServicesByProviderAsync("provider-1", parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount); // Total non-deleted services for provider 1
+        Assert.Equal(2, result.Items.Count());
+        Assert.Equal("A Service", result.Items.First().Name); // Check sorting by price
+        Assert.Equal("B Service", result.Items.Last().Name);
+        Assert.True(result.Items.All(s => s.ProviderId == "provider-1"));
+    }
+
+    [Fact]
+    public async Task GetServicesByProviderAsync_WithProviderHavingNoServices_ShouldReturnEmptyPagedResult()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        await this.dbContext.Users.AddAsync(provider);
+        await this.dbContext.SaveChangesAsync();
+        var parameters = new PagingAndSortingParameters();
+
+        // Act:
+        var result = await this.serviceService.GetServicesByProviderAsync("provider-1", parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetServicesByCategoryAsync_WithSecondPage_ShouldReturnCorrectItems()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Category 1"
+        };
+
+        var service1 = new Service 
+        {
+            Name = "Service 1", 
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "Service 2",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1
+        };
+        
+        var service3 = new Service 
+        {
+            Name = "Service 3",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1
+        };
+
+        await this.dbContext.Users.AddAsync(provider);
+        await this.dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3);
+        await this.dbContext.SaveChangesAsync();
+
+        var parameters = new PagingAndSortingParameters
+        {
+            PageNumber = 2,
+            PageSize = 2,
+            SortBy = "Name",
+            SortDirection = "asc"
+        };
+
+        // Act:
+        var result = await this.serviceService.GetServicesByCategoryAsync(1, parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(3, result.TotalCount); // Total items is 3
+        Assert.Single(result.Items); // Page 2 with size 2 should have 1 item (the 3rd one)
+        Assert.Equal("Service 3", result.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task GetServicesByCategoryAsync_WithSortByPriceDesc_ShouldReturnCorrectOrder()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Category 1"
+        };
+
+        var service1 = new Service 
+        {
+            Name = "Cheap",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            Price = 10
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "Expensive",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            Price = 100
+        };
+        
+        var service3 = new Service 
+        {
+            Name = "Medium",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            Price = 50
+        };
+
+        await this.dbContext.Users.AddAsync(provider);
+        await this.dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3);
+        await this.dbContext.SaveChangesAsync();
+
+        var parameters = new PagingAndSortingParameters
+        {
+            SortBy = "Price",
+            SortDirection = "desc"
+        };
+
+        // Act:
+        var result = await this.serviceService.GetServicesByCategoryAsync(1, parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(3, result.Items.Count());
+        Assert.Equal("Expensive", result.Items.First().Name);
+        Assert.Equal("Medium", result.Items.ElementAt(1).Name);
+        Assert.Equal("Cheap", result.Items.Last().Name);
+    }
+
+    [Fact]
+    public async Task GetServicesByCategoryAsync_WithInvalidSortColumn_ShouldDefaultToCreatedOnDesc()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            FirstName = "John",
+            LastName = "Doe"
+        };
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Category 1"
+        };
+
+        var service1 = new Service { 
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            CreatedOn = DateTime.UtcNow.AddHours(-3) 
+        };
+        
+        var service2 = new Service
+        {
+            Name = "Service 2",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            CreatedOn = DateTime.UtcNow.AddHours(-2)
+        };
+        
+        var service3 = new Service
+        {
+            Name = "Service 3",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            CategoryId = 1,
+            CreatedOn = DateTime.UtcNow.AddHours(-1)
+        };
+
+        await this.dbContext.Users.AddAsync(provider);
+        await this.dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3);
+        await this.dbContext.SaveChangesAsync();
+
+        var parameters = new PagingAndSortingParameters
+        {
+            SortBy = "InvalidColumnName",
+            SortDirection = "asc"
+        };
+
+        // Act:
+        var result = await this.serviceService.GetServicesByCategoryAsync(1, parameters);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(3, result.Items.Count());
+        
+        // Should be sorted by CreatedOn Descending (Newest first)
+        Assert.Equal("Service 3", result.Items.First().Name);
+        Assert.Equal("Service 2", result.Items.ElementAt(1).Name);
+        Assert.Equal("Service 1", result.Items.Last().Name);
     }
 }
