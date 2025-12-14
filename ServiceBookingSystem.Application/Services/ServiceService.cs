@@ -251,7 +251,40 @@ public class ServiceService : IServiceService
     /// <inheritdoc/>
     public async Task<ServiceViewDto?> GetServiceByIdAsync(int serviceId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        logger.LogDebug("Attempting to fetch service with ID: {ServiceId}", serviceId);
+
+        var service = await dbContext.Services
+            .AsNoTracking()
+            .Include(s => s.Provider)
+            .Include(s => s.Category)
+            .FirstOrDefaultAsync(s => s.Id == serviceId, cancellationToken);
+
+        if (service == null)
+        {
+            logger.LogInformation("Service with ID: {ServiceId} not found.", serviceId);
+            return null;
+        }
+
+        var dto = new ServiceViewDto
+        {
+            Id = service.Id,
+            Name = service.Name,
+            Description = service.Description,
+            Price = service.Price,
+            DurationInMinutes = service.DurationInMinutes,
+            IsOnline = service.IsOnline,
+            StreetAddress = service.StreetAddress,
+            City = service.City,
+            PostalCode = service.PostalCode,
+            IsActive = service.IsActive,
+            ProviderId = service.ProviderId,
+            ProviderName = $"{service.Provider.FirstName} {service.Provider.LastName}",
+            CategoryId = service.CategoryId,
+            CategoryName = service.Category.Name
+        };
+
+        logger.LogInformation("Successfully fetched Service {ServiceId}", serviceId);
+        return dto;
     }
 
     /// <inheritdoc/>
