@@ -65,6 +65,7 @@ The project has a solid architectural foundation, with the following key pattern
 4.  **Core Business Services**:
     -   A fully-featured `UserService` for administrative user management (CRUD, role management, disabling users).
     -   A `CategoryService` for managing service categories.
+    -   A `ServiceService` for full CRUD management of services, including paging, sorting, and soft-delete support.
 5.  **Infrastructure Layer & External Services**:
     -   A dedicated `.Infrastructure` project for decoupled external service implementations.
     -   An **Email Notification Service** with `SendGrid` (production) and `NullEmailService` (development) implementations.

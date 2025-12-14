@@ -23,6 +23,9 @@ public static class ValidationConstraints
         
         public const int PasswordMinLength = 8;
         public const int PasswordMaxLength = 100;
+        
+        // Default ASP.NET Identity ID length
+        public const int IdMaxLength = 450;
     }
 
     public static class Service
@@ -36,5 +39,10 @@ public static class ValidationConstraints
         public const int AddressCityMaximumLength = 100;
         public const int PostalCodeMaximumLength = 10;
 
+    }
+    
+    public static class Booking
+    {
+        public const int NotesMaxLength = 1000;
     }
 }

@@ -32,6 +32,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<OperatingHour> OperatingHours { get; set; }
     public DbSet<ServiceImage> ServiceImages { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<Booking> Bookings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
