@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServiceBookingSystem.Data.Contexts;
 
@@ -11,9 +12,11 @@ using ServiceBookingSystem.Data.Contexts;
 namespace ServiceBookingSystem.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251214130507_AddBookingDomain")]
+    partial class AddBookingDomain
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,50 +129,6 @@ namespace ServiceBookingSystem.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ServiceBookingSystem.Data.Entities.Domain.Booking", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("BookingStart")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CustomerId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("DeletedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("ModifiedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("ServiceId");
-
-                    b.ToTable("Bookings");
                 });
 
             modelBuilder.Entity("ServiceBookingSystem.Data.Entities.Domain.Category", b =>
@@ -558,25 +517,6 @@ namespace ServiceBookingSystem.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ServiceBookingSystem.Data.Entities.Domain.Booking", b =>
-                {
-                    b.HasOne("ServiceBookingSystem.Data.Entities.Identity.ApplicationUser", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ServiceBookingSystem.Data.Entities.Domain.Service", "Service")
-                        .WithMany()
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Service");
-                });
-
             modelBuilder.Entity("ServiceBookingSystem.Data.Entities.Domain.OperatingHour", b =>
                 {
                     b.HasOne("ServiceBookingSystem.Data.Entities.Domain.Service", "Service")
@@ -599,7 +539,7 @@ namespace ServiceBookingSystem.Data.Migrations
                     b.HasOne("ServiceBookingSystem.Data.Entities.Domain.Service", "Service")
                         .WithMany("Reviews")
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Customer");
