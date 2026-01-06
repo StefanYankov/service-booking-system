@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ServiceBookingSystem.Application.DTOs.Booking;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
@@ -137,7 +138,118 @@ public class BookingService : IBookingService
     public async Task<BookingViewDto> UpdateBookingAsync(BookingUpdateDto dto, string customerId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Attempting to update a new booking");
+        ArgumentNullException.ThrowIfNull(dto);
+
+        if (string.IsNullOrWhiteSpace(customerId))
+        {
+            throw new ArgumentException(ExceptionMessages.InvalidProviderId, nameof(customerId));
+        }
+
+        this.logger
+            .LogDebug(
+                "Attempting to update a booking with ID {BookingId} by CustomerId {CustomerId}",
+                dto.Id, customerId
+            );
+        
+        var bookingToUpdate = await this.dbContext
+            .Bookings
+            .Include(b => b.Service)
+            .Include(b => b.Service.Provider)
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == dto.Id, cancellationToken);
+        
+        if (bookingToUpdate == null)
+        {
+            this.logger
+                .LogWarning("Update failed: Booking {BookingId} not found.",
+                    dto.Id);
+            throw new EntityNotFoundException(nameof(Booking), dto.Id);
+        }
+        
+        if (bookingToUpdate.CustomerId != customerId)
+        {
+            this.logger
+                .LogWarning("Update failed: User {UserId} tried to update booking {BookingId} owned by {OwnerId}.",
+                    customerId, dto.Id, bookingToUpdate.CustomerId);
+            throw new AuthorizationException(customerId, $"Update Booking {dto.Id}");
+        }
+        
+        // Only allow updates if the booking is still active (Pending or Confirmed).
+        if (bookingToUpdate.Status != BookingStatus.Pending && bookingToUpdate.Status != BookingStatus.Confirmed)
+        {
+            this.logger
+                .LogWarning("Update failed: Booking {BookingId} is in state {Status} and cannot be updated.",
+                    dto.Id, bookingToUpdate.Status);
+            throw new InvalidBookingStateException(dto.Id, bookingToUpdate.Status.ToString(), "Update");
+        }
+        
+        if (bookingToUpdate.BookingStart != dto.BookingStart)
+        {
+            this.logger
+                .LogInformation("Rescheduling booking {BookingId} from {OldStart} to {NewStart}.",
+                    dto.Id, bookingToUpdate.BookingStart, dto.BookingStart);
+
+            var isAvailable = await this.availabilityService
+                .IsSlotAvailableAsync(
+                bookingToUpdate.ServiceId, 
+                dto.BookingStart, 
+                bookingToUpdate.Service.DurationInMinutes, 
+                cancellationToken);
+
+            if (!isAvailable)
+            {
+                this.logger
+                    .LogWarning("Update failed: New slot {NewStart} is unavailable.",
+                        dto.BookingStart);
+                throw new SlotUnavailableException(bookingToUpdate.ServiceId, dto.BookingStart);
+            }
+
+            bookingToUpdate.BookingStart = dto.BookingStart;
+
+            if (bookingToUpdate.Status == BookingStatus.Confirmed)
+            {
+                this.logger
+                    .LogInformation("Resetting booking {BookingId} status to Pending due to reschedule.",
+                        dto.Id);
+                bookingToUpdate.Status = BookingStatus.Pending;
+            }
+        }
+
+        bookingToUpdate.Notes = dto.Notes;
+
+        try
+        {
+            await this.dbContext.SaveChangesAsync(cancellationToken);
+            this.logger
+                .LogInformation("Booking {BookingId} updated successfully.",
+                    dto.Id);
+        }
+        catch (Exception ex)
+        {
+            this.logger
+                .LogError(ex, "Failed to update booking {BookingId}.",
+                    dto.Id);
+            throw;
+        }
+        
+        var bookingDto = new BookingViewDto
+        {
+            Id = bookingToUpdate.Id,
+            ServiceId = bookingToUpdate.ServiceId,
+            ServiceName = bookingToUpdate.Service.Name,
+            CustomerId = bookingToUpdate.CustomerId,
+            CustomerName = $"{bookingToUpdate.Customer.FirstName} {bookingToUpdate.Customer.LastName}", 
+            ProviderId = bookingToUpdate.Service.ProviderId,
+            ProviderName = $"{bookingToUpdate.Service.Provider.FirstName} {bookingToUpdate.Service.Provider.LastName}",
+            BookingStart = bookingToUpdate.BookingStart,
+            Status = bookingToUpdate.Status.ToString(),
+            Notes = bookingToUpdate.Notes,
+            CreatedOn = bookingToUpdate.CreatedOn
+        };
+
+        return bookingDto;
     }
 
     /// <inheritdoc/>
