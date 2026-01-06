@@ -413,21 +413,185 @@ public class BookingService : IBookingService
     public async Task<BookingViewDto> ConfirmBookingAsync(string bookingId, string providerId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Attempting to confirm booking {BookingId} by provider {ProviderId}",
+                bookingId, providerId);
+
+        var booking = await this.dbContext.Bookings
+            .Include(b => b.Service)
+            .Include(b => b.Service.Provider)
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+
+        if (booking == null)
+        {
+            this.logger
+                .LogWarning("Confirm failed: Booking {BookingId} not found.",
+                    bookingId);
+            throw new EntityNotFoundException(nameof(Booking), bookingId);
+        }
+
+        if (booking.Service.ProviderId != providerId)
+        {
+            this.logger
+                .LogWarning("Confirm failed: User {UserId} is not the provider for booking {BookingId}.",
+                    providerId, bookingId);
+            throw new AuthorizationException(providerId, $"Confirm Booking {bookingId}");
+        }
+
+        if (booking.Status != BookingStatus.Pending)
+        {
+            this.logger
+                .LogWarning("Confirm failed: Booking {BookingId} is in state {Status}.",
+                    bookingId, booking.Status);
+            throw new InvalidBookingStateException(bookingId, booking.Status.ToString(), "Confirm");
+        }
+
+        booking.Status = BookingStatus.Confirmed;
+        await this.dbContext.SaveChangesAsync(cancellationToken);
+        
+        this.logger
+            .LogInformation("Booking {BookingId} confirmed by provider {ProviderId}.",
+                bookingId, providerId);
+
+        var dto = new BookingViewDto
+        {
+            Id = booking.Id,
+            ServiceId = booking.ServiceId,
+            ServiceName = booking.Service.Name,
+            CustomerId = booking.CustomerId,
+            CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            ProviderId = booking.Service.ProviderId,
+            ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
+            BookingStart = booking.BookingStart,
+            Status = booking.Status.ToString(),
+            Notes = booking.Notes,
+            CreatedOn = booking.CreatedOn
+        };
+        return dto;
     }
 
     /// <inheritdoc/>
     public async Task<BookingViewDto> DeclineBookingAsync(string bookingId, string providerId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Attempting to decline booking {BookingId} by provider {ProviderId}",
+                bookingId, providerId);
+
+        var booking = await this.dbContext.Bookings
+            .Include(b => b.Service)
+            .Include(b => b.Service.Provider)
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+
+        if (booking == null)
+        {
+            this.logger
+                .LogWarning("Decline failed: Booking {BookingId} not found.",
+                bookingId);
+            throw new EntityNotFoundException(nameof(Booking), bookingId);
+        }
+
+        if (booking.Service.ProviderId != providerId)
+        {
+            this.logger
+                .LogWarning("Decline failed: User {UserId} is not the provider for booking {BookingId}.",
+                providerId, bookingId);
+            throw new AuthorizationException(providerId, $"Decline Booking {bookingId}");
+        }
+
+        if (booking.Status != BookingStatus.Pending)
+        {
+            this.logger
+                .LogWarning("Decline failed: Booking {BookingId} is in state {Status}.",
+                bookingId, booking.Status);
+            throw new InvalidBookingStateException(bookingId, booking.Status.ToString(), "Decline");
+        }
+
+        booking.Status = BookingStatus.Declined;
+        await this.dbContext.SaveChangesAsync(cancellationToken);
+        
+        this.logger
+            .LogInformation("Booking {BookingId} declined by provider {ProviderId}.",
+                bookingId, providerId);
+
+        var dto = new BookingViewDto
+        {
+            Id = booking.Id,
+            ServiceId = booking.ServiceId,
+            ServiceName = booking.Service.Name,
+            CustomerId = booking.CustomerId,
+            CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            ProviderId = booking.Service.ProviderId,
+            ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
+            BookingStart = booking.BookingStart,
+            Status = booking.Status.ToString(),
+            Notes = booking.Notes,
+            CreatedOn = booking.CreatedOn
+        };
+        return dto;
     }
 
     /// <inheritdoc/>
     public async Task<BookingViewDto> CancelBookingAsync(string bookingId, string userId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Attempting to cancel booking {BookingId} by user {UserId}",
+                bookingId, userId);
+
+        var booking = await this.dbContext.Bookings
+            .Include(b => b.Service)
+            .Include(b => b.Service.Provider)
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+
+        if (booking == null)
+        {
+            this.logger.LogWarning("Cancel failed: Booking {BookingId} not found.", bookingId);
+            throw new EntityNotFoundException(nameof(Booking), bookingId);
+        }
+
+        // Allow cancellation if user is the Customer OR the Provider
+        if (booking.CustomerId != userId && booking.Service.ProviderId != userId)
+        {
+            this.logger
+                .LogWarning("Cancel failed: User {UserId} is not authorized to cancel booking {BookingId}.",
+                    userId, bookingId);
+            throw new AuthorizationException(userId, $"Cancel Booking {bookingId}");
+        }
+
+        if (booking.Status != BookingStatus.Pending && booking.Status != BookingStatus.Confirmed)
+        {
+            this.logger
+                .LogWarning("Cancel failed: Booking {BookingId} is in state {Status}.",
+                    bookingId, booking.Status);
+            throw new InvalidBookingStateException(bookingId, booking.Status.ToString(), "Cancel");
+        }
+
+        booking.Status = BookingStatus.Cancelled;
+        await this.dbContext.SaveChangesAsync(cancellationToken);
+        
+        this.logger
+            .LogInformation("Booking {BookingId} cancelled by user {UserId}.",
+            bookingId, userId);
+
+        var dto = new BookingViewDto
+        {
+            Id = booking.Id,
+            ServiceId = booking.ServiceId,
+            ServiceName = booking.Service.Name,
+            CustomerId = booking.CustomerId,
+            CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            ProviderId = booking.Service.ProviderId,
+            ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
+            BookingStart = booking.BookingStart,
+            Status = booking.Status.ToString(),
+            Notes = booking.Notes,
+            CreatedOn = booking.CreatedOn
+        };
+        return dto;
     }
 
     /// <inheritdoc/>
