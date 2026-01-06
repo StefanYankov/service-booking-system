@@ -66,7 +66,8 @@ The project has a solid architectural foundation, with the following key pattern
     -   A fully-featured `UserService` for administrative user management (CRUD, role management, disabling users).
     -   A `ServiceService` for full CRUD management of services, including paging, sorting, and soft-delete support.
     -   A `CategoryService` for managing service categories.
-    -   A `ServiceService` for full CRUD management of services, including paging, sorting, and soft-delete support.
+    -   A `BookingService` for managing the entire booking lifecycle (Create, Read, Update, Cancel, Confirm, Decline, Complete).
+    -   An `AvailabilityService` that handles complex scheduling logic, including operating hours, split shifts, and booking overlaps.
 5.  **Infrastructure Layer & External Services**:
     -   A dedicated `.Infrastructure` project for decoupled external service implementations.
     -   An **Email Notification Service** with `SendGrid` (production) and `NullEmailService` (development) implementations.
