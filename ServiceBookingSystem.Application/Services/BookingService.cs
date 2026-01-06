@@ -152,14 +152,14 @@ public class BookingService : IBookingService
                 "Attempting to update a booking with ID {BookingId} by CustomerId {CustomerId}",
                 dto.Id, customerId
             );
-        
+
         var bookingToUpdate = await this.dbContext
             .Bookings
             .Include(b => b.Service)
             .Include(b => b.Service.Provider)
             .Include(b => b.Customer)
             .FirstOrDefaultAsync(b => b.Id == dto.Id, cancellationToken);
-        
+
         if (bookingToUpdate == null)
         {
             this.logger
@@ -167,7 +167,7 @@ public class BookingService : IBookingService
                     dto.Id);
             throw new EntityNotFoundException(nameof(Booking), dto.Id);
         }
-        
+
         if (bookingToUpdate.CustomerId != customerId)
         {
             this.logger
@@ -175,7 +175,7 @@ public class BookingService : IBookingService
                     customerId, dto.Id, bookingToUpdate.CustomerId);
             throw new AuthorizationException(customerId, $"Update Booking {dto.Id}");
         }
-        
+
         // Only allow updates if the booking is still active (Pending or Confirmed).
         if (bookingToUpdate.Status != BookingStatus.Pending && bookingToUpdate.Status != BookingStatus.Confirmed)
         {
@@ -184,7 +184,7 @@ public class BookingService : IBookingService
                     dto.Id, bookingToUpdate.Status);
             throw new InvalidBookingStateException(dto.Id, bookingToUpdate.Status.ToString(), "Update");
         }
-        
+
         if (bookingToUpdate.BookingStart != dto.BookingStart)
         {
             this.logger
@@ -193,10 +193,10 @@ public class BookingService : IBookingService
 
             var isAvailable = await this.availabilityService
                 .IsSlotAvailableAsync(
-                bookingToUpdate.ServiceId, 
-                dto.BookingStart, 
-                bookingToUpdate.Service.DurationInMinutes, 
-                cancellationToken);
+                    bookingToUpdate.ServiceId,
+                    dto.BookingStart,
+                    bookingToUpdate.Service.DurationInMinutes,
+                    cancellationToken);
 
             if (!isAvailable)
             {
@@ -233,14 +233,14 @@ public class BookingService : IBookingService
                     dto.Id);
             throw;
         }
-        
+
         var bookingDto = new BookingViewDto
         {
             Id = bookingToUpdate.Id,
             ServiceId = bookingToUpdate.ServiceId,
             ServiceName = bookingToUpdate.Service.Name,
             CustomerId = bookingToUpdate.CustomerId,
-            CustomerName = $"{bookingToUpdate.Customer.FirstName} {bookingToUpdate.Customer.LastName}", 
+            CustomerName = $"{bookingToUpdate.Customer.FirstName} {bookingToUpdate.Customer.LastName}",
             ProviderId = bookingToUpdate.Service.ProviderId,
             ProviderName = $"{bookingToUpdate.Service.Provider.FirstName} {bookingToUpdate.Service.Provider.LastName}",
             BookingStart = bookingToUpdate.BookingStart,
@@ -256,23 +256,157 @@ public class BookingService : IBookingService
     public async Task<BookingViewDto?> GetBookingByIdAsync(string bookingId, string userId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Retrieving booking {BookingId} for user {UserId}",
+                bookingId, userId);
+        
+        var booking = await this.dbContext
+            .Bookings
+            .AsNoTracking()
+            .Include(b => b.Service)
+            .ThenInclude(s => s.Provider)
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken: cancellationToken);
+
+        if (booking is null)
+        {
+            return null;
+        }
+
+        if (userId != booking.CustomerId && userId != booking.Service.ProviderId)
+        {
+            return null;
+        }
+
+        var bookingDto = new BookingViewDto
+        {
+            Id = booking.Id,
+            ServiceId = booking.ServiceId,
+            ServiceName = booking.Service.Name,
+            CustomerId = booking.CustomerId,
+            CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            ProviderId = booking.Service.ProviderId,
+            ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
+            BookingStart = booking.BookingStart,
+            Status = booking.Status.ToString(),
+            Notes = booking.Notes,
+            CreatedOn = booking.CreatedOn
+        };
+
+        return bookingDto;
     }
 
     /// <inheritdoc/>
-    public async Task<PagedResult<BookingViewDto>> GetBookingsByCustomerAsync(string customerId,
-        PagingAndSortingParameters parameters,
+    public async Task<PagedResult<BookingViewDto>> GetBookingsByCustomerAsync(string customerId, PagingAndSortingParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        this.logger
+            .LogDebug("Retrieving bookings for customer {CustomerId}. Page: {Page}, Size: {Size}",
+            customerId, parameters.PageNumber, parameters.PageSize);
+        
+        var query = this.dbContext.Bookings
+            .AsNoTracking()
+            .Include(b => b.Service)
+            .ThenInclude(s => s.Provider)
+            .Include(b => b.Customer)
+            .Where(b => b.CustomerId == customerId);
 
+        var isDescending = parameters.SortDirection?.ToLower() == "desc";
+
+        query = parameters.SortBy?.ToLower() switch
+        {
+            "date" => isDescending 
+                ? query.OrderByDescending(b => b.BookingStart) 
+                : query.OrderBy(b => b.BookingStart),
+            "status" => isDescending 
+                ? query.OrderByDescending(b => b.Status) 
+                : query.OrderBy(b => b.Status),
+            "service" => isDescending 
+                ? query.OrderByDescending(b => b.Service.Name) 
+                : query.OrderBy(b => b.Service.Name),
+            _ => query.OrderByDescending(b => b.BookingStart)
+        };
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        
+        var items = await query
+            .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
+            .Select(b => new BookingViewDto
+            {
+                Id = b.Id,
+                ServiceId = b.ServiceId,
+                ServiceName = b.Service.Name,
+                CustomerId = b.CustomerId,
+                CustomerName = $"{b.Customer.FirstName} {b.Customer.LastName}",
+                ProviderId = b.Service.ProviderId,
+                ProviderName = $"{b.Service.Provider.FirstName} {b.Service.Provider.LastName}",
+                BookingStart = b.BookingStart,
+                Status = b.Status.ToString(),
+                Notes = b.Notes,
+                CreatedOn = b.CreatedOn
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<BookingViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
+    }
+    
     /// <inheritdoc/>
-    public async Task<PagedResult<BookingViewDto>> GetBookingsByProviderAsync(string providerId,
-        PagingAndSortingParameters parameters,
+    public async Task<PagedResult<BookingViewDto>> GetBookingsByProviderAsync(string providerId, PagingAndSortingParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Retrieving bookings for provider {ProviderId}. Page: {Page}, Size: {Size}",
+                providerId, parameters.PageNumber, parameters.PageSize);
+        
+        var query = this.dbContext.Bookings
+            .AsNoTracking()
+            .Include(b => b.Service)
+            .ThenInclude(s => s.Provider)
+            .Include(b => b.Customer)
+            .Where(b => b.Service.ProviderId == providerId);
+
+        var isDescending = parameters.SortDirection?.ToLower() == "desc";
+
+        query = parameters.SortBy?.ToLower() switch
+        {
+            "date" => isDescending 
+                ? query.OrderByDescending(b => b.BookingStart) 
+                : query.OrderBy(b => b.BookingStart),
+            "status" => isDescending 
+                ? query.OrderByDescending(b => b.Status) 
+                : query.OrderBy(b => b.Status),
+            "service" => isDescending 
+                ? query.OrderByDescending(b => b.Service.Name) 
+                : query.OrderBy(b => b.Service.Name),
+            "customer" => isDescending 
+                ? query.OrderByDescending(b => b.Customer.LastName) 
+                : query.OrderBy(b => b.Customer.LastName),
+            _ => query.OrderByDescending(b => b.BookingStart)
+        };
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        
+        var items = await query
+            .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
+            .Select(b => new BookingViewDto
+            {
+                Id = b.Id,
+                ServiceId = b.ServiceId,
+                ServiceName = b.Service.Name,
+                CustomerId = b.CustomerId,
+                CustomerName = $"{b.Customer.FirstName} {b.Customer.LastName}",
+                ProviderId = b.Service.ProviderId,
+                ProviderName = $"{b.Service.Provider.FirstName} {b.Service.Provider.LastName}",
+                BookingStart = b.BookingStart,
+                Status = b.Status.ToString(),
+                Notes = b.Notes,
+                CreatedOn = b.CreatedOn
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<BookingViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
     }
 
     /// <inheritdoc/>
@@ -307,6 +441,18 @@ public class BookingService : IBookingService
     public async Task<bool> HasCompletedBookingAsync(string userId, int serviceId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Checking if user {UserId} has completed booking for service {ServiceId}",
+                userId, serviceId);
+        
+        var hasCompletedBooking = await this.dbContext.Bookings
+            .AsNoTracking()
+            .AnyAsync(b => 
+                b.CustomerId == userId && 
+                b.ServiceId == serviceId && 
+                b.Status == BookingStatus.Completed, 
+                cancellationToken);
+
+        return hasCompletedBooking;
     }
 }
