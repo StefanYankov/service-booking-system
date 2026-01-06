@@ -598,7 +598,74 @@ public class BookingService : IBookingService
     public async Task<BookingViewDto> CompleteBookingAsync(string bookingId, string userId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Attempting to complete booking {BookingId} by user {UserId}",
+                bookingId, userId);
+
+        var booking = await this.dbContext.Bookings
+            .Include(b => b.Service)
+            .Include(b => b.Service.Provider)
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+
+        if (booking == null)
+        {
+            this.logger
+                .LogWarning("Complete failed: Booking {BookingId} not found.",
+                    bookingId);
+            throw new EntityNotFoundException(nameof(Booking), bookingId);
+        }
+
+        // Only the Provider can mark a booking as completed.
+        if (booking.Service.ProviderId != userId)
+        {
+            this.logger
+                .LogWarning("Complete failed: User {UserId} is not the provider for booking {BookingId}.",
+                    userId, bookingId);
+            throw new AuthorizationException(userId, $"Complete Booking {bookingId}");
+        }
+
+        if (booking.Status != BookingStatus.Confirmed)
+        {
+            this.logger
+                .LogWarning("Complete failed: Booking {BookingId} is in state {Status}.",
+                    bookingId, booking.Status);
+            throw new InvalidBookingStateException(bookingId, booking.Status.ToString(), "Complete");
+        }
+
+        if (booking.BookingStart > DateTime.UtcNow)
+        {
+            this.logger
+                .LogWarning("Complete failed: Cannot complete a future booking {BookingId}.",
+                    bookingId);
+             
+            throw new BookingTimeException(bookingId, booking.BookingStart, 
+                $"Cannot mark booking '{bookingId}' as completed because it is in the future (Start: {booking.BookingStart})."
+            );
+        }
+
+        booking.Status = BookingStatus.Completed;
+        await this.dbContext.SaveChangesAsync(cancellationToken);
+        
+        this.logger
+            .LogInformation("Booking {BookingId} completed by provider {ProviderId}.",
+            bookingId, userId);
+
+        var dto = new BookingViewDto
+        {
+            Id = booking.Id,
+            ServiceId = booking.ServiceId,
+            ServiceName = booking.Service.Name,
+            CustomerId = booking.CustomerId,
+            CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            ProviderId = booking.Service.ProviderId,
+            ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
+            BookingStart = booking.BookingStart,
+            Status = booking.Status.ToString(),
+            Notes = booking.Notes,
+            CreatedOn = booking.CreatedOn
+        };
+        return dto;
     }
 
     /// <inheritdoc/>
