@@ -41,7 +41,6 @@ public class ReviewService : IReviewService
             throw new ArgumentException(ExceptionMessages.InvalidCustomerId, nameof(customerId));
         }
 
-        // 1. Get Booking
         var booking = await this.bookingService.GetBookingByIdAsync(dto.BookingId, customerId, cancellationToken);
         if (booking == null)
         {
@@ -49,21 +48,19 @@ public class ReviewService : IReviewService
             throw new EntityNotFoundException(nameof(Booking), dto.BookingId);
         }
 
-        // 2. Validate Booking State (Must be Completed)
         if (booking.Status != nameof(BookingStatus.Completed))
         {
-            this.logger.LogWarning("Create review failed: Booking {BookingId} is not completed.", dto.BookingId);
+            this.logger
+                .LogWarning("Create review failed: Booking {BookingId} is not completed.", dto.BookingId);
             throw new InvalidOperationException("You can only review completed bookings.");
         }
 
-        // 3. Validate Customer (Redundant if GetBookingById checks auth, but good for sanity)
         if (booking.CustomerId != customerId)
         {
              this.logger.LogWarning("Create review failed: User {UserId} is not the owner of booking {BookingId}.", customerId, dto.BookingId);
              throw new AuthorizationException(customerId, "Create Review");
         }
 
-        // 4. Check for Duplicate Review (One per Booking)
         var alreadyReviewed = await this.dbContext.Reviews
             .AnyAsync(r => r.BookingId == dto.BookingId, cancellationToken);
         
@@ -73,7 +70,6 @@ public class ReviewService : IReviewService
             throw new InvalidOperationException("You have already reviewed this booking.");
         }
 
-        // 5. Create Review
         var review = new Review
         {
             BookingId = dto.BookingId,
@@ -118,7 +114,68 @@ public class ReviewService : IReviewService
     public async Task<ReviewViewDto> UpdateReviewAsync(ReviewUpdateDto dto, string userId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Attempting to update review {ReviewId} by user {UserId}",
+                dto?.Id, userId);
+        
+        ArgumentNullException.ThrowIfNull(dto);
+        
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException(ExceptionMessages.InvalidCustomerId, nameof(userId));
+        }
+
+        var review = await this.dbContext.Reviews
+            .Include(r => r.Service)
+            .Include(r => r.Customer)
+            .FirstOrDefaultAsync(r => r.Id == dto.Id, cancellationToken);
+
+        if (review == null)
+        {
+            this.logger
+                .LogWarning("Update review failed: Review {ReviewId} not found.",
+                    dto.Id);
+            throw new EntityNotFoundException(nameof(Review), dto.Id);
+        }
+
+        if (review.CustomerId != userId)
+        {
+            this.logger
+                .LogWarning("Update review failed: User {UserId} is not the author of review {ReviewId}.",
+                    userId, dto.Id);
+            throw new AuthorizationException(userId, $"Update Review {dto.Id}");
+        }
+
+        review.Rating = dto.Rating;
+        review.Comment = dto.Comment;
+
+        try
+        {
+            await this.dbContext.SaveChangesAsync(cancellationToken);
+            this.logger
+                .LogInformation("Review {ReviewId} updated successfully.",
+                dto.Id);
+        }
+        catch (Exception ex)
+        {
+            this.logger
+                .LogError(ex, "Failed to update review {ReviewId}.",
+                    dto.Id);
+            throw;
+        }
+
+        return new ReviewViewDto
+        {
+            Id = review.Id,
+            ServiceId = review.ServiceId,
+            ServiceName = review.Service.Name,
+            CustomerId = review.CustomerId,
+            CustomerName = $"{review.Customer.FirstName} {review.Customer.LastName}",
+            Rating = review.Rating,
+            Comment = review.Comment,
+            CreatedOn = review.CreatedOn,
+            LastModifiedOn = review.ModifiedOn
+        };
     }
 
     public async Task<PagedResult<ReviewViewDto>> GetReviewsByServiceAsync(int serviceId, PagingParameters parameters,
