@@ -20,5 +20,6 @@ public static class ExceptionMessages
     public const string EntityNotFound = "The requested {0} with ID '{1}' was not found.";
 
     public const string InvalidProviderId = "Provider ID cannot be null or whitespace.";
-
+    
+    public const string InvalidCustomerId = "Customer ID cannot be null or whitespace.";
 }

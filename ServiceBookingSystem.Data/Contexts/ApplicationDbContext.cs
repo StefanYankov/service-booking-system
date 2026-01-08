@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ServiceBookingSystem.Data.Entities.Common;
@@ -79,8 +78,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         builder.Entity<ServiceImage>()
             .HasQueryFilter(si => !si.Service.IsDeleted);
         
+        // This ensures a review is hidden if it is deleted OR if its service is deleted.
         builder.Entity<Review>()
-            .HasQueryFilter(r => !r.Service.IsDeleted);
+            .HasQueryFilter(r => !r.IsDeleted && !r.Service.IsDeleted);
     }
 
     /// <summary>
