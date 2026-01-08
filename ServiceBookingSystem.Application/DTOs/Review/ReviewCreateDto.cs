@@ -5,7 +5,7 @@ namespace ServiceBookingSystem.Application.DTOs.Review;
 public class ReviewCreateDto
 {
     [Required]
-    public int ServiceId { get; set; }
+    public required string BookingId { get; set; }
 
     [Required]
     [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5.")]

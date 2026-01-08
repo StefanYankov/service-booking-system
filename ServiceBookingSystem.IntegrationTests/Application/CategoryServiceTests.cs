@@ -29,13 +29,13 @@ public class CategoryServiceTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         // Act:
-        var newId = await service.CreateAsync(dto);
+        var createdCategory = await service.CreateAsync(dto);
 
         // Assert:
         using var assertScope = factory.Services.CreateScope();
         var assertContext = assertScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var categoryInDb = await assertContext.Categories.FindAsync(newId);
+        var categoryInDb = await assertContext.Categories.FindAsync(createdCategory.Id);
 
         Assert.NotNull(categoryInDb);
         Assert.Equal("E2E Test Category", categoryInDb.Name);

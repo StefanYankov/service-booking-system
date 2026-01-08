@@ -32,4 +32,10 @@ public class Review : DeletableEntity<int>
 
     [ForeignKey(nameof(CustomerId))]
     public virtual ApplicationUser Customer { get; set; } = null!;
+    
+    [StringLength(450)]
+    public required string BookingId { get; set; }
+
+    [ForeignKey(nameof(BookingId))]
+    public virtual Booking Booking { get; set; } = null!;
 }

@@ -103,8 +103,9 @@ public partial class ServiceServiceTests
         var review = new Review
         {
             ServiceId = service.Id,
-            CustomerId = "cust-1",
-            Rating = 5
+            CustomerId = "customer-1",
+            Rating = 5,
+            BookingId = "dummy-booking-id"
         };
 
         var operatingHour = new OperatingHour
@@ -156,8 +157,9 @@ public partial class ServiceServiceTests
         var review = new Review
         {
             ServiceId = service.Id,
-            CustomerId = "cust-1",
-            Rating = 5
+            CustomerId = "customer-1",
+            Rating = 5,
+            BookingId = "dummy-booking-id"
         };
         var operatingHour = new OperatingHour
         {

@@ -33,5 +33,8 @@
       <ProjectReference Include="..\ServiceBookingSystem.Core\ServiceBookingSystem.Core.csproj" />
       <ProjectReference Include="..\ServiceBookingSystem.Data\ServiceBookingSystem.Data.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Application\ReviewServiceTests\" />
+    </ItemGroup>
 
 </Project>
