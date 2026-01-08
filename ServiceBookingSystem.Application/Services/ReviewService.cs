@@ -27,6 +27,7 @@ public class ReviewService : IReviewService
         this.bookingService = bookingService;
     }
 
+    /// <inheritdoc/>
     public async Task<ReviewViewDto> CreateReviewAsync(ReviewCreateDto dto, string customerId,
         CancellationToken cancellationToken = default)
     {
@@ -48,7 +49,7 @@ public class ReviewService : IReviewService
             throw new EntityNotFoundException(nameof(Booking), dto.BookingId);
         }
 
-        if (booking.Status != nameof(BookingStatus.Completed))
+        if (booking.Status != BookingStatus.Completed.ToString())
         {
             this.logger
                 .LogWarning("Create review failed: Booking {BookingId} is not completed.", dto.BookingId);
@@ -66,7 +67,7 @@ public class ReviewService : IReviewService
         
         if (alreadyReviewed)
         {
-            this.logger.LogWarning("Create Review failed: Booking {BookingId} has already been reviewed.", dto.BookingId);
+            this.logger.LogWarning("Create review failed: Booking {BookingId} has already been reviewed.", dto.BookingId);
             throw new InvalidOperationException("You have already reviewed this booking.");
         }
 
@@ -111,6 +112,7 @@ public class ReviewService : IReviewService
         return viewDto;
     }
 
+    /// <inheritdoc/>
     public async Task<ReviewViewDto> UpdateReviewAsync(ReviewUpdateDto dto, string userId,
         CancellationToken cancellationToken = default)
     {
@@ -178,15 +180,69 @@ public class ReviewService : IReviewService
         };
     }
 
+    /// <inheritdoc/>
     public async Task<PagedResult<ReviewViewDto>> GetReviewsByServiceAsync(int serviceId, PagingParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Retrieving reviews for Service {ServiceId}. Page: {Page}, Size: {Size}",
+                serviceId, parameters.PageNumber, parameters.PageSize);
+
+        var query = this.dbContext.Reviews
+            .AsNoTracking()
+            .Include(r => r.Customer)
+            .Include(r => r.Service)
+            .Where(r => r.ServiceId == serviceId)
+            .OrderByDescending(r => r.CreatedOn);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
+            .Select(r => new ReviewViewDto
+            {
+                Id = r.Id,
+                ServiceId = r.ServiceId,
+                ServiceName = r.Service.Name,
+                CustomerId = r.CustomerId,
+                CustomerName = $"{r.Customer.FirstName} {r.Customer.LastName}",
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedOn = r.CreatedOn,
+                LastModifiedOn = r.ModifiedOn
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ReviewViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
     }
 
+    /// <inheritdoc/>
     public async Task<ReviewSummaryDto> GetReviewSummaryAsync(int serviceId,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        this.logger
+            .LogDebug("Retrieving review summary for Service {ServiceId}",
+                serviceId);
+
+        var query = this.dbContext.Reviews
+            .AsNoTracking()
+            .Where(r => r.ServiceId == serviceId);
+
+        var totalReviews = await query.CountAsync(cancellationToken);
+        
+        double averageRating = 0;
+        if (totalReviews > 0)
+        {
+            averageRating = await query.AverageAsync(r => r.Rating, cancellationToken);
+        }
+
+        var dto = new ReviewSummaryDto
+        {
+            ServiceId = serviceId,
+            TotalReviews = totalReviews,
+            AverageRating = Math.Round(averageRating, 1)
+        };
+        return dto;
     }
 }
