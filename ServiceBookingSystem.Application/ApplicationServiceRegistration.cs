@@ -20,7 +20,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IUsersService, UsersService>();
         services.AddScoped<IServiceService, ServiceService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
-        // services.AddScoped<IReviewService, ReviewService>();   // Future
+        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IReviewService, ReviewService>();
 
         return services;
     }
