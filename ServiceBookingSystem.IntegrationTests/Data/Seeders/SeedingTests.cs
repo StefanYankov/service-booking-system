@@ -9,11 +9,11 @@ using ServiceBookingSystem.Data.Seeders;
 
 namespace ServiceBookingSystem.IntegrationTests.Data.Seeders;
 
-public class SeedingTests : IClassFixture<CustomWebApplicationFactory>
+public class SeedingTests : IClassFixture<CustomWebApplicationFactory<Program>>
 {
-    private readonly CustomWebApplicationFactory factory;
+    private readonly CustomWebApplicationFactory<Program> factory;
 
-    public SeedingTests(CustomWebApplicationFactory factory)
+    public SeedingTests(CustomWebApplicationFactory<Program> factory)
     {
         this.factory = factory;
     }
