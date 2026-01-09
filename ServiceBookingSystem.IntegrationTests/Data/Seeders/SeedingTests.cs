@@ -6,32 +6,28 @@ using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Identity;
 using ServiceBookingSystem.Data.Seeders;
+using Xunit;
 
 namespace ServiceBookingSystem.IntegrationTests.Data.Seeders;
 
-public class SeedingTests : IClassFixture<CustomWebApplicationFactory<Program>>
+public class SeedingTests : BaseIntegrationTest
 {
-    private readonly CustomWebApplicationFactory<Program> factory;
-
-    public SeedingTests(CustomWebApplicationFactory<Program> factory)
+    public SeedingTests(CustomWebApplicationFactory<Program> factory) : base(factory)
     {
-        this.factory = factory;
     }
 
     [Fact]
     public async Task Seeders_OnFirstRun_ShouldPopulateRolesAndAdminUser()
     {
         // Arrange
-        var client = factory.CreateClient();
-        using var scope = factory.Services.CreateScope();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        // BaseIntegrationTest.InitializeAsync re-runs RolesSeeder after Respawn.
+        // However, AdminSeeder is NOT re-run in BaseIntegrationTest.
+        // So we expect Roles to exist, but maybe not Admin User unless we seed it here.
         
-        // Act
+        // Let's check Roles first.
+        var roleManager = this.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
         
-        // seeding happens during arrangement phase
-        
-        // Assert
+        // Act & Assert
         var adminRoleExists = await roleManager.RoleExistsAsync(RoleConstants.Administrator);
         var providerRoleExists = await roleManager.RoleExistsAsync(RoleConstants.Provider);
         var customerRoleExists = await roleManager.RoleExistsAsync(RoleConstants.Customer);
@@ -40,11 +36,17 @@ public class SeedingTests : IClassFixture<CustomWebApplicationFactory<Program>>
         providerRoleExists.Should().BeTrue("the Provider role is essential for offering services.");
         customerRoleExists.Should().BeTrue("the Customer role is essential for booking services.");  
 
-        // Check that the default administrator user was created.
-        var adminUser = await userManager.FindByEmailAsync("admin@servicebooking.com");
-        adminUser.Should().NotBeNull("a default administrator user should be created for initial setup.");
+        // For Admin User, since Respawn wiped it and we didn't re-seed it in BaseIntegrationTest,
+        // we should manually seed it here if we want to test it, OR update BaseIntegrationTest to seed it.
+        // Given this is a "Seeding Test", it makes sense to run the seeder explicitly.
         
-        // Check that the admin user was correctly assigned to the Administrator role.
+        var adminSeeder = this.ServiceProvider.GetRequiredService<AdministratorSeeder>();
+        await adminSeeder.SeedAsync(this.ServiceProvider);
+        
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var adminUser = await userManager.FindByEmailAsync("admin@servicebooking.com");
+        adminUser.Should().NotBeNull("a default administrator user should be created.");
+        
         var isAdmin = await userManager.IsInRoleAsync(adminUser!, RoleConstants.Administrator);
         isAdmin.Should().BeTrue("the default user must be assigned the Administrator role.");
     }
@@ -53,25 +55,26 @@ public class SeedingTests : IClassFixture<CustomWebApplicationFactory<Program>>
     public async Task Seeders_WhenRunMultipleTimes_ShouldBeIdempotent()
     {
         // ARRANGE
-        var client = factory.CreateClient();
-        using var scope = factory.Services.CreateScope();
-        var serviceProvider = scope.ServiceProvider;
-        var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
-        var rolesSeeder = serviceProvider.GetRequiredService<RolesSeeder>();
-        var adminSeeder = serviceProvider.GetRequiredService<AdministratorSeeder>();
+        var rolesSeeder = this.ServiceProvider.GetRequiredService<RolesSeeder>();
+        var adminSeeder = this.ServiceProvider.GetRequiredService<AdministratorSeeder>();
 
         // ACT
-        await rolesSeeder.SeedAsync(serviceProvider);
-        await adminSeeder.SeedAsync(serviceProvider);
+        // Run seeders manually (Roles ran once in InitializeAsync, Admin ran 0 times)
+        await rolesSeeder.SeedAsync(this.ServiceProvider);
+        await adminSeeder.SeedAsync(this.ServiceProvider);
+        
+        // Run them AGAIN to test idempotency
+        await rolesSeeder.SeedAsync(this.ServiceProvider);
+        await adminSeeder.SeedAsync(this.ServiceProvider);
 
         // ASSERT
-        
-        // The database should still contain exactly three roles.
-        var roleCount = await dbContext.Roles.CountAsync();
+        var roleCount = await this.DbContext.Roles.CountAsync();
         roleCount.Should().Be(3, "seeding roles should be an idempotent operation.");
 
-        // The database should still contain exactly one user.
-        var userCount = await dbContext.Users.CountAsync();
+        var userCount = await this.DbContext.Users.CountAsync();
+        // We expect 1 admin user.
+        // Note: If other tests ran before this and created users, Respawn wiped them.
+        // So only the Admin user should exist.
         userCount.Should().Be(1, "seeding the administrator should be an idempotent operation.");
     }
 }

@@ -1,36 +1,62 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Data.Contexts;
+using Testcontainers.MsSql;
 
 namespace ServiceBookingSystem.IntegrationTests;
 
 /// <summary>
 /// A custom WebApplicationFactory for integration tests.
-/// This factory is responsible for bootstrapping the application in-memory and overriding
-/// services for the test environment, such as replacing the real database with an
-/// in-memory database.
+/// This factory spins up a real SQL Server Docker container using Testcontainers.
+/// It replaces the application's database configuration to point to this container.
 /// </summary>
-public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
+public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram>, IAsyncLifetime where TProgram : class
 {
+    private readonly MsSqlContainer dbContainer = new MsSqlBuilder()
+        .Build();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
         {
-            var dbContextDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(IDbContextOptionsConfiguration<ApplicationDbContext>));
+            // 1. Remove the existing DbContext configuration (from Program.cs).
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
 
-            if (dbContextDescriptor != null)
+            if (descriptor != null)
             {
-                services.Remove(dbContextDescriptor);
+                services.Remove(descriptor);
             }
 
+            // 2. Add DbContext pointing to the Testcontainer.
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase("InMemoryTestDbForSeeding");
+                options.UseSqlServer(this.dbContainer.GetConnectionString());
             });
         });
+    }
+
+    /// <summary>
+    /// Starts the container before any tests run.
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        await this.dbContainer.StartAsync();
+        
+        // Ensure the database is created (Apply Migrations).
+        using var scope = this.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+
+    /// <summary>
+    /// Stops the container after all tests finish.
+    /// Explicit implementation to avoid conflict with WebApplicationFactory.DisposeAsync.
+    /// </summary>
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await this.dbContainer.StopAsync();
     }
 }

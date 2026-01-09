@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using ServiceBookingSystem.Data.Seeders;
 using ServiceBookingSystem.Application;
 using Serilog;
 using ServiceBookingSystem.Data;
+using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Infrastructure;
 using ServiceBookingSystem.Web.Extensions;
 using ServiceBookingSystem.Web.Middleware;
@@ -41,20 +43,27 @@ using (var scope = app.Services.CreateScope())
     var serviceProvider = scope.ServiceProvider;
     var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
     
-    logger.LogInformation("Starting database seeding...");
+    logger.LogInformation("Starting database migration and seeding...");
     try
     {
+        // Apply Migrations automatically
+        var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
+        if (dbContext.Database.IsRelational())
+        {
+            await dbContext.Database.MigrateAsync();
+        }
+
         var rolesSeeder = serviceProvider.GetRequiredService<RolesSeeder>();
         await rolesSeeder.SeedAsync(serviceProvider);
 
         var adminSeeder = serviceProvider.GetRequiredService<AdministratorSeeder>();
         await adminSeeder.SeedAsync(serviceProvider);
         
-        logger.LogInformation("Database seeding completed successfully.");
+        logger.LogInformation("Database migration and seeding completed successfully.");
     }
     catch (Exception ex)
     {
-        logger.LogCritical(ex, "An error occurred during database seeding.");
+        logger.LogCritical(ex, "An error occurred during database migration or seeding.");
         throw;
     }
 }
