@@ -5,93 +5,81 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Application.DTOs.Booking;
 using ServiceBookingSystem.Application.DTOs.Identity;
-using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
 using Xunit;
 
 namespace ServiceBookingSystem.IntegrationTests.Controllers;
 
-public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<Program>>
+public class BookingControllerTests : BaseIntegrationTest
 {
-    private readonly CustomWebApplicationFactory<Program> factory;
-    private readonly HttpClient client;
-
-    public BookingControllerTests(CustomWebApplicationFactory<Program> factory)
+    public BookingControllerTests(CustomWebApplicationFactory<Program> factory) : base(factory)
     {
-        this.factory = factory;
-        this.client = factory.CreateClient();
     }
 
     [Fact]
     public async Task Create_WithValidData_ShouldReturn201Created()
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var customerEmail = $"customer_{uniqueSuffix}@test.com";
+        const string customerEmail = "customer@test.com";
         const string password = "Password123!";
+        const string providerId = "provider-1";
         var bookingStart = DateTime.UtcNow.AddDays(1);
-        int serviceId;
 
-        using (var scope = factory.Services.CreateScope())
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        await userManager.CreateAsync(customer, password);
+
+        var provider = new ApplicationUser { Id = providerId, UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        await userManager.CreateAsync(provider, "Password123!");
+
+        var category = new Category { Name = "Test Category", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync(); 
+
+        var service = new Service 
+        { 
+            Name = "Test Service", 
+            Description = "Desc", 
+            ProviderId = providerId, 
+            DurationInMinutes = 60, 
+            Price = 100, 
+            IsActive = true, 
+            CategoryId = category.Id 
+        };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
+
+        var operatingHour = new OperatingHour
         {
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
-            await userManager.CreateAsync(customer, password);
-
-            var provider = new ApplicationUser { Id = $"prov-{uniqueSuffix}", UserName = $"prov_{uniqueSuffix}@test.com", Email = $"prov_{uniqueSuffix}@test.com", FirstName = "Test", LastName = "Provider" };
-            await userManager.CreateAsync(provider, "Password123!");
-
-            var category = new Category { Name = $"Cat {uniqueSuffix}", Description = "Desc" };
-            await dbContext.Categories.AddAsync(category);
-            await dbContext.SaveChangesAsync();
-
-            var service = new Service 
-            { 
-                Name = $"Service {uniqueSuffix}", 
-                Description = "Desc", 
-                ProviderId = provider.Id, 
-                DurationInMinutes = 60, 
-                Price = 100, 
-                IsActive = true, 
-                CategoryId = category.Id 
-            };
-            await dbContext.Services.AddAsync(service);
-            await dbContext.SaveChangesAsync();
-            serviceId = service.Id;
-
-            var operatingHour = new OperatingHour
-            {
-                ServiceId = serviceId,
-                DayOfWeek = bookingStart.DayOfWeek,
-                StartTime = new TimeOnly(0, 0),
-                EndTime = new TimeOnly(23, 59)
-            };
-            await dbContext.OperatingHours.AddAsync(operatingHour);
-            await dbContext.SaveChangesAsync();
-        }
+            ServiceId = service.Id,
+            DayOfWeek = bookingStart.DayOfWeek,
+            StartTime = new TimeOnly(0, 0),
+            EndTime = new TimeOnly(23, 59)
+        };
+        await this.DbContext.OperatingHours.AddAsync(operatingHour);
+        await this.DbContext.SaveChangesAsync();
 
         var token = await GetAuthTokenAsync(customerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var bookingDto = new BookingCreateDto
         {
-            ServiceId = serviceId,
+            ServiceId = service.Id,
             BookingStart = bookingStart,
             Notes = "Integration Test Booking"
         };
 
         // Act:
-        var response = await client.PostAsJsonAsync("/api/booking", bookingDto);
+        var response = await this.Client.PostAsJsonAsync("/api/booking", bookingDto);
 
         // Assert:
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         
         var createdBooking = await response.Content.ReadFromJsonAsync<BookingViewDto>();
         Assert.NotNull(createdBooking);
-        Assert.Equal(serviceId, createdBooking.ServiceId);
+        Assert.Equal(service.Id, createdBooking.ServiceId);
         Assert.Equal("Pending", createdBooking.Status);
     }
 
@@ -101,12 +89,11 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task Create_WithInvalidServiceId_ShouldReturn404NotFound(int invalidServiceId)
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var customerEmail = $"customer_inv_{uniqueSuffix}@test.com";
+        const string customerEmail = "customer@test.com";
         const string password = "Password123!";
         await SeedUserAsync(customerEmail, password);
         var token = await GetAuthTokenAsync(customerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var bookingDto = new BookingCreateDto
         {
@@ -115,7 +102,7 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
         };
 
         // Act:
-        var response = await client.PostAsJsonAsync("/api/booking", bookingDto);
+        var response = await this.Client.PostAsJsonAsync("/api/booking", bookingDto);
 
         // Assert:
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -127,50 +114,33 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task Create_WithPastDate_ShouldReturn409Conflict(int minutesToAdd)
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var customerEmail = $"customer_past_{uniqueSuffix}@test.com";
+        const string customerEmail = "customer@test.com";
         const string password = "Password123!";
-        int serviceId;
         
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            
-            var category = new Category { Name = $"Cat {uniqueSuffix}", Description = "Desc" };
-            await dbContext.Categories.AddAsync(category);
-            await dbContext.SaveChangesAsync();
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        await userManager.CreateAsync(provider, "Password123!");
 
-            var provider = new ApplicationUser { Id = $"prov-{uniqueSuffix}", UserName = $"prov_{uniqueSuffix}@test.com", Email = $"prov_{uniqueSuffix}@test.com", FirstName = "Test", LastName = "Provider" };
-            await userManager.CreateAsync(provider, "Password123!");
+        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
 
-            var service = new Service 
-            { 
-                Name = $"Service {uniqueSuffix}", 
-                Description = "Desc", 
-                ProviderId = provider.Id, 
-                DurationInMinutes = 60, 
-                Price = 100, 
-                IsActive = true, 
-                CategoryId = category.Id 
-            };
-            await dbContext.Services.AddAsync(service);
-            await dbContext.SaveChangesAsync();
-            serviceId = service.Id;
-        }
+        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = "provider-1", DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
 
         await SeedUserAsync(customerEmail, password);
         var token = await GetAuthTokenAsync(customerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var bookingDto = new BookingCreateDto
         {
-            ServiceId = serviceId,
+            ServiceId = service.Id,
             BookingStart = DateTime.UtcNow.AddMinutes(minutesToAdd)
         };
 
         // Act:
-        var response = await client.PostAsJsonAsync("/api/booking", bookingDto);
+        var response = await this.Client.PostAsJsonAsync("/api/booking", bookingDto);
 
         // Assert:
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -180,45 +150,37 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task Create_WithUnavailableSlot_ShouldReturn409Conflict()
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var customerEmail = $"customer_conflict_{uniqueSuffix}@test.com";
+        const string customerEmail = "customer@test.com";
         const string password = "Password123!";
-        int serviceId;
         var bookingStart = DateTime.UtcNow.AddDays(2);
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        await userManager.CreateAsync(customer, password);
 
-            var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
-            await userManager.CreateAsync(customer, password);
+        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        await userManager.CreateAsync(provider, "Password123!");
+        
+        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
 
-            var provider = new ApplicationUser { Id = $"prov-{uniqueSuffix}", UserName = $"prov_{uniqueSuffix}@test.com", Email = $"prov_{uniqueSuffix}@test.com", FirstName = "Test", LastName = "Provider" };
-            await userManager.CreateAsync(provider, "Password123!");
-            
-            var category = new Category { Name = $"Cat {uniqueSuffix}", Description = "Desc" };
-            await dbContext.Categories.AddAsync(category);
-            await dbContext.SaveChangesAsync();
-
-            var service = new Service { Name = $"Closed {uniqueSuffix}", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
-            await dbContext.Services.AddAsync(service);
-            await dbContext.SaveChangesAsync();
-            serviceId = service.Id;
-            // NO Operating Hours added
-        }
+        var service = new Service { Name = "Closed Service", Description = "Desc", ProviderId = "provider-1", DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        await this.DbContext.Services.AddAsync(service);
+        // NO Operating Hours added
+        await this.DbContext.SaveChangesAsync();
 
         var token = await GetAuthTokenAsync(customerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var bookingDto = new BookingCreateDto
         {
-            ServiceId = serviceId,
+            ServiceId = service.Id,
             BookingStart = bookingStart
         };
 
         // Act:
-        var response = await client.PostAsJsonAsync("/api/booking", bookingDto);
+        var response = await this.Client.PostAsJsonAsync("/api/booking", bookingDto);
 
         // Assert:
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -231,46 +193,38 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task Cancel_WithValidId_ShouldReturn200OK()
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var customerEmail = $"customer_cancel_{uniqueSuffix}@test.com";
+        const string customerEmail = "customer@test.com";
         const string password = "Password123!";
-        int serviceId;
         var bookingStart = DateTime.UtcNow.AddDays(3);
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        await userManager.CreateAsync(customer, password);
 
-            var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
-            await userManager.CreateAsync(customer, password);
+        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        await userManager.CreateAsync(provider, "Password123!");
+        
+        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
 
-            var provider = new ApplicationUser { Id = $"prov-{uniqueSuffix}", UserName = $"prov_{uniqueSuffix}@test.com", Email = $"prov_{uniqueSuffix}@test.com", FirstName = "Test", LastName = "Provider" };
-            await userManager.CreateAsync(provider, "Password123!");
-            
-            var category = new Category { Name = $"Cat {uniqueSuffix}", Description = "Desc" };
-            await dbContext.Categories.AddAsync(category);
-            await dbContext.SaveChangesAsync();
-
-            var service = new Service { Name = $"Service {uniqueSuffix}", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
-            await dbContext.Services.AddAsync(service);
-            await dbContext.SaveChangesAsync();
-            serviceId = service.Id;
-            
-            var operatingHour = new OperatingHour { ServiceId = serviceId, DayOfWeek = bookingStart.DayOfWeek, StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) };
-            await dbContext.OperatingHours.AddAsync(operatingHour);
-            await dbContext.SaveChangesAsync();
-        }
+        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = "provider-1", DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
+        
+        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = bookingStart.DayOfWeek, StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) };
+        await this.DbContext.OperatingHours.AddAsync(operatingHour);
+        await this.DbContext.SaveChangesAsync();
 
         var token = await GetAuthTokenAsync(customerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var createResponse = await client.PostAsJsonAsync("/api/booking", new BookingCreateDto { ServiceId = serviceId, BookingStart = bookingStart });
+        var createResponse = await this.Client.PostAsJsonAsync("/api/booking", new BookingCreateDto { ServiceId = service.Id, BookingStart = bookingStart });
         createResponse.EnsureSuccessStatusCode();
         var createdBooking = await createResponse.Content.ReadFromJsonAsync<BookingViewDto>();
 
         // Act:
-        var cancelResponse = await client.PutAsync($"/api/booking/{createdBooking!.Id}/cancel", null);
+        var cancelResponse = await this.Client.PutAsync($"/api/booking/{createdBooking!.Id}/cancel", null);
 
         // Assert:
         Assert.Equal(HttpStatusCode.OK, cancelResponse.StatusCode);
@@ -285,49 +239,41 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task Cancel_WithInvalidState_ShouldReturn409Conflict(string initialState)
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var customerEmail = $"customer_state_{initialState}_{uniqueSuffix}@test.com";
+        const string customerEmail = "customer@test.com";
         const string password = "Password123!";
         var bookingStart = DateTime.UtcNow.AddDays(4);
-        string bookingId;
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            
-            var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
-            await userManager.CreateAsync(customer, password);
-            
-            var provider = new ApplicationUser { Id = $"prov-{uniqueSuffix}", UserName = $"prov_{uniqueSuffix}@test.com", Email = $"prov_{uniqueSuffix}@test.com", FirstName = "Test", LastName = "Provider" };
-            await userManager.CreateAsync(provider, "Password123!");
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        await userManager.CreateAsync(customer, password);
+        
+        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        await userManager.CreateAsync(provider, "Password123!");
 
-            var category = new Category { Name = $"Cat {uniqueSuffix}", Description = "Desc" };
-            await dbContext.Categories.AddAsync(category);
-            await dbContext.SaveChangesAsync();
+        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
 
-            var service = new Service { Name = $"Service {uniqueSuffix}", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
-            await dbContext.Services.AddAsync(service);
-            await dbContext.SaveChangesAsync();
+        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
 
-            var statusEnum = Enum.Parse<BookingStatus>(initialState);
-            var booking = new Booking 
-            { 
-                ServiceId = service.Id, 
-                CustomerId = customer.Id, 
-                BookingStart = bookingStart, 
-                Status = statusEnum 
-            };
-            await dbContext.Bookings.AddAsync(booking);
-            await dbContext.SaveChangesAsync();
-            bookingId = booking.Id;
-        }
+        var statusEnum = Enum.Parse<BookingStatus>(initialState);
+        var booking = new Booking 
+        { 
+            ServiceId = service.Id, 
+            CustomerId = customer.Id, 
+            BookingStart = bookingStart, 
+            Status = statusEnum 
+        };
+        await this.DbContext.Bookings.AddAsync(booking);
+        await this.DbContext.SaveChangesAsync();
 
         var token = await GetAuthTokenAsync(customerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act:
-        var response = await client.PutAsync($"/api/booking/{bookingId}/cancel", null);
+        var response = await this.Client.PutAsync($"/api/booking/{booking.Id}/cancel", null);
 
         // Assert:
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -344,10 +290,10 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
         await SeedUserAsync(customerEmail, password);
         
         var token = await GetAuthTokenAsync(customerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act:
-        var response = await client.GetAsync("/api/booking/non-existent-id");
+        var response = await this.Client.GetAsync("/api/booking/non-existent-id");
 
         // Assert:
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -359,46 +305,38 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task GetById_WithOtherUsersBooking_ShouldReturn404NotFound()
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var ownerEmail = $"owner_{uniqueSuffix}@test.com";
-        var hackerEmail = $"hacker_{uniqueSuffix}@test.com";
+        const string ownerEmail = "owner@test.com";
+        const string hackerEmail = "hacker@test.com";
         const string password = "Password123!";
-        string bookingId;
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            
-            var owner = new ApplicationUser { UserName = ownerEmail, Email = ownerEmail, FirstName = "Owner", LastName = "User" };
-            await userManager.CreateAsync(owner, password);
-            
-            var hacker = new ApplicationUser { UserName = hackerEmail, Email = hackerEmail, FirstName = "Hacker", LastName = "User" };
-            await userManager.CreateAsync(hacker, password);
-            
-            var provider = new ApplicationUser { Id = $"prov-{uniqueSuffix}", UserName = $"prov_{uniqueSuffix}@test.com", Email = $"prov_{uniqueSuffix}@test.com", FirstName = "Test", LastName = "Provider" };
-            await userManager.CreateAsync(provider, "Password123!");
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var owner = new ApplicationUser { UserName = ownerEmail, Email = ownerEmail, FirstName = "Owner", LastName = "User" };
+        await userManager.CreateAsync(owner, password);
+        
+        var hacker = new ApplicationUser { UserName = hackerEmail, Email = hackerEmail, FirstName = "Hacker", LastName = "User" };
+        await userManager.CreateAsync(hacker, password);
+        
+        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        await userManager.CreateAsync(provider, "Password123!");
 
-            var category = new Category { Name = $"Cat {uniqueSuffix}", Description = "Desc" };
-            await dbContext.Categories.AddAsync(category);
-            await dbContext.SaveChangesAsync();
+        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
 
-            var service = new Service { Name = $"Service {uniqueSuffix}", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
-            await dbContext.Services.AddAsync(service);
-            await dbContext.SaveChangesAsync();
+        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
 
-            var booking = new Booking { ServiceId = service.Id, CustomerId = owner.Id, BookingStart = DateTime.UtcNow.AddDays(1) };
-            await dbContext.Bookings.AddAsync(booking);
-            await dbContext.SaveChangesAsync();
-            bookingId = booking.Id;
-        }
+        var booking = new Booking { ServiceId = service.Id, CustomerId = owner.Id, BookingStart = DateTime.UtcNow.AddDays(1) };
+        await this.DbContext.Bookings.AddAsync(booking);
+        await this.DbContext.SaveChangesAsync();
 
         // Login as Hacker
         var token = await GetAuthTokenAsync(hackerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act:
-        var response = await client.GetAsync($"/api/booking/{bookingId}");
+        var response = await this.Client.GetAsync($"/api/booking/{booking.Id}");
 
         // Assert:
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -408,43 +346,35 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task Confirm_AsProvider_ShouldReturn200OK()
     {
         // Arrange:
-        var uniqueSuffix = Guid.NewGuid().ToString().Substring(0, 8);
-        var providerEmail = $"prov_{uniqueSuffix}@test.com";
-        var customerEmail = $"cust_{uniqueSuffix}@test.com";
+        const string providerEmail = "provider@test.com";
+        const string customerEmail = "customer@test.com";
         const string password = "Password123!";
-        string bookingId;
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            
-            var provider = new ApplicationUser { UserName = providerEmail, Email = providerEmail, FirstName = "Test", LastName = "Provider" };
-            await userManager.CreateAsync(provider, password);
-            
-            var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
-            await userManager.CreateAsync(customer, password);
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var provider = new ApplicationUser { UserName = providerEmail, Email = providerEmail, FirstName = "Test", LastName = "Provider" };
+        await userManager.CreateAsync(provider, password);
+        
+        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        await userManager.CreateAsync(customer, password);
 
-            var category = new Category { Name = $"Cat {uniqueSuffix}", Description = "Desc" };
-            await dbContext.Categories.AddAsync(category);
-            await dbContext.SaveChangesAsync();
+        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
 
-            var service = new Service { Name = $"Service {uniqueSuffix}", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
-            await dbContext.Services.AddAsync(service);
-            await dbContext.SaveChangesAsync();
+        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
 
-            var booking = new Booking { ServiceId = service.Id, CustomerId = customer.Id, BookingStart = DateTime.UtcNow.AddDays(1), Status = BookingStatus.Pending };
-            await dbContext.Bookings.AddAsync(booking);
-            await dbContext.SaveChangesAsync();
-            bookingId = booking.Id;
-        }
+        var booking = new Booking { ServiceId = service.Id, CustomerId = customer.Id, BookingStart = DateTime.UtcNow.AddDays(1), Status = BookingStatus.Pending };
+        await this.DbContext.Bookings.AddAsync(booking);
+        await this.DbContext.SaveChangesAsync();
 
         // Login as Provider
         var token = await GetAuthTokenAsync(providerEmail, password);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act:
-        var response = await client.PutAsync($"/api/booking/{bookingId}/confirm", null);
+        var response = await this.Client.PutAsync($"/api/booking/{booking.Id}/confirm", null);
 
         // Assert:
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -456,11 +386,11 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
     public async Task Create_WithoutToken_ShouldReturn401Unauthorized()
     {
         // Arrange:
-        client.DefaultRequestHeaders.Authorization = null;
+        this.Client.DefaultRequestHeaders.Authorization = null;
         var bookingDto = new BookingCreateDto { ServiceId = 1, BookingStart = DateTime.UtcNow.AddDays(1) };
 
         // Act:
-        var response = await client.PostAsJsonAsync("/api/booking", bookingDto);
+        var response = await this.Client.PostAsJsonAsync("/api/booking", bookingDto);
 
         // Assert:
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -470,18 +400,14 @@ public class BookingControllerTests : IClassFixture<CustomWebApplicationFactory<
 
     private async Task SeedUserAsync(string email, string password)
     {
-        using var scope = factory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        if (await userManager.FindByEmailAsync(email) == null)
-        {
-            var user = new ApplicationUser { UserName = email, Email = email, FirstName = "Test", LastName = "User" };
-            await userManager.CreateAsync(user, password);
-        }
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = new ApplicationUser { UserName = email, Email = email, FirstName = "Test", LastName = "User" };
+        await userManager.CreateAsync(user, password);
     }
 
     private async Task<string> GetAuthTokenAsync(string email, string password)
     {
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginDto { Email = email, Password = password });
+        var loginResponse = await this.Client.PostAsJsonAsync("/api/auth/login", new LoginDto { Email = email, Password = password });
         loginResponse.EnsureSuccessStatusCode();
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResult>();
         return loginResult!.Token;

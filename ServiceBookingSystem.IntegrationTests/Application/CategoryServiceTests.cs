@@ -1,26 +1,22 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Application.DTOs.Category;
 using ServiceBookingSystem.Application.Interfaces;
-using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Domain;
+using Xunit;
 
 namespace ServiceBookingSystem.IntegrationTests.Application;
 
-public class CategoryServiceTests : IClassFixture<CustomWebApplicationFactory<Program>>
+public class CategoryServiceTests : BaseIntegrationTest
 {
-    private readonly CustomWebApplicationFactory<Program> factory;
-
-    public CategoryServiceTests(CustomWebApplicationFactory<Program> factory)
+    public CategoryServiceTests(CustomWebApplicationFactory<Program> factory) : base(factory)
     {
-        this.factory = factory;
     }
 
     [Fact]
     public async Task CreateAsync_WhenCalledThroughApplicationHost_ShouldPersistEntity()
     {
         // Arrange:
-        using var scope = factory.Services.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<ICategoryService>();
+        var service = this.ServiceProvider.GetRequiredService<ICategoryService>();
 
         var dto = new CategoryCreateDto
         {
@@ -32,10 +28,8 @@ public class CategoryServiceTests : IClassFixture<CustomWebApplicationFactory<Pr
         var createdCategory = await service.CreateAsync(dto);
 
         // Assert:
-        using var assertScope = factory.Services.CreateScope();
-        var assertContext = assertScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-        var categoryInDb = await assertContext.Categories.FindAsync(createdCategory.Id);
+        this.DbContext.ChangeTracker.Clear();
+        var categoryInDb = await this.DbContext.Categories.FindAsync(createdCategory.Id);
 
         Assert.NotNull(categoryInDb);
         Assert.Equal("E2E Test Category", categoryInDb.Name);
@@ -45,26 +39,21 @@ public class CategoryServiceTests : IClassFixture<CustomWebApplicationFactory<Pr
     public async Task GetByIdAsync_AfterDeleting_ShouldReturnNullDueToGlobalQueryFilter()
     {
         // Arrange:
-        using var arrangeScope = factory.Services.CreateScope();
-        var arrangeContext = arrangeScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
         var categoryToDelete = new Category
         {
             Name = "Category to Delete"
         };
-        arrangeContext.Categories.Add(categoryToDelete);
-        await arrangeContext.SaveChangesAsync();
+        this.DbContext.Categories.Add(categoryToDelete);
+        await this.DbContext.SaveChangesAsync();
+        
+        this.DbContext.ChangeTracker.Clear();
 
         // Act:
-        using var actScope = factory.Services.CreateScope();
-        var service = actScope.ServiceProvider.GetRequiredService<ICategoryService>();
+        var service = this.ServiceProvider.GetRequiredService<ICategoryService>();
         await service.DeleteAsync(categoryToDelete.Id);
 
         // Assert:
-        using var assertScope = factory.Services.CreateScope();
-        var assertService = assertScope.ServiceProvider.GetRequiredService<ICategoryService>();
-
-        var result = await assertService.GetByIdAsync(categoryToDelete.Id);
+        var result = await service.GetByIdAsync(categoryToDelete.Id);
 
         Assert.Null(result);
     }
