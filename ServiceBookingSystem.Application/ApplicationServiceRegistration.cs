@@ -22,6 +22,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }

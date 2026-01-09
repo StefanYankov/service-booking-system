@@ -3,6 +3,7 @@ using ServiceBookingSystem.Application;
 using Serilog;
 using ServiceBookingSystem.Data;
 using ServiceBookingSystem.Infrastructure;
+using ServiceBookingSystem.Web.Extensions;
 using ServiceBookingSystem.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,16 +19,14 @@ builder.Host.UseSerilog((context, configuration) =>
 
 // --- Register services from other layers ---
 
-// This single call now registers DbContext, Identity, and all seeders from the Data layer.
 builder.Services.AddDataServices(builder.Configuration);
-
-// This call registers all services from the Application layer.
 builder.Services.AddApplicationServices();
-
-// This call registers all services from the Infrastructure layer (e.g., Email Service).
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Register Global Exception Handler
+// --- JWT Authentication Configuration ---
+builder.Services.AddApiAuthentication(builder.Configuration);
+
+// --- Register Global Exception Handler ---
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
