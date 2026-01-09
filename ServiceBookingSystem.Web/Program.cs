@@ -3,6 +3,7 @@ using ServiceBookingSystem.Application;
 using Serilog;
 using ServiceBookingSystem.Data;
 using ServiceBookingSystem.Infrastructure;
+using ServiceBookingSystem.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,10 @@ builder.Services.AddApplicationServices();
 
 // This call registers all services from the Infrastructure layer (e.g., Email Service).
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Register Global Exception Handler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -58,11 +63,24 @@ using (var scope = app.Services.CreateScope())
 // --- Configure the HTTP request pipeline ---
 app.UseSerilogRequestLogging();
 
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseDeveloperExceptionPage();
+}
+else
+{
     app.UseHsts();
 }
+
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), appBuilder =>
+{
+    appBuilder.UseExceptionHandler(options => { });
+});
+
+app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api"), appBuilder =>
+{
+    appBuilder.UseExceptionHandler("/Home/Error");
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
