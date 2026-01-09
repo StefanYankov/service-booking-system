@@ -6,11 +6,11 @@ using ServiceBookingSystem.Data.Entities.Domain;
 
 namespace ServiceBookingSystem.IntegrationTests.Application;
 
-public class CategoryServiceTests : IClassFixture<CustomWebApplicationFactory>
+public class CategoryServiceTests : IClassFixture<CustomWebApplicationFactory<Program>>
 {
-    private readonly CustomWebApplicationFactory factory;
+    private readonly CustomWebApplicationFactory<Program> factory;
 
-    public CategoryServiceTests(CustomWebApplicationFactory factory)
+    public CategoryServiceTests(CustomWebApplicationFactory<Program> factory)
     {
         this.factory = factory;
     }
