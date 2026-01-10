@@ -18,19 +18,22 @@ public class BookingService : IBookingService
     private readonly IServiceService serviceService;
     private readonly IAvailabilityService availabilityService;
     private readonly IUsersService usersService;
+    private readonly INotificationService notificationService;
 
     public BookingService(
         ApplicationDbContext dbContext,
         ILogger<BookingService> logger,
         IServiceService serviceService,
         IAvailabilityService availabilityService,
-        IUsersService usersService)
+        IUsersService usersService,
+        INotificationService notificationService)
     {
         this.dbContext = dbContext;
         this.logger = logger;
         this.serviceService = serviceService;
         this.availabilityService = availabilityService;
         this.usersService = usersService;
+        this.notificationService = notificationService;
     }
 
     /// <inheritdoc/>
@@ -107,6 +110,15 @@ public class BookingService : IBookingService
                 .LogInformation(
                     "Booking {BookingId} created successfully for Service {ServiceId} by Customer {CustomerId}.",
                     booking.Id, dto.ServiceId, customerId);
+            
+            // Reload booking with navigation properties for notification
+            var bookingForNotification = await this.dbContext.Bookings
+                .Include(b => b.Service)
+                .ThenInclude(s => s.Provider)
+                .Include(b => b.Customer)
+                .FirstAsync(b => b.Id == booking.Id, cancellationToken);
+            
+            await this.notificationService.NotifyBookingCreatedAsync(bookingForNotification);
         }
         catch (Exception ex)
         {
@@ -453,6 +465,8 @@ public class BookingService : IBookingService
         this.logger
             .LogInformation("Booking {BookingId} confirmed by provider {ProviderId}.",
                 bookingId, providerId);
+        
+        await this.notificationService.NotifyBookingConfirmedAsync(booking);
 
         var dto = new BookingViewDto
         {
@@ -515,6 +529,8 @@ public class BookingService : IBookingService
         this.logger
             .LogInformation("Booking {BookingId} declined by provider {ProviderId}.",
                 bookingId, providerId);
+        
+        await this.notificationService.NotifyBookingDeclinedAsync(booking);
 
         var dto = new BookingViewDto
         {
@@ -576,6 +592,10 @@ public class BookingService : IBookingService
         this.logger
             .LogInformation("Booking {BookingId} cancelled by user {UserId}.",
             bookingId, userId);
+        
+        // Determine who cancelled to notify the other party
+        bool cancelledByProvider = (userId == booking.Service.ProviderId);
+        await this.notificationService.NotifyBookingCancelledAsync(booking, cancelledByProvider);
 
         var dto = new BookingViewDto
         {

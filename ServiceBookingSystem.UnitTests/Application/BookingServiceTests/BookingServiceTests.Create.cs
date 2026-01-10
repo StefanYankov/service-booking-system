@@ -5,6 +5,7 @@ using ServiceBookingSystem.Application.DTOs.Identity.User;
 using ServiceBookingSystem.Application.DTOs.Service;
 using ServiceBookingSystem.Core.Exceptions;
 using ServiceBookingSystem.Data.Entities.Domain;
+using ServiceBookingSystem.Data.Entities.Identity;
 
 namespace ServiceBookingSystem.UnitTests.Application.BookingServiceTests;
 
@@ -50,6 +51,35 @@ public partial class BookingServiceTests
             .Setup(x => x.IsSlotAvailableAsync(serviceId, bookingStart, 60, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        var provider = new ApplicationUser 
+        {
+            Id = providerId,
+            FirstName = "Test",
+            LastName = "Provider",
+            Email = "prov@test.com"
+        };
+        
+        var customer = new ApplicationUser 
+        {
+            Id = customerId,
+            FirstName = "Test",
+            LastName = "Customer",
+            Email = "cust@test.com"
+        };
+        
+        var service = new Service
+        {
+            Id = serviceId,
+            Name = "Test Service",
+            Description = "Desc",
+            ProviderId = providerId,
+            Provider = provider
+        };
+        
+        await dbContext.Users.AddRangeAsync(provider, customer);
+        await dbContext.Services.AddAsync(service);
+        await dbContext.SaveChangesAsync();
+
         // Act:
         var result = await bookingService.CreateBookingAsync(dto, customerId);
 
@@ -69,6 +99,9 @@ public partial class BookingServiceTests
         Assert.Equal(bookingStart, savedBooking.BookingStart);
         Assert.Equal("Test Note", savedBooking.Notes);
         Assert.Equal(BookingStatus.Pending, savedBooking.Status);
+        
+        // Verify Notification
+        notificationServiceMock.Verify(x => x.NotifyBookingCreatedAsync(It.Is<Booking>(b => b.Id == savedBooking.Id)), Times.Once);
     }
 
     [Fact]

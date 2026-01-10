@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Moq;
 using ServiceBookingSystem.Core.Exceptions;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
@@ -62,6 +63,8 @@ public partial class BookingServiceTests
         
         var updatedBooking = await dbContext.Bookings.FindAsync(bookingId);
         Assert.Equal(BookingStatus.Confirmed, updatedBooking!.Status);
+        
+        notificationServiceMock.Verify(x => x.NotifyBookingConfirmedAsync(It.Is<Booking>(b => b.Id == booking.Id)), Times.Once);
     }
 
     [Fact]
@@ -222,6 +225,8 @@ public partial class BookingServiceTests
         
         var updatedBooking = await dbContext.Bookings.FindAsync(bookingId);
         Assert.Equal(BookingStatus.Declined, updatedBooking!.Status);
+        
+        notificationServiceMock.Verify(x => x.NotifyBookingDeclinedAsync(It.Is<Booking>(b => b.Id == booking.Id)), Times.Once);
     }
 
     [Fact]
@@ -381,6 +386,9 @@ public partial class BookingServiceTests
         
         var updatedBooking = await dbContext.Bookings.FindAsync(bookingId);
         Assert.Equal(BookingStatus.Cancelled, updatedBooking!.Status);
+        
+        notificationServiceMock
+            .Verify(x => x.NotifyBookingCancelledAsync(It.Is<Booking>(b => b.Id == booking.Id), false), Times.Once);
     }
 
     [Fact]
@@ -437,6 +445,7 @@ public partial class BookingServiceTests
         
         var updatedBooking = await dbContext.Bookings.FindAsync(bookingId);
         Assert.Equal(BookingStatus.Cancelled, updatedBooking!.Status);
+        notificationServiceMock.Verify(x => x.NotifyBookingCancelledAsync(It.Is<Booking>(b => b.Id == booking.Id), true), Times.Once);
     }
 
     [Fact]
