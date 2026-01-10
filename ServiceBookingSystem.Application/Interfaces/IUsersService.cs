@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using ServiceBookingSystem.Application.DTOs.Identity;
 using ServiceBookingSystem.Application.DTOs.Identity.User;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Core.Exceptions;
@@ -20,6 +21,13 @@ public interface IUsersService
     /// containing the outcome of the create operation, including any validation errors.
     /// </returns>
     Task<IdentityResult> CreateUserAsync(UserCreateDto dto);
+
+    /// <summary>
+    /// Asynchronously registers a new user (Customer or Provider) via the public API.
+    /// </summary>
+    /// <param name="dto">The registration details.</param>
+    /// <returns>The result of the registration operation.</returns>
+    Task<IdentityResult> RegisterUserAsync(RegisterDto dto);
     
     /// <summary>
     /// Asynchronously updates an existing user's profile information.

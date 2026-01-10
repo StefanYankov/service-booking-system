@@ -2,10 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ServiceBookingSystem.Application.DTOs.Identity;
 using ServiceBookingSystem.Application.DTOs.Identity.User;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
+using ServiceBookingSystem.Core.Constants;
 using ServiceBookingSystem.Core.Exceptions;
+using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Entities.Identity;
 
 namespace ServiceBookingSystem.Application.Services;
@@ -90,6 +93,60 @@ public class UsersService : IUsersService
         {
             logger.LogWarning("Failed to create user with Email {Email}. Errors: {Errors}", dto.Email,
                 result.Errors.Select(e => e.Description));
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IdentityResult> RegisterUserAsync(RegisterDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        logger
+            .LogDebug("Attempting to register new user with Email: {Email} and Role: {Role}",
+                dto.Email, dto.Role);
+
+        if (dto.Role != RoleConstants.Customer && dto.Role != RoleConstants.Provider)
+        {
+            logger.LogWarning("Invalid role registration attempt: {Role}", dto.Role);
+            return IdentityResult.Failed(new IdentityError
+            {
+                Code = "InvalidRole",
+                Description = "Invalid role selected. Allowed roles are 'Customer' or 'Provider'."
+            });
+        }
+
+        var user = new ApplicationUser
+        {
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            Email = dto.Email,
+            UserName = dto.Email
+        };
+
+        var result = await userManager.CreateAsync(user, dto.Password);
+
+        if (result.Succeeded)
+        {
+            logger.LogInformation("User {UserId} registered successfully", user.Id);
+            await userManager.AddToRoleAsync(user, dto.Role);
+
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            var baseUrl = configuration["WebAppSettings:BaseUrl"];
+            var confirmationLink = $"{baseUrl}/Identity/Account/ConfirmEmail?userId={user.Id}&code={System.Net.WebUtility.UrlEncode(token)}";
+
+            var emailBody = await templateService.RenderTemplateAsync("ConfirmEmail.html",
+                new Dictionary<string, string>
+                {
+                    { "UserName", user.FirstName },
+                    { "ConfirmationLink", confirmationLink }
+                });
+
+            _ = emailService.SendEmailAsync(user.Email, "Welcome to Service Booking System", emailBody);
+        }
+        else
+        {
+            logger.LogWarning("Failed to register user {Email}. Errors: {Errors}", dto.Email, result.Errors.Select(e => e.Description));
         }
 
         return result;
