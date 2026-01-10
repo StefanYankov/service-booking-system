@@ -19,6 +19,7 @@ The **Service Booking System** is a web application built with ASP.NET Core. It 
 - [Project Status & Key Features](#project-status--key-features)
 - [Technology Stack](#technology-stack)
 - [Getting Started](#getting-started)
+- [Testing](#testing)
 
 ## Project Goal
 
@@ -31,7 +32,7 @@ The application is built using a layered architecture to ensure a clean separati
 -   **Backend**: **ASP.NET Core 9.0**
 -   **Architecture**: Layered (`Core`, `Data`, `Application`, `Infrastructure`, `Web`)
 -   **Database**: **Entity Framework Core** with **Microsoft SQL Server**
--   **Authentication**: **ASP.NET Core Identity**
+-   **Authentication**: **ASP.NET Core Identity** (Cookies for MVC, JWT for API)
 
 ### Use Case Diagram
 
@@ -58,7 +59,9 @@ The database schema is designed to support the core features of the application.
 The project has a solid architectural foundation, with the following key patterns and features implemented:
 
 1.  **Layered Architecture**: Solution structured into five layers: `.Core`, `.Data`, `.Application`, `.Infrastructure`, and `.Web`.
-2.  **Identity & Authentication**: ASP.NET Core Identity is configured with custom `ApplicationUser` and `ApplicationRole` entities.
+2.  **Identity & Authentication**: 
+    -   ASP.NET Core Identity configured with custom `ApplicationUser` and `ApplicationRole` entities.
+    -   **Hybrid Auth**: Supports Cookies for MVC views and **JWT (JSON Web Tokens)** for API endpoints.
 3.  **Data Persistence Patterns**:
     -   A complete domain model with a flexible base entity hierarchy (`BaseEntity`, `DeletableEntity`).
     -   A **Soft-Delete** pattern implemented using EF Core's Global Query Filters.
@@ -67,24 +70,24 @@ The project has a solid architectural foundation, with the following key pattern
     -   A `ServiceService` for full CRUD management of services, including paging, sorting, and soft-delete support.
     -   A `CategoryService` for managing service categories.
     -   A `BookingService` for managing the entire booking lifecycle (Create, Read, Update, Cancel, Confirm, Decline, Complete).
+    -   A `ReviewService` for managing customer reviews and ratings.
     -   An `AvailabilityService` that handles complex scheduling logic, including operating hours, split shifts, and booking overlaps.
 5.  **Infrastructure Layer & External Services**:
     -   A dedicated `.Infrastructure` project for decoupled external service implementations.
     -   An **Email Notification Service** with `SendGrid` (production) and `NullEmailService` (development) implementations.
     -   An `ITemplateService` that renders HTML email templates from embedded resources.
 6.  **Database Seeding**: A decoupled, composite seeder pattern for essential data (`Roles`, `Administrator`).
-7.  **Comprehensive Unit Testing**:
-    -   A dedicated **Unit Test** project using xUnit and Moq.
-    -   High test coverage for the `UserService`, including happy paths, non-happy paths, and edge cases.
-    -   Tests are organized into **partial classes** (e.g., `UsersServiceTests.Get.cs`) for better maintainability.
+7.  **Testing**:
+    -   **Unit Tests**: High coverage using xUnit and Moq for business logic.
+    -   **Integration Tests**: Tests using **Testcontainers (SQL Server)** and **Respawn** to verify the full stack against a real database.
 8.  **Logging**: Configured Serilog for structured logging to both the console and rolling files.
 
 ## Technology Stack
 
 -   **Backend:** .NET 9, ASP.NET Core
 -   **Data Access:** Entity Framework Core 9
--   **Authentication:** ASP.NET Core Identity
--   **Testing:** xUnit, Moq
+-   **Authentication:** ASP.NET Core Identity, JWT Bearer
+-   **Testing:** xUnit, Moq, Testcontainers, Respawn
 -   **Logging:** Serilog
 -   **Email:** SendGrid
 
@@ -94,11 +97,34 @@ The project has a solid architectural foundation, with the following key pattern
 
 -   .NET 9 SDK
 -   A code editor (e.g., JetBrains Rider, Visual Studio)
+-   **Docker Desktop** (Required for Integration Tests)
 -   (Optional) A SendGrid account and API key for testing real email sending.
 
 ### Configuration
 
 1.  Clone the repository.
 2.  The application uses `appsettings.Development.json` for local development configuration. Ensure the `ConnectionStrings` section is configured for your local database.
-3.  **API Keys (Important!):** It is strongly recommended to store the `SendGridApiKey` using the .NET Secret Manager. To set the secret, navigate to the `ServiceBookingSystem.Web` project directory in your terminal and run:
-    
+3.  **API Keys (Important!):** It is strongly recommended to store the `SendGridApiKey` and `Jwt:Key` using the .NET Secret Manager. To set the secrets, navigate to the `ServiceBookingSystem.Web` project directory in your terminal and run:
+    ```bash
+    dotnet user-secrets init
+    dotnet user-secrets set "SendGridApiKey" "YOUR_API_KEY"
+    dotnet user-secrets set "Jwt:Key" "YOUR_SUPER_SECRET_KEY_MIN_32_CHARS"
+    ```
+
+## Testing
+
+The project employs the following testing strategy.
+
+### Unit Tests
+Located in `ServiceBookingSystem.UnitTests`.
+-   **Focus:** Business logic in the Application layer.
+-   **Tools:** xUnit, Moq, EF Core In-Memory (for simple repository mocking).
+-   **Run:** `dotnet test ServiceBookingSystem.UnitTests`
+
+### Integration Tests
+Located in `ServiceBookingSystem.IntegrationTests`.
+-   **Focus:** API Endpoints, Database Constraints, Middleware, and Full Request Lifecycle.
+-   **Infrastructure:** Uses **Testcontainers** to spin up a real SQL Server Docker container for the test suite. Uses **Respawn** to wipe the database clean between every test method.
+-   **Logging:** Application logs are piped to the xUnit output window using `MartinCostello.Logging.XUnit`.
+-   **Requirement:** Docker must be running.
+-   **Run:** `dotnet test ServiceBookingSystem.IntegrationTests`

@@ -7,13 +7,13 @@ using ServiceBookingSystem.Application.DTOs.Booking;
 using ServiceBookingSystem.Application.DTOs.Identity;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
-using Xunit;
+using Xunit.Abstractions;
 
 namespace ServiceBookingSystem.IntegrationTests.Controllers;
 
 public class BookingControllerTests : BaseIntegrationTest
 {
-    public BookingControllerTests(CustomWebApplicationFactory<Program> factory) : base(factory)
+    public BookingControllerTests(CustomWebApplicationFactory<Program> factory, ITestOutputHelper output) : base(factory, output)
     {
     }
 
