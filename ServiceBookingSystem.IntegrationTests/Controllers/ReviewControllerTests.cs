@@ -8,12 +8,13 @@ using ServiceBookingSystem.Application.DTOs.Review;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
+using Xunit.Abstractions;
 
 namespace ServiceBookingSystem.IntegrationTests.Controllers;
 
 public class ReviewControllerTests : BaseIntegrationTest
 {
-    public ReviewControllerTests(CustomWebApplicationFactory<Program> factory) : base(factory)
+    public ReviewControllerTests(CustomWebApplicationFactory<Program> factory, ITestOutputHelper output) : base(factory, output)
     {
     }
 

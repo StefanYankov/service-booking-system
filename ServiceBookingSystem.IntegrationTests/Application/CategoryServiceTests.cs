@@ -2,13 +2,13 @@
 using ServiceBookingSystem.Application.DTOs.Category;
 using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Data.Entities.Domain;
-using Xunit;
+using Xunit.Abstractions;
 
 namespace ServiceBookingSystem.IntegrationTests.Application;
 
 public class CategoryServiceTests : BaseIntegrationTest
 {
-    public CategoryServiceTests(CustomWebApplicationFactory<Program> factory) : base(factory)
+    public CategoryServiceTests(CustomWebApplicationFactory<Program> factory, ITestOutputHelper output) : base(factory, output)
     {
     }
 
