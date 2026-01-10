@@ -1,8 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ServiceBookingSystem.Application.DTOs.Shared;
+﻿using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
-using Xunit;
 
 namespace ServiceBookingSystem.UnitTests.Application.ReviewServiceTests;
 
@@ -182,5 +180,77 @@ public partial class ReviewServiceTests
         // Assert
         Assert.Equal(1, result.TotalReviews); // Only the active one
         Assert.Equal(5.0, result.AverageRating); // Average of just the 5-star review
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithValidId_ShouldReturnDto()
+    {
+        // Arrange:
+        const int serviceId = 1;
+        var provider = new ApplicationUser { Id = "provider-1", FirstName = "Test", LastName = "Provider" };
+        var customer = new ApplicationUser { Id = "customer-1", FirstName = "Test", LastName = "Customer" };
+        var service = new Service { Id = serviceId, Name = "Test Service", Description = "Test Description", ProviderId = "provider-1", Provider = provider };
+
+        var review = new Review
+        {
+            Id = 1,
+            ServiceId = serviceId,
+            Service = service,
+            CustomerId = "customer-1",
+            Customer = customer,
+            BookingId = "b1",
+            Rating = 5,
+            CreatedOn = DateTime.UtcNow
+        };
+
+        await dbContext.Users.AddRangeAsync(provider, customer);
+        await dbContext.Services.AddAsync(service);
+        await dbContext.Reviews.AddAsync(review);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await this.reviewService.GetByIdAsync(review.Id);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(review.Id, result.Id);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithInvalidId_ShouldReturnNull()
+    {
+        // Arrange:
+        const int nonExistentId = 1;
+        // Act:
+        var result = await this.reviewService.GetByIdAsync(nonExistentId);
+
+        // Assert:
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithSoftDeletedReview_ShouldReturnNull()
+    {
+        // Arrange:
+        const int reviewId = 1;
+        var review = new Review
+        {
+            Id = reviewId,
+            ServiceId = 1,
+            CustomerId = "customer-1",
+            BookingId = "b1",
+            Rating = 5,
+            IsDeleted = true,
+            DeletedOn = DateTime.UtcNow
+        };
+
+        await dbContext.Reviews.AddAsync(review);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await this.reviewService.GetByIdAsync(reviewId);
+
+        // Assert:
+        Assert.Null(result);
     }
 }

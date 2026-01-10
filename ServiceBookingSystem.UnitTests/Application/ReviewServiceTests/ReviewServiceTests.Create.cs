@@ -137,7 +137,7 @@ public partial class ReviewServiceTests
     }
 
     [Fact]
-    public async Task CreateReviewAsync_WhenBookingNotCompleted_ShouldThrowInvalidOperationException()
+    public async Task CreateReviewAsync_WhenBookingNotCompleted_ShouldThrowInvalidBookingStateException()
     {
         // Arrange:
         const string bookingId = "b1";
@@ -158,13 +158,12 @@ public partial class ReviewServiceTests
             .ReturnsAsync(bookingDto);
 
         // Act & Assert:
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsAsync<InvalidBookingStateException>(() => 
             reviewService.CreateReviewAsync(dto, "customer-1"));
-        Assert.Contains("only review completed", ex.Message);
     }
 
     [Fact]
-    public async Task CreateReviewAsync_WhenAlreadyReviewed_ShouldThrowInvalidOperationException()
+    public async Task CreateReviewAsync_WhenAlreadyReviewed_ShouldThrowDuplicateEntityException()
     {
         // Arrange:
         const string customerId = "customer-1";
@@ -236,8 +235,7 @@ public partial class ReviewServiceTests
             .ReturnsAsync(bookingDto);
 
         // Act & Assert:
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsAsync<DuplicateEntityException>(() => 
             reviewService.CreateReviewAsync(dto, customerId));
-        Assert.Contains("already reviewed", ex.Message);
     }
 }
