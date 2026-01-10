@@ -34,9 +34,9 @@ public class ReviewService : IReviewService
         this.logger
             .LogDebug("Attempting to create review for Booking {BookingId} by Customer {CustomerId}",
                 dto?.BookingId, customerId);
-        
+
         ArgumentNullException.ThrowIfNull(dto);
-        
+
         if (string.IsNullOrWhiteSpace(customerId))
         {
             throw new ArgumentException(ExceptionMessages.InvalidCustomerId, nameof(customerId));
@@ -45,30 +45,33 @@ public class ReviewService : IReviewService
         var booking = await this.bookingService.GetBookingByIdAsync(dto.BookingId, customerId, cancellationToken);
         if (booking == null)
         {
-            this.logger.LogWarning("Create review failed: Booking {BookingId} not found or access denied.", dto.BookingId);
+            this.logger.LogWarning("Create review failed: Booking {BookingId} not found or access denied.",
+                dto.BookingId);
             throw new EntityNotFoundException(nameof(Booking), dto.BookingId);
         }
 
-        if (booking.Status != BookingStatus.Completed.ToString())
+        if (booking.Status != nameof(BookingStatus.Completed))
         {
             this.logger
                 .LogWarning("Create review failed: Booking {BookingId} is not completed.", dto.BookingId);
-            throw new InvalidOperationException("You can only review completed bookings.");
+            throw new InvalidBookingStateException(dto.BookingId, booking.Status, "Create Review");
         }
 
         if (booking.CustomerId != customerId)
         {
-             this.logger.LogWarning("Create review failed: User {UserId} is not the owner of booking {BookingId}.", customerId, dto.BookingId);
-             throw new AuthorizationException(customerId, "Create Review");
+            this.logger.LogWarning("Create review failed: User {UserId} is not the owner of booking {BookingId}.",
+                customerId, dto.BookingId);
+            throw new AuthorizationException(customerId, "Create Review");
         }
 
         var alreadyReviewed = await this.dbContext.Reviews
             .AnyAsync(r => r.BookingId == dto.BookingId, cancellationToken);
-        
+
         if (alreadyReviewed)
         {
-            this.logger.LogWarning("Create review failed: Booking {BookingId} has already been reviewed.", dto.BookingId);
-            throw new InvalidOperationException("You have already reviewed this booking.");
+            this.logger.LogWarning("Create review failed: Booking {BookingId} has already been reviewed.",
+                dto.BookingId);
+            throw new DuplicateEntityException(nameof(Review), dto.BookingId);
         }
 
         var review = new Review
@@ -119,9 +122,9 @@ public class ReviewService : IReviewService
         this.logger
             .LogDebug("Attempting to update review {ReviewId} by user {UserId}",
                 dto?.Id, userId);
-        
+
         ArgumentNullException.ThrowIfNull(dto);
-        
+
         if (string.IsNullOrWhiteSpace(userId))
         {
             throw new ArgumentException(ExceptionMessages.InvalidCustomerId, nameof(userId));
@@ -156,7 +159,7 @@ public class ReviewService : IReviewService
             await this.dbContext.SaveChangesAsync(cancellationToken);
             this.logger
                 .LogInformation("Review {ReviewId} updated successfully.",
-                dto.Id);
+                    dto.Id);
         }
         catch (Exception ex)
         {
@@ -230,7 +233,7 @@ public class ReviewService : IReviewService
             .Where(r => r.ServiceId == serviceId);
 
         var totalReviews = await query.CountAsync(cancellationToken);
-        
+
         double averageRating = 0;
         if (totalReviews > 0)
         {
@@ -244,5 +247,32 @@ public class ReviewService : IReviewService
             AverageRating = Math.Round(averageRating, 1)
         };
         return dto;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ReviewViewDto?> GetByIdAsync(int reviewId, CancellationToken cancellationToken = default)
+    {
+        this.logger
+            .LogDebug("Retrieving review with Id {ReviewId}",
+                reviewId);
+
+        var reviewDto = await this.dbContext.Reviews
+            .AsNoTracking()
+            .Where(r => r.Id == reviewId)
+            .Select(r => new ReviewViewDto
+            {
+                Id = r.Id,
+                ServiceId = r.ServiceId,
+                ServiceName = r.Service.Name, 
+                CustomerId = r.CustomerId,
+                CustomerName = $"{r.Customer.FirstName} {r.Customer.LastName}",
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedOn = r.CreatedOn,
+                LastModifiedOn = r.ModifiedOn
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return reviewDto;
     }
 }
