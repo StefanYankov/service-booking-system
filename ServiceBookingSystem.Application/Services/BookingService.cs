@@ -197,6 +197,9 @@ public class BookingService : IBookingService
             throw new InvalidBookingStateException(dto.Id, bookingToUpdate.Status.ToString(), "Update");
         }
 
+        bool isReschedule = false;
+        DateTime oldStart = bookingToUpdate.BookingStart;
+
         if (bookingToUpdate.BookingStart != dto.BookingStart)
         {
             this.logger
@@ -219,6 +222,7 @@ public class BookingService : IBookingService
             }
 
             bookingToUpdate.BookingStart = dto.BookingStart;
+            isReschedule = true;
 
             if (bookingToUpdate.Status == BookingStatus.Confirmed)
             {
@@ -237,6 +241,11 @@ public class BookingService : IBookingService
             this.logger
                 .LogInformation("Booking {BookingId} updated successfully.",
                     dto.Id);
+            
+            if (isReschedule)
+            {
+                await this.notificationService.NotifyBookingRescheduledAsync(bookingToUpdate, oldStart);
+            }
         }
         catch (Exception ex)
         {

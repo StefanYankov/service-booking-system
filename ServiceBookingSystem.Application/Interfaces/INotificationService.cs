@@ -30,4 +30,11 @@ public interface INotificationService
     /// <param name="booking">The booking details.</param>
     /// <param name="cancelledByProvider">True if provider cancelled (notify customer), False if customer cancelled (notify provider).</param>
     Task NotifyBookingCancelledAsync(Booking booking, bool cancelledByProvider);
+
+    /// <summary>
+    /// Sends a notification to the Provider that a booking has been rescheduled by the Customer.
+    /// </summary>
+    /// <param name="booking">The updated booking.</param>
+    /// <param name="oldDate">The original booking date.</param>
+    Task NotifyBookingRescheduledAsync(Booking booking, DateTime oldDate);
 }

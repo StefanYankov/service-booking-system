@@ -1,9 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Moq;
+﻿using Moq;
 using ServiceBookingSystem.Core.Exceptions;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
-using Xunit;
 
 namespace ServiceBookingSystem.UnitTests.Application.BookingServiceTests;
 

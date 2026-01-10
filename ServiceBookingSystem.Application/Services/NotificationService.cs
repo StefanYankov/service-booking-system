@@ -123,4 +123,30 @@ public class NotificationService : INotificationService
             logger.LogError(ex, "Failed to send cancellation notification for Booking {BookingId}", booking.Id);
         }
     }
+
+    /// <inheritdoc/>
+    public async Task NotifyBookingRescheduledAsync(Booking booking, DateTime oldDate)
+    {
+        try
+        {
+            // Notify Provider
+            var recipient = booking.Service.Provider;
+            
+            var templateParams = new Dictionary<string, string>
+            {
+                { "RecipientName", recipient.FirstName },
+                { "ServiceName", booking.Service.Name },
+                { "NewDate", booking.BookingStart.ToString("f") },
+                { "OldDate", oldDate.ToString("f") }
+            };
+            var body = await templateService.RenderTemplateAsync("BookingRescheduled.html", templateParams);
+            await emailService.SendEmailAsync(recipient.Email!, "Booking Rescheduled", body);
+            
+            logger.LogInformation("Sent reschedule notification for Booking {BookingId} to {Recipient}", booking.Id, recipient.Email);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send reschedule notification for Booking {BookingId}", booking.Id);
+        }
+    }
 }
