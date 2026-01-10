@@ -20,6 +20,7 @@ public class AvailabilityService : IAvailabilityService
         this.logger = logger;
     }
 
+    /// <inheritdoc/>
     public async Task<bool> IsSlotAvailableAsync(int serviceId, DateTime bookingStart, int durationMinutes, CancellationToken cancellationToken = default)
     {
         logger
@@ -60,7 +61,6 @@ public class AvailabilityService : IAvailabilityService
             return false;
         }
 
-        // Check if the proposed booking fits within ANY of the defined time slots for that day.
         var fitsInAnySlot = operatingHours.Any(oh =>
             bookingStartTime >= oh.StartTime && bookingEndTime <= oh.EndTime);
 
@@ -93,5 +93,100 @@ public class AvailabilityService : IAvailabilityService
             .LogInformation("Availability check successful for ServiceId {ServiceId} at {BookingStart}.",
                 serviceId, bookingStart);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<TimeOnly>> GetAvailableSlotsAsync(int serviceId, DateTime date, CancellationToken cancellationToken = default)
+    {
+        logger
+            .LogDebug("Fetching available slots for ServiceId {ServiceId} on {Date}",
+                serviceId, date.Date);
+
+        var service = await dbContext.Services
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == serviceId, cancellationToken);
+
+        if (service == null)
+        {
+            logger
+                .LogWarning("Service with ID {ServiceId} not found.",
+                    serviceId);
+            throw new EntityNotFoundException(nameof(Service), serviceId);
+        }
+
+        var dayOfWeek = date.DayOfWeek;
+        var operatingHours = await dbContext.OperatingHours
+            .AsNoTracking()
+            .Where(oh => oh.ServiceId == serviceId && oh.DayOfWeek == dayOfWeek)
+            .OrderBy(oh => oh.StartTime)
+            .ToListAsync(cancellationToken);
+
+        if (!operatingHours.Any())
+        {
+            logger.
+                LogInformation("No operating hours found for ServiceId {ServiceId} on {DayOfWeek}.",
+                    serviceId, dayOfWeek);
+            return Enumerable.Empty<TimeOnly>();
+        }
+
+        var dayStart = date.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        var existingBookings = await dbContext.Bookings
+            .AsNoTracking()
+            .Where(b => b.ServiceId == serviceId)
+            .Where(b => b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending)
+            .Where(b => b.BookingStart >= dayStart && b.BookingStart < dayEnd)
+            .Select(b => new 
+                { 
+                    b.BookingStart,
+                    Duration = b.Service.DurationInMinutes
+                    
+                })
+            .ToListAsync(cancellationToken);
+
+        var availableSlots = new List<TimeOnly>();
+        var duration = TimeSpan.FromMinutes(service.DurationInMinutes);
+
+        foreach (var hours in operatingHours)
+        {
+            var currentSlotStart = hours.StartTime;
+            var shiftEnd = hours.EndTime;
+
+            // Loop until the slot + duration exceeds the shift end
+            while (currentSlotStart.Add(duration) <= shiftEnd)
+            {
+                var currentSlotEnd = currentSlotStart.Add(duration);
+                var currentSlotDateTimeStart = dayStart.Add(currentSlotStart.ToTimeSpan());
+                var currentSlotDateTimeEnd = dayStart.Add(currentSlotEnd.ToTimeSpan());
+
+                // Filter out past slots if the date is today
+                if (currentSlotDateTimeStart < DateTime.UtcNow)
+                {
+                    currentSlotStart = currentSlotEnd; // Move to next slot
+                    continue;
+                }
+
+                // Check for conflicts
+                bool isConflict = existingBookings.Any(b =>
+                {
+                    var bookingStart = b.BookingStart;
+                    var bookingEnd = b.BookingStart.AddMinutes(b.Duration);
+
+                    // Overlap logic: (StartA < EndB) and (EndA > StartB)
+                    return currentSlotDateTimeStart < bookingEnd && currentSlotDateTimeEnd > bookingStart;
+                });
+
+                if (!isConflict)
+                {
+                    availableSlots.Add(currentSlotStart);
+                }
+
+                // Move to next slot (Step = Duration)
+                currentSlotStart = currentSlotEnd;
+            }
+        }
+
+        return availableSlots;
     }
 }
