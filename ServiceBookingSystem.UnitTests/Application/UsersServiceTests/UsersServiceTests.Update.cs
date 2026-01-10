@@ -1,6 +1,7 @@
 ﻿using Moq;
 using ServiceBookingSystem.Application.DTOs.Identity.User;
 using ServiceBookingSystem.Core.Exceptions;
+using ServiceBookingSystem.Data.Common;
 
 namespace ServiceBookingSystem.UnitTests.Application.UsersServiceTests;
 
@@ -142,7 +143,8 @@ public partial class UsersServiceTests
     {
         // Arrange:
         var userFromDb = await userManager.FindByEmailAsync("cust1@example.com");
-        var rolesToAdd = new List<string> { "Manager", "Customer" };
+        // cust1 has "Customer". Add "Provider".
+        var rolesToAdd = new List<string> { RoleConstants.Provider, RoleConstants.Customer };
 
         // Act:
         var result = await usersService.UpdateUserRolesAsync(userFromDb.Id, rolesToAdd);
@@ -153,8 +155,8 @@ public partial class UsersServiceTests
         Assert.NotNull(updatedUser);
 
         var roles = await userManager.GetRolesAsync(updatedUser);
-        Assert.Equal("Customer", roles[0]);
-        Assert.Equal("Manager", roles[1]);
+        Assert.Contains(RoleConstants.Customer, roles);
+        Assert.Contains(RoleConstants.Provider, roles);
     }
 
     [Fact]
@@ -163,8 +165,8 @@ public partial class UsersServiceTests
         // Arrange:
         var user = await userManager.FindByEmailAsync("admin@example.com");
         Assert.NotNull(user);
-
-        var newRoles = new List<string> { "Admin" };
+        // Admin has "Administrator". Change to "Customer".
+        var newRoles = new List<string> { RoleConstants.Customer };
 
         // Act:
         var result = await usersService.UpdateUserRolesAsync(user.Id, newRoles);
@@ -173,7 +175,8 @@ public partial class UsersServiceTests
         Assert.True(result.Succeeded);
         var finalRoles = await userManager.GetRolesAsync(user);
         var singleRole = Assert.Single(finalRoles);
-        Assert.Equal("Admin", singleRole);
+        Assert.Equal(RoleConstants.Customer, singleRole);
+        Assert.DoesNotContain(RoleConstants.Administrator, finalRoles);
     }
 
     [Fact]
@@ -183,7 +186,7 @@ public partial class UsersServiceTests
         var user = await userManager.FindByEmailAsync("admin@example.com");
         Assert.NotNull(user);
 
-        var newRoles = new List<string> { "Customer" };
+        var newRoles = new List<string> { RoleConstants.Customer };
 
         // Act
         var result = await usersService.UpdateUserRolesAsync(user.Id, newRoles);
@@ -192,9 +195,8 @@ public partial class UsersServiceTests
         Assert.True(result.Succeeded);
         var finalRoles = await userManager.GetRolesAsync(user);
         var singleRole = Assert.Single(finalRoles);
-        Assert.Equal("Customer", singleRole);
-        Assert.DoesNotContain("Admin", finalRoles);
-        Assert.DoesNotContain("Manager", finalRoles);
+        Assert.Equal(RoleConstants.Customer, singleRole);
+        Assert.DoesNotContain(RoleConstants.Administrator, finalRoles);
     }
 
     [Fact]
@@ -220,7 +222,7 @@ public partial class UsersServiceTests
     {
         // Arrange:
         const string nonExistentId = "this-id-does-not-exist";
-        var roles = new List<string> { "Customer" };
+        var roles = new List<string> { RoleConstants.Customer };
 
         // Act & Assert:
         await Assert.ThrowsAsync<EntityNotFoundException>(() =>
@@ -235,7 +237,7 @@ public partial class UsersServiceTests
         Assert.NotNull(user);
         var initialRoles = await userManager.GetRolesAsync(user);
 
-        var newRoles = new List<string> { "Customer", "NonExistentRole" };
+        var newRoles = new List<string> { RoleConstants.Customer, "NonExistentRole" };
 
         // Act:
         var result = await usersService.UpdateUserRolesAsync(user.Id, newRoles);
@@ -258,7 +260,7 @@ public partial class UsersServiceTests
     public async Task UpdateUserRolesAsync_WithAnyInvalidId_ShouldThrowEntityNotFoundException(string invalidId)
     {
         // Arrange:
-        var roles = new List<string> { "Customer" };
+        var roles = new List<string> { RoleConstants.Customer };
 
         // Act & Assert:
         await Assert.ThrowsAsync<EntityNotFoundException>(() => usersService.UpdateUserRolesAsync(invalidId, roles));

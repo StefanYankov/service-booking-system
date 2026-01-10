@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ServiceBookingSystem.Application.DTOs.Shared;
+using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Entities.Identity;
 
 namespace ServiceBookingSystem.UnitTests.Application.UsersServiceTests;
@@ -27,7 +28,7 @@ public partial class UsersServiceTests
                 throw new Exception($"Test setup failed: Could not create user {i}.");
             }
 
-            await userManager.AddToRoleAsync(user, "Customer");
+            await userManager.AddToRoleAsync(user, RoleConstants.Customer);
         }
 
         var parameters = new UserQueryParameters
@@ -70,7 +71,7 @@ public partial class UsersServiceTests
                 throw new Exception($"Test setup failed: Could not create user {i}.");
             }
 
-            await userManager.AddToRoleAsync(user, "Customer");
+            await userManager.AddToRoleAsync(user, RoleConstants.Customer);
         }
 
         var parameters = new UserQueryParameters
@@ -178,7 +179,7 @@ public partial class UsersServiceTests
         Assert.NotNull(result);
         Assert.Equal(4, result.TotalCount);
         Assert.Equal(4, result.Items.Count);
-        Assert.Equal("manager@example.com", result.Items[0].Email);
+        Assert.Equal("provider@example.com", result.Items[0].Email);
         Assert.Equal("cust2@example.com", result.Items[1].Email);
         Assert.Equal("cust1@example.com", result.Items[2].Email);
         Assert.Equal("admin@example.com", result.Items[3].Email);
@@ -203,7 +204,7 @@ public partial class UsersServiceTests
         Assert.Equal("admin@example.com", result.Items[0].Email);
         Assert.Equal("cust1@example.com", result.Items[1].Email);
         Assert.Equal("cust2@example.com", result.Items[2].Email);
-        Assert.Equal("manager@example.com", result.Items[3].Email);
+        Assert.Equal("provider@example.com", result.Items[3].Email);
     }
 
     // --- Filtering tests --- \\\
@@ -353,8 +354,7 @@ public partial class UsersServiceTests
         Assert.NotNull(result);
         Assert.Equal(existingUser.Email, result.Email);
         Assert.Equal(existingUser.FirstName, result.FirstName);
-        Assert.Contains("Manager", result.Roles);
-        Assert.Contains("Admin", result.Roles);
+        Assert.Contains(RoleConstants.Administrator, result.Roles);
     }
 
     [Fact]
@@ -375,12 +375,12 @@ public partial class UsersServiceTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("\u200B")]
-    public async Task GetUserByIdAsync_WithInvalidId_ShouldReturnNull(string invalidId)
+    public async Task GetUserByIdAsync_WithInvalidId_ShouldReturnNull(string? invalidId)
     {
-        // Act
-        var result = await usersService.GetUserByIdAsync(invalidId);
+        // Act:
+        var result = await usersService.GetUserByIdAsync(invalidId!);
 
-        // Assert
+        // Assert:
         Assert.Null(result);
     }
     
@@ -388,36 +388,30 @@ public partial class UsersServiceTests
     public async Task GetUsersInRoleAsync_WithExistingRole_ShouldReturnUsersWithAllTheirRoles()
     {
         // Act
-        var result = (await usersService.GetUsersInRoleAsync("Manager")).ToList();
+        var result = (await usersService.GetUsersInRoleAsync(RoleConstants.Provider)).ToList();
 
         // Assert
-        Assert.Equal(2, result.Count);
+        Assert.Single(result); // Only 1 provider seeded
 
-        var adminDto = result.FirstOrDefault(u => u.Email == "admin@example.com");
-        Assert.NotNull(adminDto);
-        Assert.Equal("Super", adminDto.FirstName);
-        Assert.Contains("Admin", adminDto.Roles);
-        Assert.Contains("Manager", adminDto.Roles);
-        Assert.Equal(2, adminDto.Roles.Count);
-
-        var managerDto = result.FirstOrDefault(u => u.Email == "manager@example.com");
-        Assert.NotNull(managerDto);
-        Assert.Single(managerDto.Roles);
-        Assert.Equal("Manager", managerDto.Roles[0]);
+        var providerDto = result.FirstOrDefault(u => u.Email == "provider@example.com");
+        Assert.NotNull(providerDto);
+        Assert.Equal("Bob", providerDto.FirstName);
+        Assert.Single(providerDto.Roles);
+        Assert.Equal(RoleConstants.Provider, providerDto.Roles[0]);
     }
 
     [Fact]
     public async Task GetUsersInRoleAsync_WithCustomerRole_ShouldReturnOnlyCustomers()
     {
         // Act
-        var result = (await usersService.GetUsersInRoleAsync("Customer")).ToList();
+        var result = (await usersService.GetUsersInRoleAsync(RoleConstants.Customer)).ToList();
 
         // Assert
         Assert.Equal(2, result.Count);
         Assert.All(result, user =>
         {
             Assert.Single(user.Roles);
-            Assert.Equal("Customer", user.Roles[0]);
+            Assert.Equal(RoleConstants.Customer, user.Roles[0]);
         });
         Assert.Contains(result, u => u.Email == "cust1@example.com");
         Assert.Contains(result, u => u.Email == "cust2@example.com");
@@ -450,11 +444,11 @@ public partial class UsersServiceTests
     public async Task GetUsersInRoleAsync_CaseInsensitiveRoleName_ShouldWork()
     {
         // Act
-        var result = await usersService.GetUsersInRoleAsync("admin");
+        var result = (await usersService.GetUsersInRoleAsync(RoleConstants.Administrator.ToLower())).ToList();
 
         // Assert
         Assert.Single(result);
         Assert.Equal("admin@example.com", result.First().Email);
-        Assert.Contains("Admin", result.First().Roles);
+        Assert.Contains(RoleConstants.Administrator, result.First().Roles);
     }
 }

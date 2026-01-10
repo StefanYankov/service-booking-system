@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ServiceBookingSystem.Application.Interfaces;
+using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Entities.Identity;
 using ServiceBookingSystem.Application.Services;
@@ -54,9 +55,9 @@ public partial class UsersServiceTests : IDisposable
 
     private async Task SeedData()
     {
-        await CreateRoleIfNotExists("Admin");
-        await CreateRoleIfNotExists("Manager");
-        await CreateRoleIfNotExists("Customer");
+        await CreateRoleIfNotExists(RoleConstants.Administrator);
+        await CreateRoleIfNotExists(RoleConstants.Provider);
+        await CreateRoleIfNotExists(RoleConstants.Customer);
 
         var admin = new ApplicationUser
         {
@@ -66,12 +67,12 @@ public partial class UsersServiceTests : IDisposable
             LastName = "Admin"
         };
 
-        var managerUser = new ApplicationUser
+        var provider = new ApplicationUser
         {
-            UserName = "manager@example.com",
-            Email = "manager@example.com",
+            UserName = "provider@example.com",
+            Email = "provider@example.com",
             FirstName = "Bob",
-            LastName = "Manager"
+            LastName = "Provider"
         };
 
         var customer1 = new ApplicationUser
@@ -92,18 +93,15 @@ public partial class UsersServiceTests : IDisposable
 
         // Create users (no password needed for roles test)
         await userManager.CreateAsync(admin, "TempPass123!");
-        await userManager.CreateAsync(managerUser, "TempPass123!");
+        await userManager.CreateAsync(provider, "TempPass123!");
         await userManager.CreateAsync(customer1, "TempPass123!");
         await userManager.CreateAsync(customer2, "TempPass123!");
 
         // Assign roles
-        await userManager.AddToRoleAsync(admin, "Admin");
-        await userManager.AddToRoleAsync(admin, "Manager");
-
-        await userManager.AddToRoleAsync(managerUser, "Manager");
-
-        await userManager.AddToRoleAsync(customer1, "Customer");
-        await userManager.AddToRoleAsync(customer2, "Customer");
+        await userManager.AddToRoleAsync(admin, RoleConstants.Administrator);
+        await userManager.AddToRoleAsync(provider, RoleConstants.Provider);
+        await userManager.AddToRoleAsync(customer1, RoleConstants.Customer);
+        await userManager.AddToRoleAsync(customer2, RoleConstants.Customer);
     }
 
     private async Task CreateRoleIfNotExists(string roleName)

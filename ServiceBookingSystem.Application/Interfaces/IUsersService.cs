@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using ServiceBookingSystem.Application.DTOs.Identity;
 using ServiceBookingSystem.Application.DTOs.Identity.User;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Core.Exceptions;
@@ -20,6 +21,13 @@ public interface IUsersService
     /// containing the outcome of the create operation, including any validation errors.
     /// </returns>
     Task<IdentityResult> CreateUserAsync(UserCreateDto dto);
+
+    /// <summary>
+    /// Asynchronously registers a new user (Customer or Provider) via the public API.
+    /// </summary>
+    /// <param name="dto">The registration details.</param>
+    /// <returns>The result of the registration operation.</returns>
+    Task<IdentityResult> RegisterUserAsync(RegisterDto dto);
     
     /// <summary>
     /// Asynchronously updates an existing user's profile information.
@@ -34,6 +42,23 @@ public interface IUsersService
     /// </returns>
     /// <exception cref="EntityNotFoundException">Thrown if a user with the ID specified in the DTO does not exist.</exception>
     Task<IdentityResult> UpdateUserAsync(UserUpdateDto dto);
+
+    /// <summary>
+    /// Asynchronously changes the password for a user.
+    /// </summary>
+    /// <param name="userId">The ID of the user changing their password.</param>
+    /// <param name="dto">The password change details (old and new password).</param>
+    /// <returns>The result of the password change operation.</returns>
+    /// <exception cref="EntityNotFoundException">Thrown if the user is not found.</exception>
+    Task<IdentityResult> ChangePasswordAsync(string userId, ChangePasswordDto dto);
+
+    /// <summary>
+    /// Asynchronously confirms a user's email address using a token.
+    /// </summary>
+    /// <param name="dto">The confirmation details (UserId and Token).</param>
+    /// <returns>The result of the confirmation operation.</returns>
+    /// <exception cref="EntityNotFoundException">Thrown if the user is not found.</exception>
+    Task<IdentityResult> ConfirmEmailAsync(ConfirmEmailDto dto);
 
     /// <summary>
     /// Asynchronously retrieves a paginated list of users, with optional filtering and sorting.
