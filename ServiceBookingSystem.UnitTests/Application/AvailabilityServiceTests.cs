@@ -31,7 +31,6 @@ public class AvailabilityServiceTests : IDisposable
             Id = "provider-1",
             FirstName = "Test",
             LastName = "Provider"
-            
         };
         
         var category = new Category
@@ -176,7 +175,7 @@ public class AvailabilityServiceTests : IDisposable
         var existingBooking = new Booking
         {
             ServiceId = 1,
-            CustomerId = "cust-1",
+            CustomerId = "customer-1",
             BookingStart = existingBookingStart,
             Status = BookingStatus.Confirmed
         };
@@ -217,7 +216,7 @@ public class AvailabilityServiceTests : IDisposable
         var existingBooking = new Booking
         {
             ServiceId = 1,
-            CustomerId = "cust-1",
+            CustomerId = "customer-1",
             BookingStart = existingBookingStart,
             Status = BookingStatus.Confirmed
         };
@@ -259,7 +258,7 @@ public class AvailabilityServiceTests : IDisposable
         var cancelledBooking = new Booking
         {
             ServiceId = 1,
-            CustomerId = "cust-1",
+            CustomerId = "customer-1",
             BookingStart = cancelledBookingStart,
             Status = BookingStatus.Cancelled
         };
@@ -267,7 +266,6 @@ public class AvailabilityServiceTests : IDisposable
         await dbContext.Bookings.AddAsync(cancelledBooking);
         await dbContext.SaveChangesAsync();
 
-        // Try to book the same slot as the cancelled one
         // Act:
         var result = await availabilityService.IsSlotAvailableAsync(1, cancelledBookingStart, 60);
 
@@ -351,5 +349,84 @@ public class AvailabilityServiceTests : IDisposable
         Assert.True(isMorningAvailable, "Morning slot should be available");
         Assert.False(isLunchAvailable, "Lunch slot should be unavailable");
         Assert.True(isAfternoonAvailable, "Afternoon slot should be available");
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_NoOperatingHours_ShouldReturnEmpty()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+
+        // Act:
+        var result = await availabilityService.GetAvailableSlotsAsync(1, DateTime.UtcNow.AddDays(1));
+
+        // Assert:
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_NoBookings_ShouldReturnAllSlots()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1);
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            StartTime = new TimeOnly(9, 0), 
+            EndTime = new TimeOnly(12, 0) 
+        };
+        
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+
+        // Assert:
+        // 9-10, 10-11, 11-12. (3 slots)
+        Assert.Equal(3, result.Count());
+        Assert.Contains(new TimeOnly(9, 0), result);
+        Assert.Contains(new TimeOnly(10, 0), result);
+        Assert.Contains(new TimeOnly(11, 0), result);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_WithConflict_ShouldFilterSlots()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1).Date; // Tomorrow 00:00
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            StartTime = new TimeOnly(9, 0), 
+            EndTime = new TimeOnly(12, 0) 
+        };
+        
+        // Booking from 10:00 to 11:00
+        var booking = new Booking
+        {
+            ServiceId = 1,
+            CustomerId = "customer-1",
+            BookingStart = date.AddHours(10),
+            Status = BookingStatus.Confirmed
+        };
+        
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.Bookings.AddAsync(booking);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+
+        // Assert:
+        // 9-10 (Free), 10-11 (Taken), 11-12 (Free)
+        Assert.Equal(2, result.Count());
+        Assert.Contains(new TimeOnly(9, 0), result);
+        Assert.DoesNotContain(new TimeOnly(10, 0), result);
+        Assert.Contains(new TimeOnly(11, 0), result);
     }
 }
