@@ -28,13 +28,30 @@ public class BookingControllerTests : BaseIntegrationTest
 
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        var customer = new ApplicationUser
+        {
+            UserName = customerEmail,
+            Email = customerEmail,
+            FirstName = "Test",
+            LastName = "Customer"
+        };
         await userManager.CreateAsync(customer, password);
 
-        var provider = new ApplicationUser { Id = providerId, UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        var provider = new ApplicationUser
+        {
+            Id = providerId,
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
         await userManager.CreateAsync(provider, "Password123!");
 
-        var category = new Category { Name = "Test Category", Description = "Desc" };
+        var category = new Category
+        {
+            Name = "Test Category",
+            Description = "Desc"
+        };
         await this.DbContext.Categories.AddAsync(category);
         await this.DbContext.SaveChangesAsync(); 
 
@@ -118,14 +135,34 @@ public class BookingControllerTests : BaseIntegrationTest
         const string password = "Password123!";
         
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
         await userManager.CreateAsync(provider, "Password123!");
 
-        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
         await this.DbContext.Categories.AddAsync(category);
         await this.DbContext.SaveChangesAsync();
 
-        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = "provider-1", DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            DurationInMinutes = 60,
+            Price = 100,
+            IsActive = true,
+            CategoryId = category.Id
+        };
         await this.DbContext.Services.AddAsync(service);
         await this.DbContext.SaveChangesAsync();
 
@@ -155,19 +192,44 @@ public class BookingControllerTests : BaseIntegrationTest
         var bookingStart = DateTime.UtcNow.AddDays(2);
 
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        var customer = new ApplicationUser
+        {
+            UserName = customerEmail,
+            Email = customerEmail,
+            FirstName = "Test",
+            LastName = "Customer"
+        };
         await userManager.CreateAsync(customer, password);
 
-        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
         await userManager.CreateAsync(provider, "Password123!");
         
-        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
         await this.DbContext.Categories.AddAsync(category);
         await this.DbContext.SaveChangesAsync();
 
-        var service = new Service { Name = "Closed Service", Description = "Desc", ProviderId = "provider-1", DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        var service = new Service
+        {
+            Name = "Closed Service",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            DurationInMinutes = 60,
+            Price = 100, 
+            IsActive = true,
+            CategoryId = category.Id
+        };
         await this.DbContext.Services.AddAsync(service);
-        // NO Operating Hours added
         await this.DbContext.SaveChangesAsync();
 
         var token = await GetAuthTokenAsync(customerEmail, password);
@@ -198,21 +260,53 @@ public class BookingControllerTests : BaseIntegrationTest
         var bookingStart = DateTime.UtcNow.AddDays(3);
 
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        var customer = new ApplicationUser
+        {
+            UserName = customerEmail,
+            Email = customerEmail,
+            FirstName = "Test",
+            LastName = "Customer"
+        };
         await userManager.CreateAsync(customer, password);
 
-        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
         await userManager.CreateAsync(provider, "Password123!");
         
-        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
         await this.DbContext.Categories.AddAsync(category);
         await this.DbContext.SaveChangesAsync();
 
-        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = "provider-1", DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            DurationInMinutes = 60,
+            Price = 100,
+            IsActive = true,
+            CategoryId = category.Id
+        };
         await this.DbContext.Services.AddAsync(service);
         await this.DbContext.SaveChangesAsync();
         
-        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = bookingStart.DayOfWeek, StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) };
+        var operatingHour = new OperatingHour
+        {
+            ServiceId = service.Id,
+            DayOfWeek = bookingStart.DayOfWeek,
+            StartTime = new TimeOnly(0, 0),
+            EndTime = new TimeOnly(23, 59)
+        };
         await this.DbContext.OperatingHours.AddAsync(operatingHour);
         await this.DbContext.SaveChangesAsync();
 
@@ -244,17 +338,44 @@ public class BookingControllerTests : BaseIntegrationTest
         var bookingStart = DateTime.UtcNow.AddDays(4);
 
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        var customer = new ApplicationUser
+        {
+            UserName = customerEmail,
+            Email = customerEmail,
+            FirstName = "Test",
+            LastName = "Customer"
+        };
         await userManager.CreateAsync(customer, password);
         
-        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
         await userManager.CreateAsync(provider, "Password123!");
 
-        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
         await this.DbContext.Categories.AddAsync(category);
         await this.DbContext.SaveChangesAsync();
 
-        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = provider.Id,
+            DurationInMinutes = 60,
+            Price = 100,
+            IsActive = true,
+            CategoryId = category.Id
+        };
+        
         await this.DbContext.Services.AddAsync(service);
         await this.DbContext.SaveChangesAsync();
 
@@ -310,28 +431,66 @@ public class BookingControllerTests : BaseIntegrationTest
         const string password = "Password123!";
 
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var owner = new ApplicationUser { UserName = ownerEmail, Email = ownerEmail, FirstName = "Owner", LastName = "User" };
+        var owner = new ApplicationUser
+        {
+            UserName = ownerEmail,
+            Email = ownerEmail,
+            FirstName = "Owner",
+            LastName = "User"
+        };
+        
         await userManager.CreateAsync(owner, password);
         
-        var hacker = new ApplicationUser { UserName = hackerEmail, Email = hackerEmail, FirstName = "Hacker", LastName = "User" };
+        var hacker = new ApplicationUser
+        {
+            UserName = hackerEmail,
+            Email = hackerEmail,
+            FirstName = "Hacker",
+            LastName = "User"
+        };
         await userManager.CreateAsync(hacker, password);
         
-        var provider = new ApplicationUser { Id = "provider-1", UserName = "provider@test.com", Email = "provider@test.com", FirstName = "Test", LastName = "Provider" };
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
         await userManager.CreateAsync(provider, "Password123!");
 
-        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
         await this.DbContext.Categories.AddAsync(category);
         await this.DbContext.SaveChangesAsync();
 
-        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = provider.Id,
+            DurationInMinutes = 60,
+            Price = 100,
+            IsActive = true,
+            CategoryId = category.Id
+        };
+        
         await this.DbContext.Services.AddAsync(service);
         await this.DbContext.SaveChangesAsync();
 
-        var booking = new Booking { ServiceId = service.Id, CustomerId = owner.Id, BookingStart = DateTime.UtcNow.AddDays(1) };
+        var booking = new Booking
+        {
+            ServiceId = service.Id,
+            CustomerId = owner.Id,
+            BookingStart = DateTime.UtcNow.AddDays(1)
+        };
         await this.DbContext.Bookings.AddAsync(booking);
         await this.DbContext.SaveChangesAsync();
 
-        // Login as Hacker
         var token = await GetAuthTokenAsync(hackerEmail, password);
         this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -351,25 +510,55 @@ public class BookingControllerTests : BaseIntegrationTest
         const string password = "Password123!";
 
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var provider = new ApplicationUser { UserName = providerEmail, Email = providerEmail, FirstName = "Test", LastName = "Provider" };
+        var provider = new ApplicationUser
+        {
+            UserName = providerEmail,
+            Email = providerEmail,
+            FirstName = "Test",
+            LastName = "Provider"
+        };
         await userManager.CreateAsync(provider, password);
         
-        var customer = new ApplicationUser { UserName = customerEmail, Email = customerEmail, FirstName = "Test", LastName = "Customer" };
+        var customer = new ApplicationUser
+        {
+            UserName = customerEmail,
+            Email = customerEmail,
+            FirstName = "Test",
+            LastName = "Customer"
+        };
         await userManager.CreateAsync(customer, password);
 
-        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
         await this.DbContext.Categories.AddAsync(category);
         await this.DbContext.SaveChangesAsync();
 
-        var service = new Service { Name = "Service 1", Description = "Desc", ProviderId = provider.Id, DurationInMinutes = 60, Price = 100, IsActive = true, CategoryId = category.Id };
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc", 
+            ProviderId = provider.Id,
+            DurationInMinutes = 60, 
+            Price = 100, 
+            IsActive = true, 
+            CategoryId = category.Id
+        };
         await this.DbContext.Services.AddAsync(service);
         await this.DbContext.SaveChangesAsync();
 
-        var booking = new Booking { ServiceId = service.Id, CustomerId = customer.Id, BookingStart = DateTime.UtcNow.AddDays(1), Status = BookingStatus.Pending };
+        var booking = new Booking
+        {
+            ServiceId = service.Id,
+            CustomerId = customer.Id,
+            BookingStart = DateTime.UtcNow.AddDays(1),
+            Status = BookingStatus.Pending
+        };
         await this.DbContext.Bookings.AddAsync(booking);
         await this.DbContext.SaveChangesAsync();
 
-        // Login as Provider
         var token = await GetAuthTokenAsync(providerEmail, password);
         this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -387,7 +576,11 @@ public class BookingControllerTests : BaseIntegrationTest
     {
         // Arrange:
         this.Client.DefaultRequestHeaders.Authorization = null;
-        var bookingDto = new BookingCreateDto { ServiceId = 1, BookingStart = DateTime.UtcNow.AddDays(1) };
+        var bookingDto = new BookingCreateDto
+        {
+            ServiceId = 1,
+            BookingStart = DateTime.UtcNow.AddDays(1)
+        };
 
         // Act:
         var response = await this.Client.PostAsJsonAsync("/api/booking", bookingDto);
@@ -396,12 +589,279 @@ public class BookingControllerTests : BaseIntegrationTest
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Update_WithValidData_ShouldUpdateBooking()
+    {
+        // Arrange:
+        const string customerEmail = "customer@test.com";
+        const string password = "Password123!";
+        var bookingStart = DateTime.UtcNow.AddDays(1);
+        var newStart = bookingStart.AddDays(1);
+
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customer = new ApplicationUser
+        {
+            UserName = customerEmail,
+            Email = customerEmail,
+            FirstName = "Test",
+            LastName = "Customer"
+        };
+        await userManager.CreateAsync(customer, password);
+
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
+        await userManager.CreateAsync(provider, "Password123!");
+
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
+
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            DurationInMinutes = 60,
+            Price = 100,
+            IsActive = true,
+            CategoryId = category.Id
+        };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
+
+        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = newStart.DayOfWeek, StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) };
+        await this.DbContext.OperatingHours.AddAsync(operatingHour);
+        await this.DbContext.SaveChangesAsync();
+
+        var booking = new Booking { ServiceId = service.Id, CustomerId = customer.Id, BookingStart = bookingStart, Status = BookingStatus.Pending };
+        await this.DbContext.Bookings.AddAsync(booking);
+        await this.DbContext.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync(customerEmail, password);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var updateDto = new BookingUpdateDto
+        {
+            Id = booking.Id,
+            BookingStart = newStart,
+            Notes = "Rescheduled"
+        };
+
+        // Act:
+        var response = await this.Client.PutAsJsonAsync($"/api/booking/{booking.Id}", updateDto);
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var updatedBooking = await response.Content.ReadFromJsonAsync<BookingViewDto>();
+        Assert.Equal(newStart, updatedBooking!.BookingStart);
+        Assert.Equal("Rescheduled", updatedBooking.Notes);
+    }
+
+    [Fact]
+    public async Task Update_WithConflict_ShouldReturnConflict()
+    {
+        // Arrange:
+        const string customerEmail = "customer@test.com";
+        const string password = "Password123!";
+        var bookingStart = DateTime.UtcNow.AddDays(1);
+        var newStart = bookingStart.AddDays(1);
+
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customer = new ApplicationUser
+        {
+            UserName = customerEmail,
+            Email = customerEmail,
+            FirstName = "Test",
+            LastName = "Customer"
+        };
+        await userManager.CreateAsync(customer, password);
+
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
+        await userManager.CreateAsync(provider, "Password123!");
+
+        var category = new Category { Name = "Cat 1", Description = "Desc" };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
+
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            DurationInMinutes = 60,
+            Price = 100,
+            IsActive = true,
+            CategoryId = category.Id
+        };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
+
+        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = newStart.DayOfWeek, StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) };
+        await this.DbContext.OperatingHours.AddAsync(operatingHour);
+        await this.DbContext.SaveChangesAsync();
+
+        var otherUser = new ApplicationUser
+        {
+            Id = "other",
+            UserName = "other@test.com",
+            Email = "other@test.com",
+            FirstName = "Other",
+            LastName = "User"
+        };
+        
+        await userManager.CreateAsync(otherUser, "Password123!");
+
+        var existingBooking = new Booking
+        {
+            ServiceId = service.Id,
+            CustomerId = "other",
+            BookingStart = newStart,
+            Status = BookingStatus.Confirmed
+        };
+        await this.DbContext.Bookings.AddAsync(existingBooking);
+
+        var booking = new Booking
+        {
+            ServiceId = service.Id,
+            CustomerId = customer.Id,
+            BookingStart = bookingStart,
+            Status = BookingStatus.Pending
+        };
+        
+        await this.DbContext.Bookings.AddAsync(booking);
+        await this.DbContext.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync(customerEmail, password);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var updateDto = new BookingUpdateDto
+        {
+            Id = booking.Id,
+            BookingStart = newStart,
+            Notes = "Rescheduled"
+        };
+
+        // Act:
+        var response = await this.Client.PutAsJsonAsync($"/api/booking/{booking.Id}", updateDto);
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_OtherUsersBooking_ShouldReturn403Forbidden()
+    {
+        // Arrange:
+        const string ownerEmail = "owner@test.com";
+        const string hackerEmail = "hacker@test.com";
+        const string password = "Password123!";
+
+        var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var owner = new ApplicationUser
+        {
+            UserName = ownerEmail,
+            Email = ownerEmail,
+            FirstName = "Owner",
+            LastName = "User"
+        };
+        await userManager.CreateAsync(owner, password);
+        
+        var hacker = new ApplicationUser
+        {
+            UserName = hackerEmail,
+            Email = hackerEmail,
+            FirstName = "Hacker",
+            LastName = "User"
+        };
+        await userManager.CreateAsync(hacker, password);
+        
+        var provider = new ApplicationUser
+        {
+            Id = "provider-1",
+            UserName = "provider@test.com",
+            Email = "provider@test.com",
+            FirstName = "Test",
+            LastName = "Provider"
+        };
+        await userManager.CreateAsync(provider, "Password123!");
+
+        var category = new Category
+        {
+            Name = "Cat 1",
+            Description = "Desc"
+        };
+        await this.DbContext.Categories.AddAsync(category);
+        await this.DbContext.SaveChangesAsync();
+
+        var service = new Service
+        {
+            Name = "Service 1",
+            Description = "Desc",
+            ProviderId = "provider-1",
+            DurationInMinutes = 60,
+            Price = 100,
+            IsActive = true,
+            CategoryId = category.Id
+        };
+        await this.DbContext.Services.AddAsync(service);
+        await this.DbContext.SaveChangesAsync();
+
+        var booking = new Booking
+        {
+            ServiceId = service.Id,
+            CustomerId = owner.Id,
+            BookingStart = DateTime.UtcNow.AddDays(1),
+            Status = BookingStatus.Pending
+        };
+        await this.DbContext.Bookings.AddAsync(booking);
+        await this.DbContext.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync(hackerEmail, password);
+        this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var updateDto = new BookingUpdateDto
+        {
+            Id = booking.Id,
+            BookingStart = DateTime.UtcNow.AddDays(2),
+            Notes = "Hacked"
+        };
+
+        // Act:
+        var response = await this.Client.PutAsJsonAsync($"/api/booking/{booking.Id}", updateDto);
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
     // --- Helpers ---
 
     private async Task SeedUserAsync(string email, string password)
     {
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var user = new ApplicationUser { UserName = email, Email = email, FirstName = "Test", LastName = "User" };
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            FirstName = "Test",
+            LastName = "User"
+        };
         await userManager.CreateAsync(user, password);
     }
 
@@ -415,6 +875,6 @@ public class BookingControllerTests : BaseIntegrationTest
 
     private class LoginResult
     {
-        public string Token { get; set; } = null!;
+        public string Token { get; init; } = null!;
     }
 }

@@ -67,6 +67,33 @@ public class BookingController : BaseApiController
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    [HttpPut("{id}")]
+    [ProducesResponseType(typeof(BookingViewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<BookingViewDto>> Update(string id, [FromBody] BookingUpdateDto dto,
+        CancellationToken cancellationToken)
+    {
+        var userId = this.GetCurrentUserId();
+        logger.LogDebug("API: Update booking {BookingId} request received from user {UserId}", id, userId);
+
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        if (id != dto.Id)
+        {
+            // TODO: refactor to RFC 7807
+            return BadRequest("ID mismatch");
+        }
+
+        var result = await this.bookingService.UpdateBookingAsync(dto, userId, cancellationToken);
+        return Ok(result);
+    }
+
     [HttpGet("my-bookings")]
     [ProducesResponseType(typeof(PagedResult<BookingViewDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
