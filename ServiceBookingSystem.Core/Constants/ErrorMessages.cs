@@ -28,4 +28,6 @@ public static class ErrorMessages
     public const string AtLeastOneRoleIsRequired = "At least one role must be assigned.";
     
     public const string AtLeastOneMinuteDuration = "Duration must be at least 1 minute.";
+
+    public const string PasswordsDoNotMatch = "The new password and confirmation password do not match.";
 }

@@ -6,7 +6,6 @@ using ServiceBookingSystem.Application.DTOs.Identity;
 using ServiceBookingSystem.Application.DTOs.Identity.User;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
-using ServiceBookingSystem.Core.Constants;
 using ServiceBookingSystem.Core.Exceptions;
 using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Entities.Identity;
@@ -102,10 +101,9 @@ public class UsersService : IUsersService
     public async Task<IdentityResult> RegisterUserAsync(RegisterDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        logger
-            .LogDebug("Attempting to register new user with Email: {Email} and Role: {Role}",
-                dto.Email, dto.Role);
+        logger.LogDebug("Attempting to register new user with Email: {Email} and Role: {Role}", dto.Email, dto.Role);
 
+        // Validate Role: Only Customer or Provider allowed for public registration
         if (dto.Role != RoleConstants.Customer && dto.Role != RoleConstants.Provider)
         {
             logger.LogWarning("Invalid role registration attempt: {Role}", dto.Role);
@@ -131,6 +129,8 @@ public class UsersService : IUsersService
             logger.LogInformation("User {UserId} registered successfully", user.Id);
             await userManager.AddToRoleAsync(user, dto.Role);
 
+            // Send Welcome Email (Reuse logic or create new template)
+            // For now, reusing ConfirmEmail logic
             var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
             var baseUrl = configuration["WebAppSettings:BaseUrl"];
             var confirmationLink = $"{baseUrl}/Identity/Account/ConfirmEmail?userId={user.Id}&code={System.Net.WebUtility.UrlEncode(token)}";
@@ -349,6 +349,60 @@ public class UsersService : IUsersService
         }
 
         return updateResult;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IdentityResult> ChangePasswordAsync(string userId, ChangePasswordDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        logger.LogDebug("Attempting to change password for User {UserId}", userId);
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            throw new EntityNotFoundException(nameof(ApplicationUser), userId);
+        }
+
+        var result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
+
+        if (result.Succeeded)
+        {
+            logger.LogInformation("Password changed successfully for User {UserId}", userId);
+        }
+        else
+        {
+            logger.LogWarning("Failed to change password for User {UserId}. Errors: {Errors}", userId,
+                result.Errors.Select(e => e.Description));
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IdentityResult> ConfirmEmailAsync(ConfirmEmailDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        logger.LogDebug("Attempting to confirm email for User {UserId}", dto.UserId);
+
+        var user = await userManager.FindByIdAsync(dto.UserId);
+        if (user is null)
+        {
+            throw new EntityNotFoundException(nameof(ApplicationUser), dto.UserId);
+        }
+
+        var result = await userManager.ConfirmEmailAsync(user, dto.Code);
+
+        if (result.Succeeded)
+        {
+            logger.LogInformation("Email confirmed successfully for User {UserId}", dto.UserId);
+        }
+        else
+        {
+            logger.LogWarning("Failed to confirm email for User {UserId}. Errors: {Errors}", dto.UserId,
+                result.Errors.Select(e => e.Description));
+        }
+
+        return result;
     }
 
     /// <inheritdoc/>
