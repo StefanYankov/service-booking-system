@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Respawn;
-using Respawn.Graph;
 using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Data.Seeders;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
+using Xunit.Abstractions;
 
 namespace ServiceBookingSystem.IntegrationTests;
 
@@ -23,10 +23,18 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     protected readonly HttpClient Client;
     protected readonly ApplicationDbContext DbContext;
     protected readonly IServiceProvider ServiceProvider;
+    protected readonly ITestOutputHelper Output;
 
-    protected BaseIntegrationTest(CustomWebApplicationFactory<Program> factory)
+    protected BaseIntegrationTest(CustomWebApplicationFactory<Program> factory, ITestOutputHelper output)
     {
         this.factory = factory;
+        this.Output = output;
+        
+        // Wire up the logger. 
+        // The factory implements ITestOutputHelperAccessor, so setting this property
+        // directs the MartinCostello.Logging.XUnit logger to the current test's output.
+        this.factory.OutputHelper = output;
+        
         this.Client = factory.CreateClient();
         
         // Create a scope for the test method to resolve scoped services (like DbContext).
@@ -37,6 +45,9 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        // Ensure the logger is set for this test run
+        this.factory.OutputHelper = this.Output;
+
         // Initialize Respawner once per factory instance (lazy loading).
         if (respawner == null)
         {
@@ -48,8 +59,8 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
                 
                 respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
                 {
-                    TablesToIgnore = new Table[] { "__EFMigrationsHistory" },
-                    SchemasToInclude = new[] { "dbo" },
+                    TablesToIgnore = ["__EFMigrationsHistory"],
+                    SchemasToInclude = ["dbo"],
                     DbAdapter = DbAdapter.SqlServer
                 });
             }
@@ -64,7 +75,6 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         }
         
         // Re-seed essential data (Roles) because Respawn wiped them.
-        // This ensures every test starts with a "freshly seeded" DB state.
         var rolesSeeder = this.ServiceProvider.GetRequiredService<RolesSeeder>();
         await rolesSeeder.SeedAsync(this.ServiceProvider);
     }
@@ -72,5 +82,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     public async Task DisposeAsync()
     {
         this.scope.Dispose();
+        // Clear output to prevent writing to disposed helper
+        this.factory.OutputHelper = null;
     }
 }
