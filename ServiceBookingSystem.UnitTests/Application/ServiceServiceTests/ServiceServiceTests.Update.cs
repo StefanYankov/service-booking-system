@@ -244,7 +244,8 @@ public partial class ServiceServiceTests
             failingDbContext,
             loggerMock.Object,
             this.usersServiceMock.Object,
-            this.categoryServiceMock.Object
+            this.categoryServiceMock.Object,
+            this.imageServiceMock.Object
         );
 
         var mockCategoryDto = new CategoryViewDto()

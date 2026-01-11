@@ -1,5 +1,7 @@
-﻿using ServiceBookingSystem.Application.DTOs.Service;
+﻿using Microsoft.AspNetCore.Http;
+using ServiceBookingSystem.Application.DTOs.Service;
 using ServiceBookingSystem.Application.DTOs.Shared;
+using ServiceBookingSystem.Core.Exceptions;
 
 namespace ServiceBookingSystem.Application.Interfaces;
 
@@ -57,4 +59,27 @@ public interface IServiceService
     /// <param name="cancellationToken">A token to allow the operation to be cancelled.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a paged list of service view models.</returns>
     Task<PagedResult<ServiceViewDto>> GetServicesByProviderAsync(string providerId, PagingAndSortingParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Uploads an image for a service.
+    /// </summary>
+    /// <param name="serviceId">The ID of the service.</param>
+    /// <param name="userId">The ID of the user (provider) performing the upload.</param>
+    /// <param name="file">The image file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The URL of the uploaded image.</returns>
+    /// <exception cref="EntityNotFoundException">Thrown if the service is not found.</exception>
+    /// <exception cref="AuthorizationException">Thrown if the user is not the owner of the service.</exception>
+    Task<string> AddImageAsync(int serviceId, string userId, IFormFile file, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes an image from a service.
+    /// </summary>
+    /// <param name="serviceId">The ID of the service.</param>
+    /// <param name="userId">The ID of the user (provider) performing the deletion.</param>
+    /// <param name="imageId">The ID of the image to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="EntityNotFoundException">Thrown if the image or service is not found.</exception>
+    /// <exception cref="AuthorizationException">Thrown if the user is not the owner of the service.</exception>
+    Task DeleteImageAsync(int serviceId, string userId, int imageId, CancellationToken cancellationToken = default);
 }

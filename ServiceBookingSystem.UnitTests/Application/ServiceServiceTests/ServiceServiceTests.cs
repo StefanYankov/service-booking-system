@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ServiceBookingSystem.Application.Interfaces;
+using ServiceBookingSystem.Application.Interfaces.Infrastructure;
 using ServiceBookingSystem.Application.Services;
 using ServiceBookingSystem.Data.Contexts;
 
@@ -17,6 +18,7 @@ public partial class ServiceServiceTests : IDisposable
     private readonly ILogger<ServiceService> logger;
     private readonly Mock<IUsersService> usersServiceMock;
     private readonly Mock<ICategoryService> categoryServiceMock;
+    private readonly Mock<IImageService> imageServiceMock;
     private readonly ServiceService serviceService;
 
     public ServiceServiceTests()
@@ -30,12 +32,14 @@ public partial class ServiceServiceTests : IDisposable
 
         this.usersServiceMock = new Mock<IUsersService>();
         this.categoryServiceMock = new Mock<ICategoryService>();
+        this.imageServiceMock = new Mock<IImageService>();
 
         this.serviceService = new ServiceService(
             dbContext,
             logger,
             usersServiceMock.Object,
-            categoryServiceMock.Object
+            categoryServiceMock.Object,
+            imageServiceMock.Object
         );
     }
 

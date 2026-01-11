@@ -15,7 +15,7 @@ namespace ServiceBookingSystem.IntegrationTests;
 [Collection("Integration Tests")]
 public abstract class BaseIntegrationTest : IAsyncLifetime
 {
-    private readonly CustomWebApplicationFactory<Program> factory;
+    protected readonly CustomWebApplicationFactory<Program> Factory;
     private readonly IServiceScope scope;
     private static Respawner? respawner;
     private static string? connectionString;
@@ -27,13 +27,13 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
 
     protected BaseIntegrationTest(CustomWebApplicationFactory<Program> factory, ITestOutputHelper output)
     {
-        this.factory = factory;
+        this.Factory = factory;
         this.Output = output;
         
         // Wire up the logger. 
         // The factory implements ITestOutputHelperAccessor, so setting this property
         // directs the MartinCostello.Logging.XUnit logger to the current test's output.
-        this.factory.OutputHelper = output;
+        this.Factory.OutputHelper = output;
         
         this.Client = factory.CreateClient();
         
@@ -46,7 +46,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Ensure the logger is set for this test run
-        this.factory.OutputHelper = this.Output;
+        this.Factory.OutputHelper = this.Output;
 
         // Initialize Respawner once per factory instance (lazy loading).
         if (respawner == null)
@@ -83,6 +83,6 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     {
         this.scope.Dispose();
         // Clear output to prevent writing to disposed helper
-        this.factory.OutputHelper = null;
+        this.Factory.OutputHelper = null;
     }
 }
