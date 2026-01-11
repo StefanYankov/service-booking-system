@@ -195,7 +195,8 @@ public partial class ServiceServiceTests
             failingDbContext,
             loggerMock.Object,
             this.usersServiceMock.Object,
-            this.categoryServiceMock.Object
+            this.categoryServiceMock.Object,
+            this.imageServiceMock.Object
         );
         
         const string providerId = "provider-user-id";

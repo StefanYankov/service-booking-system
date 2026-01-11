@@ -17,6 +17,13 @@ public class ServiceImage : AuditableEntity<int>
     [Required]
     [StringLength(2048)]
     public required string ImageUrl { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the public identifier for the image in the external storage provider (e.g., Cloudinary Public ID).
+    /// Used for deletion.
+    /// </summary>
+    [StringLength(255)]
+    public string? PublicId { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this is the main thumbnail image for the service.

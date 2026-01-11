@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ServiceBookingSystem.Application.DTOs.Service;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
+using ServiceBookingSystem.Application.Interfaces.Infrastructure;
 using ServiceBookingSystem.Core.Constants;
 using ServiceBookingSystem.Core.Exceptions;
 using ServiceBookingSystem.Data.Contexts;
@@ -18,17 +20,20 @@ public class ServiceService : IServiceService
     private readonly ILogger<ServiceService> logger;
     private readonly ICategoryService categoryService;
     private readonly IUsersService usersService;
+    private readonly IImageService imageService;
 
     public ServiceService(
         ApplicationDbContext dbContext,
         ILogger<ServiceService> logger,
         IUsersService usersService,
-        ICategoryService categoryService)
+        ICategoryService categoryService,
+        IImageService imageService)
     {
         this.dbContext = dbContext;
         this.logger = logger;
         this.usersService = usersService;
         this.categoryService = categoryService;
+        this.imageService = imageService;
     }
 
     /// <inheritdoc/>
@@ -129,7 +134,7 @@ public class ServiceService : IServiceService
             "Attempting to update a new Service with Name: {ServiceName}, ID: {ServiceId} to a provider with an ID {providerId}",
             dto.Name, dto.Id, providerId);
 
-        var serviceToUpdate = await dbContext.Services.FindAsync(new object[] { dto.Id }, cancellationToken);
+        var serviceToUpdate = await dbContext.Services.FindAsync([dto.Id], cancellationToken);
         if (serviceToUpdate == null)
         {
             logger.LogWarning("Attempted to update non-existent Service {ServiceId}", dto.Id);
@@ -212,7 +217,7 @@ public class ServiceService : IServiceService
         logger.LogDebug("Attempting to delete Service {ServiceId} owned by {ProviderId}", serviceId, providerId);
         var serviceToDelete = await dbContext
             .Services
-            .FindAsync(new object[] { serviceId }, cancellationToken);
+            .FindAsync([serviceId], cancellationToken);
 
         if (serviceToDelete == null)
         {
@@ -415,5 +420,77 @@ public class ServiceService : IServiceService
             .ToListAsync(cancellationToken);
 
         return new PagedResult<ServiceViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
+    }
+
+    /// <inheritdoc/>
+    public async Task<string> AddImageAsync(int serviceId, string userId, IFormFile file, CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Attempting to add image for Service {ServiceId} by User {UserId}", serviceId, userId);
+
+        var service = await dbContext.Services.FindAsync([serviceId], cancellationToken);
+        if (service == null)
+        {
+            throw new EntityNotFoundException(nameof(Service), serviceId);
+        }
+
+        if (service.ProviderId != userId)
+        {
+            logger.LogWarning("User {UserId} attempted to add image to Service {ServiceId} owned by {OwnerId}", userId, serviceId, service.ProviderId);
+            throw new AuthorizationException(userId, $"Add Image to Service {serviceId}");
+        }
+
+        var uploadResult = await imageService.AddImageAsync(file);
+
+        var serviceImage = new ServiceImage
+        {
+            ServiceId = serviceId,
+            ImageUrl = uploadResult.Url,
+            PublicId = uploadResult.PublicId
+        };
+
+        await dbContext.ServiceImages.AddAsync(serviceImage, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Image added to Service {ServiceId}. URL: {Url}", serviceId, uploadResult.Url);
+        return uploadResult.Url;
+    }
+
+    /// <inheritdoc/>
+    public async Task DeleteImageAsync(int serviceId, string userId, int imageId, CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Attempting to delete Image {ImageId} from Service {ServiceId} by User {UserId}", imageId, serviceId, userId);
+
+        var image = await dbContext.ServiceImages
+            .Include(i => i.Service)
+            .FirstOrDefaultAsync(i => i.Id == imageId, cancellationToken);
+
+        if (image == null)
+        {
+            throw new EntityNotFoundException(nameof(ServiceImage), imageId);
+        }
+
+        if (image.ServiceId != serviceId)
+        {
+            // Mismatch between URL serviceId and image's actual serviceId
+            throw new EntityNotFoundException(nameof(ServiceImage), imageId);
+        }
+
+        if (image.Service.ProviderId != userId)
+        {
+            logger.LogWarning("User {UserId} attempted to delete image {ImageId} owned by {OwnerId}", userId, imageId, image.Service.ProviderId);
+            throw new AuthorizationException(userId, $"Delete Image {imageId}");
+        }
+
+        // Delete from Cloudinary
+        if (!string.IsNullOrEmpty(image.PublicId))
+        {
+            await imageService.DeleteImageAsync(image.PublicId);
+        }
+
+        // Delete from DB
+        dbContext.ServiceImages.Remove(image);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Image {ImageId} deleted from Service {ServiceId}", imageId, serviceId);
     }
 }

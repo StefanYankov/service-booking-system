@@ -224,7 +224,8 @@ public partial class ServiceServiceTests
             failingTestContext,
             loggerMock.Object,
             this.usersServiceMock.Object,
-            this.categoryServiceMock.Object);
+            this.categoryServiceMock.Object,
+            this.imageServiceMock.Object);
 
         // Act & Assert:
         await Assert.ThrowsAsync<DbUpdateException>(() =>
