@@ -45,4 +45,10 @@ public static class ValidationConstraints
     {
         public const int NotesMaxLength = 1000;
     }
+
+    public static class Image
+    {
+        public const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
+        public static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+    }
 }
