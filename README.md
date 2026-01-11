@@ -72,15 +72,20 @@ The project has a solid architectural foundation, with the following key pattern
     -   A `BookingService` for managing the entire booking lifecycle (Create, Read, Update, Cancel, Confirm, Decline, Complete).
     -   A `ReviewService` for managing customer reviews and ratings.
     -   An `AvailabilityService` that handles complex scheduling logic, including operating hours, split shifts, and booking overlaps.
-5.  **Infrastructure Layer & External Services**:
+5.  **API Layer**:
+    -   A comprehensive REST API exposing all core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
+    -   **Image Management**: Endpoints for uploading and managing service images.
+    -   **Validation**: Robust input validation using Data Annotations and custom logic.
+6.  **Infrastructure Layer & External Services**:
     -   A dedicated `.Infrastructure` project for decoupled external service implementations.
-    -   An **Email Notification Service** with `SendGrid` (production) and `NullEmailService` (development) implementations.
+    -   **Email Notification Service**: Automated emails for booking events (Created, Confirmed, Cancelled) using `SendGrid` (production) or `NullEmailService` (development).
+    -   **Image Storage**: Integration with **Cloudinary** for scalable image hosting and transformation.
     -   An `ITemplateService` that renders HTML email templates from embedded resources.
-6.  **Database Seeding**: A decoupled, composite seeder pattern for essential data (`Roles`, `Administrator`).
-7.  **Testing**:
+7.  **Database Seeding**: A decoupled, composite seeder pattern for essential data (`Roles`, `Administrator`).
+8.  **Testing**:
     -   **Unit Tests**: High coverage using xUnit and Moq for business logic.
     -   **Integration Tests**: Tests using **Testcontainers (SQL Server)** and **Respawn** to verify the full stack against a real database.
-8.  **Logging**: Configured Serilog for structured logging to both the console and rolling files.
+9.  **Logging**: Configured Serilog for structured logging to both the console and rolling files.
 
 ## Technology Stack
 
@@ -90,6 +95,7 @@ The project has a solid architectural foundation, with the following key pattern
 -   **Testing:** xUnit, Moq, Testcontainers, Respawn
 -   **Logging:** Serilog
 -   **Email:** SendGrid
+-   **Storage:** Cloudinary
 
 ## Getting Started
 
@@ -99,16 +105,20 @@ The project has a solid architectural foundation, with the following key pattern
 -   A code editor (e.g., JetBrains Rider, Visual Studio)
 -   **Docker Desktop** (Required for Integration Tests)
 -   (Optional) A SendGrid account and API key for testing real email sending.
+-   (Optional) A Cloudinary account for image uploads.
 
 ### Configuration
 
 1.  Clone the repository.
 2.  The application uses `appsettings.Development.json` for local development configuration. Ensure the `ConnectionStrings` section is configured for your local database.
-3.  **API Keys (Important!):** It is strongly recommended to store the `SendGridApiKey` and `Jwt:Key` using the .NET Secret Manager. To set the secrets, navigate to the `ServiceBookingSystem.Web` project directory in your terminal and run:
+3.  **API Keys (Important!):** It is strongly recommended to store sensitive keys using the .NET Secret Manager. To set the secrets, navigate to the `ServiceBookingSystem.Web` project directory in your terminal and run:
     ```bash
     dotnet user-secrets init
-    dotnet user-secrets set "SendGridApiKey" "YOUR_API_KEY"
     dotnet user-secrets set "Jwt:Key" "YOUR_SUPER_SECRET_KEY_MIN_32_CHARS"
+    dotnet user-secrets set "EmailSettings:SendGridApiKey" "YOUR_SENDGRID_API_KEY"
+    dotnet user-secrets set "Cloudinary:CloudName" "YOUR_CLOUD_NAME"
+    dotnet user-secrets set "Cloudinary:ApiKey" "YOUR_CLOUDINARY_API_KEY"
+    dotnet user-secrets set "Cloudinary:ApiSecret" "YOUR_CLOUDINARY_API_SECRET"
     ```
 
 ## Testing
