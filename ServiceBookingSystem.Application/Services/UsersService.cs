@@ -518,4 +518,37 @@ public class UsersService : IUsersService
 
         return result;
     }
+
+    /// <inheritdoc/>
+    public async Task<IdentityResult> EnableUserAsync(string userId)
+    {
+        logger.LogDebug("Attempting to enable User {UserId}", userId);
+        var user = await userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            throw new EntityNotFoundException(nameof(ApplicationUser), userId);
+        }
+
+        var currentLockoutEnd = await userManager.GetLockoutEndDateAsync(user);
+        if (!currentLockoutEnd.HasValue || currentLockoutEnd.Value <= DateTimeOffset.UtcNow)
+        {
+            logger.LogDebug("User {UserId} is already enabled. No action taken.", userId);
+            return IdentityResult.Success;
+        }
+
+        var result = await userManager.SetLockoutEndDateAsync(user, null);
+
+        if (result.Succeeded)
+        {
+            logger.LogInformation("User {UserId} has been enabled successfully", userId);
+        }
+        else
+        {
+            logger.LogWarning("Failed to enable User {UserId}. Errors: {Errors}", userId,
+                result.Errors.Select(e => e.Description));
+        }
+
+        return result;
+    }
 }

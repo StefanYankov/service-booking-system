@@ -125,4 +125,14 @@ public interface IUsersService
     /// </returns>
     /// <exception cref="EntityNotFoundException">Thrown if a user with the specified <paramref name="userId"/> does not exist.</exception>
     Task<IdentityResult> DisableUserAsync(string userId);
+
+    /// <summary>
+    /// Asynchronously enables a previously disabled user's account.
+    /// </summary>
+    /// <param name="userId">The user's unique identifier.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing an <see cref="IdentityResult"/> indicating the success or failure of the operation.
+    /// </returns>
+    /// <exception cref="EntityNotFoundException">Thrown if a user with the specified <paramref name="userId"/> does not exist.</exception>
+    Task<IdentityResult> EnableUserAsync(string userId);
 }
