@@ -20,6 +20,9 @@ The **Service Booking System** is a web application built with ASP.NET Core. It 
 - [Technology Stack](#technology-stack)
 - [Getting Started](#getting-started)
 - [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ## Project Goal
 
@@ -44,7 +47,7 @@ The following diagram provides a high-level overview of the system's functionali
 
 The database schema is designed to support the core features of the application. It utilizes a flexible base entity hierarchy and a robust soft-delete pattern to ensure data integrity and history.
 
-![Domain Model Diagram](./docs/diagrams/01-Domain-Model-Diagram.png)
+![Domain Model Diagram](./docs/diagrams/01-Domain-Model-Schema-High_Level_Domain_Model.png)
 
 *(The project's `/docs/diagrams` folder contains the detailed PlantUML source files for these diagrams.)*
 
@@ -62,25 +65,25 @@ The project has a solid architectural foundation, with the following key pattern
 2.  **Identity & Authentication**: 
     -   ASP.NET Core Identity configured with custom `ApplicationUser` and `ApplicationRole` entities.
     -   **Hybrid Auth**: Supports Cookies for MVC views and **JWT (JSON Web Tokens)** for API endpoints.
+    -   **Role-Based Access Control (RBAC)**: Granular permissions for Admin, Provider, and Customer.
 3.  **Data Persistence Patterns**:
     -   A complete domain model with a flexible base entity hierarchy (`BaseEntity`, `DeletableEntity`).
     -   A **Soft-Delete** pattern implemented using EF Core's Global Query Filters.
 4.  **Core Business Services**:
-    -   A fully-featured `UserService` for administrative user management (CRUD, role management, disabling users).
-    -   A `ServiceService` for full CRUD management of services, including paging, sorting, and soft-delete support.
-    -   A `CategoryService` for managing service categories.
-    -   A `BookingService` for managing the entire booking lifecycle (Create, Read, Update, Cancel, Confirm, Decline, Complete).
-    -   A `ReviewService` for managing customer reviews and ratings.
-    -   An `AvailabilityService` that handles complex scheduling logic, including operating hours, split shifts, and booking overlaps.
+    -   **User Management**: Registration, Profile Management, Password Security, and Admin controls (Ban/Unban, Role Management).
+    -   **Service Management**: Full CRUD for services, including Image Uploads, Categorization, and Global Search (filtering by price, category, status).
+    -   **Booking System**: A complete lifecycle engine handling Creation, Confirmation, Declining, Cancellation, Rescheduling, and Completion.
+    -   **Availability Engine**: Complex logic to determine valid booking slots based on service duration and operating hours.
+    -   **Reviews**: Post-service rating and commenting system.
 5.  **API Layer**:
-    -   A comprehensive REST API exposing all core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
-    -   **Image Management**: Endpoints for uploading and managing service images.
-    -   **Validation**: Robust input validation using Data Annotations and custom logic.
+    -   **RESTful API**: Exposes core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
+    -   **Search & Discovery**: Filtering endpoints for finding services.
+    -   **Admin API**: Endpoints for user and system management.
+    -   **Validation**: Input validation using Data Annotations and `ModelState` error reporting.
 6.  **Infrastructure Layer & External Services**:
-    -   A dedicated `.Infrastructure` project for decoupled external service implementations.
-    -   **Email Notification Service**: Automated emails for booking events (Created, Confirmed, Cancelled) using `SendGrid` (production) or `NullEmailService` (development).
-    -   **Image Storage**: Integration with **Cloudinary** for scalable image hosting and transformation.
-    -   An `ITemplateService` that renders HTML email templates from embedded resources.
+    -   **Email Notifications**: Automated transactional emails (Booking Received, Confirmed, Rescheduled) using `SendGrid` (production) or `NullEmailService` (development).
+    -   **Cloud Storage**: Integration with **Cloudinary** for image hosting and transformation.
+    -   **Templating**: `ITemplateService` for rendering HTML email templates.
 7.  **Database Seeding**: A decoupled, composite seeder pattern for essential data (`Roles`, `Administrator`).
 8.  **Testing**:
     -   **Unit Tests**: High coverage using xUnit and Moq for business logic.
@@ -91,11 +94,12 @@ The project has a solid architectural foundation, with the following key pattern
 
 -   **Backend:** .NET 9, ASP.NET Core
 -   **Data Access:** Entity Framework Core 9
+-   **Database:** Microsoft SQL Server
 -   **Authentication:** ASP.NET Core Identity, JWT Bearer
 -   **Testing:** xUnit, Moq, Testcontainers, Respawn
 -   **Logging:** Serilog
 -   **Email:** SendGrid
--   **Storage:** Cloudinary
+-   **Image Storage:** Cloudinary
 
 ## Getting Started
 
@@ -138,3 +142,16 @@ Located in `ServiceBookingSystem.IntegrationTests`.
 -   **Logging:** Application logs are piped to the xUnit output window using `MartinCostello.Logging.XUnit`.
 -   **Requirement:** Docker must be running.
 -   **Run:** `dotnet test ServiceBookingSystem.IntegrationTests`
+
+## Contributing
+
+As this is a university course project, contributing is generally not required. However, feedback and suggestions are welcome.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/StefanYankov/MedicalRecordSystem/blob/main/LICENSE) file for details.
+
+## Acknowledgments
+
+This project was developed as part of the **CSCB766 Programming with ASP .NET** course at [New Bulgarian University](https://www.nbu.bg/en).
+Special thanks to the course instructor or the guidance and project requirements.
