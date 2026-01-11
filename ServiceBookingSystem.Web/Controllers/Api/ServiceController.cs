@@ -42,6 +42,21 @@ public class ServiceController : BaseApiController
     }
 
     /// <summary>
+    /// Searches for services based on various criteria.
+    /// </summary>
+    [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PagedResult<ServiceViewDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<ServiceViewDto>>> Search(
+        [FromQuery] ServiceSearchParameters parameters, 
+        CancellationToken cancellationToken)
+    {
+        logger.LogDebug("API: Search services request");
+        var result = await this.serviceService.SearchServicesAsync(parameters, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Retrieves services by category with pagination.
     /// </summary>
     [HttpGet("category/{categoryId}")]

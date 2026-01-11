@@ -61,6 +61,14 @@ public interface IServiceService
     Task<PagedResult<ServiceViewDto>> GetServicesByProviderAsync(string providerId, PagingAndSortingParameters parameters, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Searches for services based on various criteria.
+    /// </summary>
+    /// <param name="parameters">The search parameters (term, price range, category, etc.).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paged result of matching services.</returns>
+    Task<PagedResult<ServiceViewDto>> SearchServicesAsync(ServiceSearchParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Uploads an image for a service.
     /// </summary>
     /// <param name="serviceId">The ID of the service.</param>

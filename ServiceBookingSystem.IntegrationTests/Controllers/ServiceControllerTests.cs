@@ -277,7 +277,7 @@ public class ServiceControllerTests : BaseIntegrationTest
         var token = await GetAuthTokenAsync(provider.Email!, "Password123!");
         this.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        // Act
+        // Act:
         var response = await this.Client.DeleteAsync("/api/service/999");
 
         // Assert:
@@ -304,6 +304,182 @@ public class ServiceControllerTests : BaseIntegrationTest
 
         // Act:
         var response = await this.Client.GetAsync($"/api/service/category/{category.Id}?pageNumber=2&pageSize=10");
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<ServiceViewDto>>();
+        Assert.Equal(15, result!.TotalCount);
+        Assert.Equal(2, result.PageNumber);
+        Assert.Equal(5, result.Items.Count);
+    }
+
+    [Fact]
+    public async Task Search_WithValidParams_ShouldReturnResults()
+    {
+        // Arrange:
+        var provider = await SeedProviderAsync();
+        var category = await SeedCategoryAsync();
+        var service1 = new Service 
+        {
+            Name = "Plumber",
+            Description = "Fix pipes",
+            ProviderId = provider.Id,
+            CategoryId = category.Id,
+            Price = 100
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "Electrician",
+            Description = "Fix wires",
+            ProviderId = provider.Id,
+            CategoryId = category.Id,
+            Price = 200
+        };
+        await this.DbContext.Services.AddRangeAsync(service1, service2);
+        await this.DbContext.SaveChangesAsync();
+
+        // Act:
+        var response = await this.Client.GetAsync("/api/service?searchTerm=plumber&maxPrice=150");
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<ServiceViewDto>>();
+        Assert.Single(result!.Items);
+        Assert.Equal("Plumber", result.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task Search_WithNoMatches_ShouldReturnEmpty()
+    {
+        // Arrange:
+        var provider = await SeedProviderAsync();
+        var category = await SeedCategoryAsync();
+        var service1 = new Service
+        {
+            Name = "Plumber",
+            Description = "Fix pipes",
+            ProviderId = provider.Id,
+            CategoryId = category.Id
+        };
+        
+        await this.DbContext.Services.AddAsync(service1);
+        await this.DbContext.SaveChangesAsync();
+
+        // Act:
+        var response = await this.Client.GetAsync("/api/service?searchTerm=Electrician");
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<ServiceViewDto>>();
+        Assert.Empty(result!.Items);
+    }
+
+    [Fact]
+    public async Task Search_WithCategoryId_ShouldFilterByCategory()
+    {
+        // Arrange:
+        var provider = await SeedProviderAsync();
+        var category1 = new Category 
+        {
+            Name = "Cat1",
+            Description = "Desc"
+        };
+        
+        var category2 = new Category 
+        {
+            Name = "Cat2",
+            Description = "Desc"
+        };
+        
+        await this.DbContext.Categories.AddRangeAsync(category1, category2);
+        await this.DbContext.SaveChangesAsync();
+
+        var service1 = new Service 
+        {
+            Name = "S1",
+            Description = "D",
+            ProviderId = provider.Id,
+            CategoryId = category1.Id
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "S2",
+            Description = "D",
+            ProviderId = provider.Id,
+            CategoryId = category2.Id
+        };
+        
+        await this.DbContext.Services.AddRangeAsync(service1, service2);
+        await this.DbContext.SaveChangesAsync();
+
+        // Act:
+        var response = await this.Client.GetAsync($"/api/service?categoryId={category1.Id}");
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<ServiceViewDto>>();
+        Assert.Single(result!.Items);
+        Assert.Equal("S1", result.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task Search_WithIsOnline_ShouldFilterByStatus()
+    {
+        // Arrange:
+        var provider = await SeedProviderAsync();
+        var category = await SeedCategoryAsync();
+        var service1 = new Service 
+        {
+            Name = "Online",
+            Description = "D",
+            IsOnline = true,
+            ProviderId = provider.Id,
+            CategoryId = category.Id
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "Offline",
+            Description = "D",
+            IsOnline = false,
+            ProviderId = provider.Id, 
+            CategoryId = category.Id
+        };
+        await this.DbContext.Services.AddRangeAsync(service1, service2);
+        await this.DbContext.SaveChangesAsync();
+
+        // Act:
+        var response = await this.Client.GetAsync("/api/service?isOnline=true");
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<ServiceViewDto>>();
+        Assert.Single(result!.Items);
+        Assert.Equal("Online", result.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task Search_WithPagination_ShouldReturnPagedResult()
+    {
+        // Arrange:
+        var provider = await SeedProviderAsync();
+        var category = await SeedCategoryAsync();
+        for (int i = 0; i < 15; i++)
+        {
+            await this.DbContext.Services.AddAsync(new Service
+            {
+                Name = $"S{i}",
+                Description = "D",
+                ProviderId = provider.Id,
+                CategoryId = category.Id
+            });
+        }
+        await this.DbContext.SaveChangesAsync();
+
+        // Act:
+        var response = await this.Client.GetAsync("/api/service?pageNumber=2&pageSize=5");
 
         // Assert:
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
