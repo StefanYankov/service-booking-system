@@ -149,7 +149,7 @@ As this is a university course project, contributing is generally not required. 
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/StefanYankov/MedicalRecordSystem/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/StefanYankov/service-booking-system/blob/master/LICENSE) file for details.
 
 ## Acknowledgments
 
