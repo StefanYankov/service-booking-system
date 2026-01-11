@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Application.Interfaces;
+using ServiceBookingSystem.Application.Interfaces.Infrastructure;
+using ServiceBookingSystem.Infrastructure.FileStorage;
 using ServiceBookingSystem.Infrastructure.Messaging;
 using ServiceBookingSystem.Infrastructure.Settings;
 using ServiceBookingSystem.Infrastructure.Templating;
@@ -27,6 +29,10 @@ public static class InfrastructureServiceRegistration
 
         // --- Template Service ---
         services.AddTransient<ITemplateService, TemplateService>();
+
+        // --- File Storage (Cloudinary) ---
+        services.Configure<CloudinarySettings>(configuration.GetSection("Cloudinary"));
+        services.AddTransient<IImageService, CloudinaryImageService>();
 
         return services;
     }
