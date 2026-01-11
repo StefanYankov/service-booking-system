@@ -423,6 +423,92 @@ public class ServiceService : IServiceService
     }
 
     /// <inheritdoc/>
+    public async Task<PagedResult<ServiceViewDto>> SearchServicesAsync(ServiceSearchParameters parameters, CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Searching services with parameters: {@Parameters}", parameters);
+        ArgumentNullException.ThrowIfNull(parameters);
+
+        var query = dbContext.Services
+            .AsNoTracking()
+            .Include(s => s.Provider)
+            .Include(s => s.Category)
+            .AsQueryable();
+
+        // 1. Search Term (Name, Description, Category)
+        if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+        {
+            var term = parameters.SearchTerm.Trim().ToLower();
+            query = query.Where(s => 
+                s.Name.ToLower().Contains(term) || 
+                s.Description.ToLower().Contains(term) ||
+                s.Category.Name.ToLower().Contains(term));
+        }
+
+        // 2. Price Range
+        if (parameters.MinPrice.HasValue)
+        {
+            query = query.Where(s => s.Price >= parameters.MinPrice.Value);
+        }
+        if (parameters.MaxPrice.HasValue)
+        {
+            query = query.Where(s => s.Price <= parameters.MaxPrice.Value);
+        }
+
+        // 3. Category
+        if (parameters.CategoryId.HasValue)
+        {
+            query = query.Where(s => s.CategoryId == parameters.CategoryId.Value);
+        }
+
+        // 4. Online Status
+        if (parameters.IsOnline.HasValue)
+        {
+            query = query.Where(s => s.IsOnline == parameters.IsOnline.Value);
+        }
+
+        // 5. Active Only (Always)
+        query = query.Where(s => s.IsActive);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        // 6. Sorting
+        var sortBy = parameters.SortBy?.ToLower();
+        var isDescending = parameters.SortDirection?.ToLower() == "desc";
+
+        query = sortBy switch
+        {
+            "name" => isDescending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
+            "price" => isDescending ? query.OrderByDescending(s => s.Price) : query.OrderBy(s => s.Price),
+            _ => query.OrderByDescending(s => s.CreatedOn)
+        };
+
+        // 7. Paging
+        var items = await query
+            .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
+            .Select(s => new ServiceViewDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Description = s.Description,
+                Price = s.Price,
+                DurationInMinutes = s.DurationInMinutes,
+                IsOnline = s.IsOnline,
+                StreetAddress = s.StreetAddress,
+                City = s.City,
+                PostalCode = s.PostalCode,
+                IsActive = s.IsActive,
+                ProviderId = s.ProviderId,
+                ProviderName = $"{s.Provider.FirstName} {s.Provider.LastName}",
+                CategoryId = s.CategoryId,
+                CategoryName = s.Category.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ServiceViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
+    }
+
+    /// <inheritdoc/>
     public async Task<string> AddImageAsync(int serviceId, string userId, IFormFile file, CancellationToken cancellationToken = default)
     {
         logger.LogDebug("Attempting to add image for Service {ServiceId} by User {UserId}", serviceId, userId);

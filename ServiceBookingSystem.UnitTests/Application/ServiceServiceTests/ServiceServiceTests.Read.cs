@@ -1,4 +1,5 @@
-﻿using ServiceBookingSystem.Application.DTOs.Shared;
+﻿using ServiceBookingSystem.Application.DTOs.Service;
+using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
 
@@ -602,5 +603,252 @@ public partial class ServiceServiceTests
         Assert.Equal("Service 3", result.Items.First().Name);
         Assert.Equal("Service 2", result.Items.ElementAt(1).Name);
         Assert.Equal("Service 1", result.Items.Last().Name);
+    }
+
+    [Fact]
+    public async Task SearchServicesAsync_WithSearchTerm_ShouldFilterByNameOrDescription()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "p1",
+            FirstName = "P",
+            LastName = "1"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Cat"
+        };
+        
+        var s1 = new Service 
+        {
+            Name = "Plumber",
+            Description = "Fix pipes",
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+        
+        var s2 = new Service 
+        {
+            Name = "Electrician",
+            Description = "Fix wires",
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+        
+        var s3 = new Service 
+        {
+            Name = "Carpenter",
+            Description = "Wood plumber work",
+            ProviderId = "p1",
+            CategoryId = 1
+        }; // Matches "plumber" in desc
+
+        await dbContext.Users.AddAsync(provider);
+        await dbContext.Categories.AddAsync(category);
+        await dbContext.Services.AddRangeAsync(s1, s2, s3);
+        await dbContext.SaveChangesAsync();
+
+        var parameters = new ServiceSearchParameters { SearchTerm = "plumber" };
+
+        // Act:
+        var result = await serviceService.SearchServicesAsync(parameters);
+
+        // Assert:
+        Assert.Equal(2, result.TotalCount);
+        Assert.Contains(result.Items, s => s.Name == "Plumber");
+        Assert.Contains(result.Items, s => s.Name == "Carpenter");
+    }
+
+    [Fact]
+    public async Task SearchServicesAsync_WithPriceRange_ShouldFilterByPrice()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "p1",
+            FirstName = "P",
+            LastName = "1"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Cat"
+        };
+        
+        var service1 = new Service 
+        {
+            Name = "Cheap",
+            Description = "Desc",
+            Price = 10, 
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "Medium",
+            Description = "Desc",
+            Price = 50,
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+        
+        var service3 = new Service 
+        {
+            Name = "Expensive",
+            Description = "Desc",
+            Price = 100,
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+
+        await dbContext.Users.AddAsync(provider);
+        await dbContext.Categories.AddAsync(category);
+        await dbContext.Services.AddRangeAsync(service1, service2, service3);
+        await dbContext.SaveChangesAsync();
+
+        var parameters = new ServiceSearchParameters
+        {
+            MinPrice = 20,
+            MaxPrice = 80
+        };
+
+        // Act:
+        var result = await serviceService.SearchServicesAsync(parameters);
+
+        // Assert:
+        Assert.Single(result.Items);
+        Assert.Equal("Medium", result.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task SearchServicesAsync_WithOnlineFilter_ShouldFilterByIsOnline()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "p1",
+            FirstName = "P",
+            LastName = "1"
+        };
+        
+        var category = new Category 
+        {
+            Id = 1,
+                Name = "Cat"
+        };
+        var service1 = new Service 
+        {
+            Name = "Online",
+            Description = "Desc",
+            IsOnline = true,
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "Offline",
+            Description = "Desc",
+            IsOnline = false,
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+
+        await dbContext.Users.AddAsync(provider);
+        await dbContext.Categories.AddAsync(category);
+        await dbContext.Services.AddRangeAsync(service1, service2);
+        await dbContext.SaveChangesAsync();
+
+        var parameters = new ServiceSearchParameters { IsOnline = true };
+
+        // Act:
+        var result = await serviceService.SearchServicesAsync(parameters);
+
+        // Assert:
+        Assert.Single(result.Items);
+        Assert.Equal("Online", result.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task SearchServicesAsync_WithCombinedFilters_ShouldReturnIntersection()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "p1",
+            FirstName = "P",
+            LastName = "1"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Cat"
+        };
+        
+        var service1 = new Service 
+        {
+            Name = "Target",
+            Description = "Desc",
+            Price = 50,
+            IsOnline = true,
+            ProviderId = "p1",
+            CategoryId = 1
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "Target",
+            Description = "Desc",
+            Price = 150,
+            IsOnline = true,
+            ProviderId = "p1",
+            CategoryId = 1
+        }; // Price too high
+        
+        var service3 = new Service 
+        {
+            Name = "Target",
+            Description = "Desc",
+            Price = 50,
+            IsOnline = false,
+            ProviderId = "p1",
+            CategoryId = 1
+        }; // Offline
+        
+        var service4 = new Service 
+        {
+            Name = "Other",
+            Description = "Desc",
+            Price = 50,
+            IsOnline = true,
+            ProviderId = "p1",
+            CategoryId = 1
+        }; // Name mismatch
+
+        await dbContext.Users.AddAsync(provider);
+        await dbContext.Categories.AddAsync(category);
+        await dbContext.Services.AddRangeAsync(service1, service2, service3, service4);
+        await dbContext.SaveChangesAsync();
+
+        var parameters = new ServiceSearchParameters 
+        { 
+            SearchTerm = "Target", 
+            MaxPrice = 100, 
+            IsOnline = true 
+        };
+
+        // Act:
+        var result = await serviceService.SearchServicesAsync(parameters);
+
+        // Assert:
+        Assert.Single(result.Items);
+        Assert.Equal("Target", result.Items.First().Name);
+        Assert.Equal(50, result.Items.First().Price);
     }
 }
