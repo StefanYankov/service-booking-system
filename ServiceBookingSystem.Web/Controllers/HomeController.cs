@@ -11,11 +11,16 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> logger;
     private readonly ICategoryService categoryService;
+    private readonly IServiceService serviceService;
 
-    public HomeController(ILogger<HomeController> logger, ICategoryService categoryService)
+    public HomeController(
+        ILogger<HomeController> logger, 
+        ICategoryService categoryService,
+        IServiceService serviceService)
     {
         this.logger = logger;
         this.categoryService = categoryService;
+        this.serviceService = serviceService;
     }
 
     public async Task<IActionResult> Index()
@@ -25,16 +30,13 @@ public class HomeController : Controller
         // Fetch all categories (using a large page size to get all)
         var categoryResult = await categoryService.GetAllAsync(new PagingAndSortingParameters { PageSize = 100 }, CancellationToken.None);
         
+        // Fetch distinct cities
+        var cities = await serviceService.GetDistinctCitiesAsync(CancellationToken.None);
+        
         var model = new HomeViewModel
         {
             Categories = categoryResult.Items.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList(),
-            // TODO: Fetch distinct cities from ServiceService once implemented
-            Cities = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "Sofia", Text = "Sofia" },
-                new SelectListItem { Value = "Plovdiv", Text = "Plovdiv" },
-                new SelectListItem { Value = "Varna", Text = "Varna" }
-            }
+            Cities = cities.Select(c => new SelectListItem { Value = c, Text = c }).ToList()
         };
 
         return View(model);
