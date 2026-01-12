@@ -59,6 +59,13 @@ using (var scope = app.Services.CreateScope())
         var adminSeeder = serviceProvider.GetRequiredService<AdministratorSeeder>();
         await adminSeeder.SeedAsync(serviceProvider);
         
+        // Seed Demo Data in Development
+        if (app.Environment.IsDevelopment())
+        {
+            var demoSeeder = serviceProvider.GetRequiredService<DemoDataSeeder>();
+            await demoSeeder.SeedAsync(serviceProvider);
+        }
+        
         logger.LogInformation("Database migration and seeding completed successfully.");
     }
     catch (Exception ex)

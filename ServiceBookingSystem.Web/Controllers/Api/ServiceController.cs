@@ -57,6 +57,19 @@ public class ServiceController : BaseApiController
     }
 
     /// <summary>
+    /// Retrieves a list of distinct cities where services are offered.
+    /// </summary>
+    [HttpGet("cities")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<string>>> GetCities(CancellationToken cancellationToken)
+    {
+        logger.LogDebug("API: GetCities request");
+        var result = await this.serviceService.GetDistinctCitiesAsync(cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Retrieves services by category with pagination.
     /// </summary>
     [HttpGet("category/{categoryId}")]

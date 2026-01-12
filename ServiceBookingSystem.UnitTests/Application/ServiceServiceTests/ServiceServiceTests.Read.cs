@@ -84,7 +84,7 @@ public partial class ServiceServiceTests
             IsDeleted = true, // Soft deleted
             DeletedOn = DateTime.UtcNow
         };
-        
+
 
         var provider = new ApplicationUser
         {
@@ -102,7 +102,7 @@ public partial class ServiceServiceTests
         await this.dbContext.Categories.AddAsync(category);
         await this.dbContext.Services.AddAsync(service);
         await this.dbContext.SaveChangesAsync();
-        
+
         this.dbContext.ChangeTracker.Clear();
 
         // Act:
@@ -177,14 +177,14 @@ public partial class ServiceServiceTests
 
         // Assert:
         Assert.NotNull(result);
-        
-        
+
+
         var isTracked = this.dbContext.ChangeTracker.Entries<Service>()
             .Any(e => e.Entity.Id == serviceId); // Verify that the ChangeTracker is NOT tracking the service entity
-            
+
         Assert.False(isTracked, "Entity should not be tracked when using AsNoTracking()");
     }
-    
+
     [Fact]
     public async Task GetServicesByCategoryAsync_WithValidCategoryId_ShouldReturnPagedAndSortedServices()
     {
@@ -206,23 +206,23 @@ public partial class ServiceServiceTests
             Name = "Category 2"
         };
 
-        var service1 = new Service 
+        var service1 = new Service
         {
-            Name = "B Service", 
+            Name = "B Service",
             Description = "Desc 1",
             ProviderId = "provider-1",
             CategoryId = 1,
             Price = 200
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "C Service",
             Description = "Desc 2",
             ProviderId = "provider-1",
             CategoryId = 2
         }; // Wrong category
-        var service3 = new Service 
+        var service3 = new Service
         {
             Name = "A Service",
             Description = "Desc 3",
@@ -230,11 +230,11 @@ public partial class ServiceServiceTests
             CategoryId = 1,
             Price = 100
         };
-        var service4 = new Service 
+        var service4 = new Service
         {
             Name = "D Service",
             Description = "Desc 4",
-            ProviderId = "provider-1", 
+            ProviderId = "provider-1",
             CategoryId = 1,
             IsDeleted = true
         }; // Soft-deleted
@@ -301,7 +301,7 @@ public partial class ServiceServiceTests
         Assert.Empty(result.Items);
         Assert.Equal(0, result.TotalCount);
     }
-    
+
     [Fact]
     public async Task GetServicesByProviderAsync_WithValidProviderId_ShouldReturnPagedAndSortedServices()
     {
@@ -312,38 +312,38 @@ public partial class ServiceServiceTests
             FirstName = "John",
             LastName = "Doe"
         };
-        
+
         var provider2 = new ApplicationUser
         {
             Id = "provider-2",
             FirstName = "Jane",
             LastName = "Smith"
         };
-        
+
         var category = new Category
         {
             Id = 1,
             Name = "Category 1"
         };
 
-        var service1 = new Service 
+        var service1 = new Service
         {
-            Name = "B Service", 
+            Name = "B Service",
             Description = "Desc 1",
             ProviderId = "provider-1",
             CategoryId = 1,
             Price = 200
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "C Service",
             Description = "Desc 2",
             ProviderId = "provider-2", // Wrong provider
             CategoryId = 1
         };
-        
-        var service3 = new Service 
+
+        var service3 = new Service
         {
             Name = "A Service",
             Description = "Desc 3",
@@ -351,12 +351,12 @@ public partial class ServiceServiceTests
             CategoryId = 1,
             Price = 100
         };
-        
-        var service4 = new Service 
+
+        var service4 = new Service
         {
             Name = "D Service",
             Description = "Desc 4",
-            ProviderId = "provider-1", 
+            ProviderId = "provider-1",
             CategoryId = 1,
             IsDeleted = true // Soft-deleted
         };
@@ -419,30 +419,30 @@ public partial class ServiceServiceTests
             FirstName = "John",
             LastName = "Doe"
         };
-        
+
         var category = new Category
         {
             Id = 1,
             Name = "Category 1"
         };
 
-        var service1 = new Service 
+        var service1 = new Service
         {
-            Name = "Service 1", 
+            Name = "Service 1",
             Description = "Desc",
             ProviderId = "provider-1",
             CategoryId = 1
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "Service 2",
             Description = "Desc",
             ProviderId = "provider-1",
             CategoryId = 1
         };
-        
-        var service3 = new Service 
+
+        var service3 = new Service
         {
             Name = "Service 3",
             Description = "Desc",
@@ -483,14 +483,14 @@ public partial class ServiceServiceTests
             FirstName = "John",
             LastName = "Doe"
         };
-        
+
         var category = new Category
         {
             Id = 1,
             Name = "Category 1"
         };
 
-        var service1 = new Service 
+        var service1 = new Service
         {
             Name = "Cheap",
             Description = "Desc",
@@ -498,8 +498,8 @@ public partial class ServiceServiceTests
             CategoryId = 1,
             Price = 10
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "Expensive",
             Description = "Desc",
@@ -507,8 +507,8 @@ public partial class ServiceServiceTests
             CategoryId = 1,
             Price = 100
         };
-        
-        var service3 = new Service 
+
+        var service3 = new Service
         {
             Name = "Medium",
             Description = "Desc",
@@ -555,14 +555,15 @@ public partial class ServiceServiceTests
             Name = "Category 1"
         };
 
-        var service1 = new Service { 
+        var service1 = new Service
+        {
             Name = "Service 1",
             Description = "Desc",
             ProviderId = "provider-1",
             CategoryId = 1,
-            CreatedOn = DateTime.UtcNow.AddHours(-3) 
+            CreatedOn = DateTime.UtcNow.AddHours(-3)
         };
-        
+
         var service2 = new Service
         {
             Name = "Service 2",
@@ -571,7 +572,7 @@ public partial class ServiceServiceTests
             CategoryId = 1,
             CreatedOn = DateTime.UtcNow.AddHours(-2)
         };
-        
+
         var service3 = new Service
         {
             Name = "Service 3",
@@ -598,7 +599,7 @@ public partial class ServiceServiceTests
         // Assert:
         Assert.NotNull(result);
         Assert.Equal(3, result.Items.Count());
-        
+
         // Should be sorted by CreatedOn Descending (Newest first)
         Assert.Equal("Service 3", result.Items.First().Name);
         Assert.Equal("Service 2", result.Items.ElementAt(1).Name);
@@ -615,30 +616,30 @@ public partial class ServiceServiceTests
             FirstName = "P",
             LastName = "1"
         };
-        
+
         var category = new Category
         {
             Id = 1,
             Name = "Cat"
         };
-        
-        var s1 = new Service 
+
+        var s1 = new Service
         {
             Name = "Plumber",
             Description = "Fix pipes",
             ProviderId = "p1",
             CategoryId = 1
         };
-        
-        var s2 = new Service 
+
+        var s2 = new Service
         {
             Name = "Electrician",
             Description = "Fix wires",
             ProviderId = "p1",
             CategoryId = 1
         };
-        
-        var s3 = new Service 
+
+        var s3 = new Service
         {
             Name = "Carpenter",
             Description = "Wood plumber work",
@@ -672,23 +673,23 @@ public partial class ServiceServiceTests
             FirstName = "P",
             LastName = "1"
         };
-        
+
         var category = new Category
         {
             Id = 1,
             Name = "Cat"
         };
-        
-        var service1 = new Service 
+
+        var service1 = new Service
         {
             Name = "Cheap",
             Description = "Desc",
-            Price = 10, 
+            Price = 10,
             ProviderId = "p1",
             CategoryId = 1
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "Medium",
             Description = "Desc",
@@ -696,8 +697,8 @@ public partial class ServiceServiceTests
             ProviderId = "p1",
             CategoryId = 1
         };
-        
-        var service3 = new Service 
+
+        var service3 = new Service
         {
             Name = "Expensive",
             Description = "Desc",
@@ -735,13 +736,13 @@ public partial class ServiceServiceTests
             FirstName = "P",
             LastName = "1"
         };
-        
-        var category = new Category 
+
+        var category = new Category
         {
             Id = 1,
-                Name = "Cat"
+            Name = "Cat"
         };
-        var service1 = new Service 
+        var service1 = new Service
         {
             Name = "Online",
             Description = "Desc",
@@ -749,8 +750,8 @@ public partial class ServiceServiceTests
             ProviderId = "p1",
             CategoryId = 1
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "Offline",
             Description = "Desc",
@@ -784,14 +785,14 @@ public partial class ServiceServiceTests
             FirstName = "P",
             LastName = "1"
         };
-        
+
         var category = new Category
         {
             Id = 1,
             Name = "Cat"
         };
-        
-        var service1 = new Service 
+
+        var service1 = new Service
         {
             Name = "Target",
             Description = "Desc",
@@ -800,8 +801,8 @@ public partial class ServiceServiceTests
             ProviderId = "p1",
             CategoryId = 1
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "Target",
             Description = "Desc",
@@ -810,8 +811,8 @@ public partial class ServiceServiceTests
             ProviderId = "p1",
             CategoryId = 1
         }; // Price too high
-        
-        var service3 = new Service 
+
+        var service3 = new Service
         {
             Name = "Target",
             Description = "Desc",
@@ -820,8 +821,8 @@ public partial class ServiceServiceTests
             ProviderId = "p1",
             CategoryId = 1
         }; // Offline
-        
-        var service4 = new Service 
+
+        var service4 = new Service
         {
             Name = "Other",
             Description = "Desc",
@@ -836,11 +837,11 @@ public partial class ServiceServiceTests
         await dbContext.Services.AddRangeAsync(service1, service2, service3, service4);
         await dbContext.SaveChangesAsync();
 
-        var parameters = new ServiceSearchParameters 
-        { 
-            SearchTerm = "Target", 
-            MaxPrice = 100, 
-            IsOnline = true 
+        var parameters = new ServiceSearchParameters
+        {
+            SearchTerm = "Target",
+            MaxPrice = 100,
+            IsOnline = true
         };
 
         // Act:
@@ -850,5 +851,151 @@ public partial class ServiceServiceTests
         Assert.Single(result.Items);
         Assert.Equal("Target", result.Items.First().Name);
         Assert.Equal(50, result.Items.First().Price);
+    }
+
+    [Fact]
+    public async Task GetDistinctCitiesAsync_ShouldReturnDistinctCitiesOrderedAlphabetically()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "p1",
+            FirstName = "P",
+            LastName = "1"
+        };
+
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Cat"
+        };
+
+        var service1 = new Service
+        {
+            Name = "S1",
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Sofia"
+        };
+
+        var service2 = new Service
+        {
+            Name = "S2",
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Varna"
+        };
+        
+        var service3 = new Service
+        {
+            Name = "S3",
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Sofia"
+        }; // Duplicate
+        
+        var service4 = new Service
+        {
+            Name = "S4",
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Plovdiv"
+        };
+
+        await dbContext.Users.AddAsync(provider);
+        await dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3, service4);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await serviceService.GetDistinctCitiesAsync();
+
+        // Assert:
+        Assert.Equal(3, result.Count);
+        Assert.Equal("Plovdiv", result[0]);
+        Assert.Equal("Sofia", result[1]);
+        Assert.Equal("Varna", result[2]);
+    }
+
+    [Fact]
+    public async Task GetDistinctCitiesAsync_ShouldIgnoreNullOrEmptyCities()
+    {
+        // Arrange
+        var provider = new ApplicationUser
+        {
+            Id = "p1",
+            FirstName = "P",
+            LastName = "1"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Cat"
+        };
+
+        var service1 = new Service
+            { 
+                Name = "S1",
+                Description = "D",
+                ProviderId = "p1",
+                CategoryId = 1,
+                City = "Sofia" 
+            };
+        var service2 = new Service
+        {
+            Name = "S2",
+                Description = "D",
+                ProviderId = "p1",
+                CategoryId = 1, 
+                City = null
+        }; // Null
+        var service3 = new Service
+        {
+            Name = "S3",
+                Description = "D",
+                ProviderId = "p1",
+                CategoryId = 1,
+                City = ""
+        }; // Empty
+        var service4 = new Service
+        {
+            Name = "S4",
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "   "
+        };
+
+        await dbContext.Users.AddAsync(provider);
+        await dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3, service4);
+        await dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await serviceService.GetDistinctCitiesAsync();
+
+        // Assert:
+        Assert.Contains("Sofia", result);
+        Assert.DoesNotContain(null, result);
+        Assert.DoesNotContain("", result);
+    }
+
+    [Fact]
+    public async Task GetDistinctCitiesAsync_WhenNoServicesExist_ShouldReturnEmptyList()
+    {
+        // Arrange:
+        // DB is empty
+
+        // Act:
+        var result = await serviceService.GetDistinctCitiesAsync();
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 }

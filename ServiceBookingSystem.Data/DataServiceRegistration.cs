@@ -45,6 +45,7 @@ public static class DataServiceRegistration
         // Register data seeders
         services.AddTransient<RolesSeeder>();
         services.AddTransient<AdministratorSeeder>();
+        services.AddTransient<DemoDataSeeder>();
 
         return services;
     }
