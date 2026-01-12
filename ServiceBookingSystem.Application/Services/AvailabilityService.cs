@@ -150,20 +150,23 @@ public class AvailabilityService : IAvailabilityService
 
         foreach (var hours in operatingHours)
         {
-            var currentSlotStart = hours.StartTime;
-            var shiftEnd = hours.EndTime;
+            // Use TimeSpan to avoid TimeOnly wrap-around issues
+            var currentSlotStartTs = hours.StartTime.ToTimeSpan();
+            var shiftEndTs = hours.EndTime.ToTimeSpan();
+            
+            // Handle midnight wrap if needed (though OperatingHour usually implies same-day)
+            if (shiftEndTs < currentSlotStartTs) shiftEndTs = shiftEndTs.Add(TimeSpan.FromDays(1));
 
-            // Loop until the slot + duration exceeds the shift end
-            while (currentSlotStart.Add(duration) <= shiftEnd)
+            while (currentSlotStartTs.Add(duration) <= shiftEndTs)
             {
-                var currentSlotEnd = currentSlotStart.Add(duration);
-                var currentSlotDateTimeStart = dayStart.Add(currentSlotStart.ToTimeSpan());
-                var currentSlotDateTimeEnd = dayStart.Add(currentSlotEnd.ToTimeSpan());
+                var currentSlotEndTs = currentSlotStartTs.Add(duration);
+                var currentSlotDateTimeStart = dayStart.Add(currentSlotStartTs);
+                var currentSlotDateTimeEnd = dayStart.Add(currentSlotEndTs);
 
                 // Filter out past slots if the date is today
                 if (currentSlotDateTimeStart < DateTime.UtcNow)
                 {
-                    currentSlotStart = currentSlotEnd; // Move to next slot
+                    currentSlotStartTs = currentSlotEndTs;
                     continue;
                 }
 
@@ -173,17 +176,16 @@ public class AvailabilityService : IAvailabilityService
                     var bookingStart = b.BookingStart;
                     var bookingEnd = b.BookingStart.AddMinutes(b.Duration);
 
-                    // Overlap logic: (StartA < EndB) and (EndA > StartB)
                     return currentSlotDateTimeStart < bookingEnd && currentSlotDateTimeEnd > bookingStart;
                 });
 
                 if (!isConflict)
                 {
-                    availableSlots.Add(currentSlotStart);
+                    availableSlots.Add(TimeOnly.FromTimeSpan(currentSlotStartTs));
                 }
 
-                // Move to next slot (Step = Duration)
-                currentSlotStart = currentSlotEnd;
+                // Move to next slot
+                currentSlotStartTs = currentSlotEndTs;
             }
         }
 

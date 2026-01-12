@@ -429,4 +429,62 @@ public class AvailabilityServiceTests : IDisposable
         Assert.DoesNotContain(new TimeOnly(10, 0), result);
         Assert.Contains(new TimeOnly(11, 0), result);
     }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_WhenDurationExceedsOperatingHours_ShouldReturnEmpty()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1).Date;
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            StartTime = new TimeOnly(9, 0), 
+            EndTime = new TimeOnly(12, 0) // 3 hours
+        };
+        
+        // Update service duration to 4 hours (240 mins)
+        var service = await dbContext.Services.FindAsync(1);
+        service!.DurationInMinutes = 240;
+        
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+
+        // Assert:
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_WhenDurationEqualsOperatingHours_ShouldReturnSingleSlot()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1).Date;
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            StartTime = new TimeOnly(9, 0), 
+            EndTime = new TimeOnly(17, 0) // 8 hours (9-17)
+        };
+        
+        // Update service duration to 8 hours (480 mins)
+        var service = await dbContext.Services.FindAsync(1);
+        service!.DurationInMinutes = 480;
+        
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        // This test ensures no infinite loop occurs
+        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+
+        // Assert:
+        Assert.Single(result);
+        Assert.Equal(new TimeOnly(9, 0), result.First());
+    }
 }
