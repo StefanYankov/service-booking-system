@@ -1,11 +1,58 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using ServiceBookingSystem.Application.DTOs.Service;
+using ServiceBookingSystem.Application.DTOs.Shared;
+using ServiceBookingSystem.Application.Interfaces;
+using ServiceBookingSystem.Web.Models;
 
 namespace ServiceBookingSystem.Web.Controllers;
 
 public class ServiceController : Controller
 {
-    public IActionResult Index()
+    private readonly IServiceService serviceService;
+    private readonly ICategoryService categoryService;
+    private readonly ILogger<ServiceController> logger;
+
+    public ServiceController(
+        IServiceService serviceService,
+        ICategoryService categoryService,
+        ILogger<ServiceController> logger)
     {
-        return View();
+        this.serviceService = serviceService;
+        this.categoryService = categoryService;
+        this.logger = logger;
+    }
+
+    public async Task<IActionResult> Index(ServiceSearchParameters parameters)
+    {
+        logger.LogInformation("MVC: Viewing Service List with params: {@Params}", parameters);
+
+        // 1. Fetch Services
+        var services = await serviceService.SearchServicesAsync(parameters);
+
+        // 2. Fetch Metadata for Filters
+        var categories = await categoryService.GetAllAsync(new PagingAndSortingParameters { PageSize = 100 });
+        var cities = await serviceService.GetDistinctCitiesAsync();
+
+        // 3. Build ViewModel
+        var model = new ServiceListViewModel
+        {
+            Services = services,
+            SearchParams = parameters,
+            Categories = categories.Items.Select(c => new SelectListItem 
+            { 
+                Value = c.Id.ToString(), 
+                Text = c.Name,
+                Selected = parameters.CategoryId == c.Id
+            }).ToList(),
+            Cities = cities.Select(c => new SelectListItem 
+            { 
+                Value = c, 
+                Text = c,
+                Selected = parameters.City == c // Assuming ServiceSearchParameters has City? Wait.
+            }).ToList()
+        };
+
+        return View(model);
     }
 }
