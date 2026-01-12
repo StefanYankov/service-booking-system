@@ -1,31 +1,56 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using ServiceBookingSystem.Application.DTOs.Shared;
+using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Web.Models;
 
 namespace ServiceBookingSystem.Web.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly ILogger<HomeController> logger;
+    private readonly ICategoryService categoryService;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, ICategoryService categoryService)
     {
-        _logger = logger;
+        this.logger = logger;
+        this.categoryService = categoryService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        // --- Structured Logging Example ---
-        // This demonstrates writing a structured log. The first argument is a message template.
-        // The subsequent arguments are property values that will be captured in a structured format.
-        // This is far more powerful than simple string interpolation.
-        _logger.LogInformation("User is viewing the Home page at {ViewTime}", DateTime.UtcNow);
-        // --- End Logging Example ---
+        logger.LogInformation("User is viewing the Home page at {ViewTime}", DateTime.UtcNow);
 
-        return View();
+        // Fetch all categories (using a large page size to get all)
+        var categoryResult = await categoryService.GetAllAsync(new PagingAndSortingParameters { PageSize = 100 }, CancellationToken.None);
+        
+        var model = new HomeViewModel
+        {
+            Categories = categoryResult.Items.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList(),
+            // TODO: Fetch distinct cities from ServiceService once implemented
+            Cities = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Sofia", Text = "Sofia" },
+                new SelectListItem { Value = "Plovdiv", Text = "Plovdiv" },
+                new SelectListItem { Value = "Varna", Text = "Varna" }
+            }
+        };
+
+        return View(model);
     }
 
     public IActionResult Privacy()
+    {
+        return View();
+    }
+    
+    public IActionResult Terms()
+    {
+        return View();
+    }
+    
+    public IActionResult About()
     {
         return View();
     }

@@ -1,8 +1,55 @@
-﻿@{
+﻿@model ServiceBookingSystem.Web.Models.HomeViewModel
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center py-5 bg-light rounded-3 mb-5">
+    <h1 class="display-4 fw-bold">Find the Perfect Service</h1>
+    <p class="lead text-muted">Book trusted professionals for your home and business needs.</p>
+    
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-10">
+            <form asp-controller="Service" asp-action="Index" method="get" class="card p-4 shadow-sm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <input asp-for="SearchTerm" class="form-control form-control-lg" placeholder="What are you looking for?" />
+                    </div>
+                    <div class="col-md-3">
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select form-select-lg">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select asp-for="City" asp-items="Model.Cities" class="form-select form-select-lg">
+                            <option value="">All Cities</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row text-center">
+    <div class="col-md-4">
+        <div class="p-3">
+            <h3>Verified Providers</h3>
+            <p>All our professionals are vetted and reviewed.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3">
+            <h3>Easy Booking</h3>
+            <p>Book a slot in seconds and manage it online.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3">
+            <h3>Secure Payments</h3>
+            <p>Pay only when the job is done.</p>
+        </div>
+    </div>
 </div>
