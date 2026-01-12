@@ -49,10 +49,23 @@ public class ServiceController : Controller
             { 
                 Value = c, 
                 Text = c,
-                Selected = parameters.City == c // Assuming ServiceSearchParameters has City? Wait.
+                Selected = parameters.City == c
             }).ToList()
         };
 
         return View(model);
+    }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        logger.LogInformation("MVC: Viewing Service Details for ID: {ServiceId}", id);
+        var service = await serviceService.GetServiceByIdAsync(id);
+
+        if (service == null)
+        {
+            return NotFound();
+        }
+
+        return View(service);
     }
 }

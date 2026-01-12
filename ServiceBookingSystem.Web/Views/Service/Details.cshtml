@@ -1,0 +1,88 @@
+﻿@using ServiceBookingSystem.Data.Common
+@model ServiceBookingSystem.Application.DTOs.Service.ServiceViewDto
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container mt-5">
+    <div class="row">
+        @* --- Left Column: Image & Provider --- *@
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                @* Placeholder Image *@
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <span class="text-muted display-1">📷</span>
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="card-title">Provided by</h5>
+                    <p class="card-text fw-bold">@Model.ProviderName</p>
+                </div>
+            </div>
+        </div>
+
+        @* --- Right Column: Details & Action --- *@
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="display-5 fw-bold">@Model.Name</h1>
+                    <span class="badge bg-info text-dark fs-6">@Model.CategoryName</span>
+                    @if (Model.IsOnline)
+                    {
+                        <span class="badge bg-success fs-6">Online</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary fs-6">@Model.City</span>
+                    }
+                </div>
+                <div class="text-end">
+                    <h2 class="text-primary fw-bold">$@Model.Price</h2>
+                    <p class="text-muted">per service</p>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <h4>Description</h4>
+            <p class="lead">@Model.Description</p>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5>Details</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>Duration:</strong> @Model.DurationInMinutes minutes</li>
+                        <li><strong>Location:</strong> @(Model.IsOnline ? "Online" : $"{Model.StreetAddress}, {Model.City}, {Model.PostalCode}")</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    @if (User.IsInRole(RoleConstants.Customer))
+                    {
+                        <a asp-controller="Booking" asp-action="Create" asp-route-serviceId="@Model.Id" class="btn btn-primary btn-lg px-5">Book Now</a>
+                    }
+                    else if (User.IsInRole(RoleConstants.Provider))
+                    {
+                        @* Check if owner *@
+                        @* For now, just disable or show message *@
+                        <button class="btn btn-secondary btn-lg px-5" disabled>Provider View</button>
+                    }
+                    else
+                    {
+                         <a asp-controller="Booking" asp-action="Create" asp-route-serviceId="@Model.Id" class="btn btn-primary btn-lg px-5">Book Now</a>
+                    }
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary btn-lg px-5">Log in to Book</a>
+                }
+                
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>
