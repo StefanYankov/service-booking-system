@@ -26,15 +26,7 @@
                         <a class="nav-link text-dark" asp-area="" asp-controller="Service" asp-action="Index">Services</a>
                     </li>
                 </ul>
-                <ul class="navbar-nav">
-                    @* Placeholder for Auth Links - To be replaced by Partial *@
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="#">Register</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="#">Login</a>
-                    </li>
-                </ul>
+                <partial name="_LoginPartial" />
             </div>
         </div>
     </nav>

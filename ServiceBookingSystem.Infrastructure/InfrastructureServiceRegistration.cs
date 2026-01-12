@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Application.Interfaces.Infrastructure;
@@ -26,6 +27,9 @@ public static class InfrastructureServiceRegistration
         {
             services.AddTransient<IEmailService, NullEmailService>();
         }
+        
+        // Adapter for Identity UI
+        services.AddTransient<IEmailSender, IdentityEmailSenderAdapter>();
 
         // --- Template Service ---
         services.AddTransient<ITemplateService, TemplateService>();
