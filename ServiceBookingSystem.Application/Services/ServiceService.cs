@@ -579,4 +579,20 @@ public class ServiceService : IServiceService
 
         logger.LogInformation("Image {ImageId} deleted from Service {ServiceId}", imageId, serviceId);
     }
+
+    /// <inheritdoc/>
+    public async Task<List<string>> GetDistinctCitiesAsync(CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Fetching distinct cities from services");
+        
+        var cities = await dbContext.Services
+            .AsNoTracking()
+            .Where(s => !string.IsNullOrEmpty(s.City))
+            .Select(s => s.City)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync(cancellationToken);
+
+        return cities;
+    }
 }

@@ -90,4 +90,11 @@ public interface IServiceService
     /// <exception cref="EntityNotFoundException">Thrown if the image or service is not found.</exception>
     /// <exception cref="AuthorizationException">Thrown if the user is not the owner of the service.</exception>
     Task DeleteImageAsync(int serviceId, string userId, int imageId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a list of all distinct cities where services are offered.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of city names.</returns>
+    Task<List<string>> GetDistinctCitiesAsync(CancellationToken cancellationToken = default);
 }
