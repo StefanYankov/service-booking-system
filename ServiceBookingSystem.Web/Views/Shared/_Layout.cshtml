@@ -1,19 +1,18 @@
-﻿<!DOCTYPE html>
+﻿@using ServiceBookingSystem.Core.Constants
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>@ViewData["Title"] - Service_Booking_System</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - @AppConstants.AppName</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="~/Service_Booking_System.styles.css" asp-append-version="true"/>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Service_Booking_System</a>
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">@AppConstants.AppName</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -24,7 +23,16 @@
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Service" asp-action="Index">Services</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    @* Placeholder for Auth Links - To be replaced by Partial *@
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#">Register</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#">Login</a>
                     </li>
                 </ul>
             </div>
@@ -37,9 +45,13 @@
     </main>
 </div>
 
-<footer class="border-top footer text-muted">
-    <div class="container">
-        &copy; 2025 - Service_Booking_System - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+<footer class="border-top footer text-muted mt-auto">
+    <div class="container text-center">
+        &copy; @DateTime.Now.Year - @AppConstants.AppName
+        <br/>
+        <a asp-controller="Home" asp-action="Privacy">Privacy</a> | 
+        <a asp-controller="Home" asp-action="Terms">Terms</a> | 
+        <a asp-controller="Home" asp-action="About">About</a>
     </div>
 </footer>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
