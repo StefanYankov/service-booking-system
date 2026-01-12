@@ -489,6 +489,65 @@ public class ServiceControllerTests : BaseIntegrationTest
         Assert.Equal(5, result.Items.Count);
     }
 
+    [Fact]
+    public async Task GetCities_ShouldReturnDistinctCities()
+    {
+        // Arrange:
+        var provider = await SeedProviderAsync();
+        var category = await SeedCategoryAsync();
+        var service1 = new Service 
+        {
+            Name = "S1",
+                Description = "D",
+                ProviderId = provider.Id,
+                CategoryId = category.Id,
+                City = "Sofia"
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "S2",
+                Description = "D",
+                ProviderId = provider.Id,
+                CategoryId = category.Id,
+                City = "Varna"
+        };
+        
+        var service3 = new Service 
+        {
+            Name = "S3",
+                Description = "D",
+                ProviderId = provider.Id,
+                CategoryId = category.Id,
+                City = "Sofia"
+        };
+        
+        await this.DbContext.Services.AddRangeAsync(service1, service2, service3);
+        await this.DbContext.SaveChangesAsync();
+
+        // Act:
+        var response = await this.Client.GetAsync("/api/service/cities");
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<List<string>>();
+        Assert.Equal(2, result!.Count);
+        Assert.Contains("Sofia", result);
+        Assert.Contains("Varna", result);
+    }
+
+    [Fact]
+    public async Task GetCities_WhenNoServices_ShouldReturnEmpty()
+    {
+        // Act:
+        var response = await this.Client.GetAsync("/api/service/cities");
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<List<string>>();
+        Assert.Empty(result!);
+    }
+
     // --- Helpers ---
 
     private async Task<ApplicationUser> SeedProviderAsync(string email = "provider@test.com")
