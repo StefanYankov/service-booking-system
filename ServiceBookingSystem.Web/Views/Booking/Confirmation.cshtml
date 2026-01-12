@@ -1,0 +1,51 @@
+﻿@model ServiceBookingSystem.Web.Models.BookingConfirmationViewModel
+@{
+    ViewData["Title"] = "Booking Confirmed";
+}
+
+<div class="container mt-5 text-center">
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card-body p-5">
+            <div class="mb-4 text-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+            </div>
+            
+            <h2 class="card-title mb-3">Booking Request Sent!</h2>
+            <p class="card-text text-muted">
+                Your booking request for <span class="fw-bold">@Model.ServiceName</span> has been sent to <span class="fw-bold">@Model.ProviderName</span>.
+            </p>
+            
+            <hr class="my-4" />
+            
+            <div class="text-start">
+                <div class="row mb-2">
+                    <div class="col-4 fw-bold">Date & Time:</div>
+                    <div class="col-8">@Model.BookingStart.ToString("f")</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 fw-bold">Status:</div>
+                    <div class="col-8"><span class="badge bg-warning text-dark">@Model.Status</span></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 fw-bold">Price:</div>
+                    <div class="col-8">$@Model.Price</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Notes:</div>
+                        <div class="col-8">@Model.Notes</div>
+                    </div>
+                }
+            </div>
+
+            <div class="mt-5">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Back to Home</a>
+                @* TODO: Link to My Bookings *@
+                @* <a asp-action="Index" class="btn btn-outline-secondary">View My Bookings</a> *@
+            </div>
+        </div>
+    </div>
+</div>

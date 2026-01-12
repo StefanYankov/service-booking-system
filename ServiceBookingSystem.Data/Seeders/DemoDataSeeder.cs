@@ -115,6 +115,24 @@ public class DemoDataSeeder
         await dbContext.Services.AddRangeAsync(services);
         await dbContext.SaveChangesAsync();
 
+        // 4. Create Operating Hours (Mon-Fri, 9am-5pm) for EACH service
+        var operatingHours = new List<OperatingHour>();
+        foreach (var service in services)
+        {
+            for (int day = 1; day <= 5; day++) // Monday to Friday
+            {
+                operatingHours.Add(new OperatingHour
+                {
+                    ServiceId = service.Id,
+                    DayOfWeek = (DayOfWeek)day,
+                    StartTime = new TimeOnly(9, 0),
+                    EndTime = new TimeOnly(17, 0)
+                });
+            }
+        }
+        await dbContext.OperatingHours.AddRangeAsync(operatingHours);
+        await dbContext.SaveChangesAsync();
+
         logger.LogInformation("Demo data seeding completed.");
     }
 }

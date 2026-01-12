@@ -8,6 +8,8 @@ public class BookingViewDto
     
     public string ServiceName { get; set; } = null!;
     
+    public decimal ServicePrice { get; set; }
+    
     public string CustomerId { get; set; } = null!;
     
     public string CustomerName { get; set; } = null!;
