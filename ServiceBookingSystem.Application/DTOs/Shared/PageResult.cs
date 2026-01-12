@@ -35,5 +35,13 @@ public class PagedResult<T>
     /// </summary>
     public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
 
+    /// <summary>
+    /// Indicates if there is a previous page.
+    /// </summary>
+    public bool HasPreviousPage => PageNumber > 1;
 
+    /// <summary>
+    /// Indicates if there is a next page.
+    /// </summary>
+    public bool HasNextPage => PageNumber < TotalPages;
 }

@@ -998,4 +998,64 @@ public partial class ServiceServiceTests
         Assert.NotNull(result);
         Assert.Empty(result);
     }
+
+    [Fact]
+    public async Task SearchServicesAsync_WithCityFilter_ShouldFilterByCity()
+    {
+        // Arrange:
+        var provider = new ApplicationUser
+        {
+            Id = "p1",
+            FirstName = "P",
+            LastName = "1"
+        };
+        
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Cat"
+        };
+        
+        var service1 = new Service 
+        {
+            Name = "S1",
+                Description = "D",
+                ProviderId = "p1",
+                CategoryId = 1,
+                City = "Sofia"
+        };
+        
+        var service2 = new Service 
+        {
+            Name = "S2",
+                Description = "D",
+                ProviderId = "p1",
+                CategoryId = 1,
+                City = "Varna"
+        };
+        
+        var service3 = new Service 
+        {
+            Name = "S3",
+                Description = "D",
+                ProviderId = "p1",
+                CategoryId = 1,
+                City = "Sofia"
+        };
+        
+
+        await dbContext.Users.AddAsync(provider);
+        await dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddRangeAsync(service1, service2, service3);
+        await dbContext.SaveChangesAsync();
+
+        var parameters = new ServiceSearchParameters { City = "Sofia" };
+
+        // Act:
+        var result = await serviceService.SearchServicesAsync(parameters);
+
+        // Assert:
+        Assert.Equal(2, result.TotalCount);
+        Assert.All(result.Items, s => Assert.Equal("Sofia", s.City));
+    }
 }

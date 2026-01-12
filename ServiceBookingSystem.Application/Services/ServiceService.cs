@@ -465,13 +465,19 @@ public class ServiceService : IServiceService
         {
             query = query.Where(s => s.IsOnline == parameters.IsOnline.Value);
         }
+        
+        // 5. City
+        if (!string.IsNullOrWhiteSpace(parameters.City))
+        {
+            query = query.Where(s => s.City == parameters.City);
+        }
 
-        // 5. Active Only (Always)
+        // 6. Active Only (Always)
         query = query.Where(s => s.IsActive);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        // 6. Sorting
+        // 7. Sorting
         var sortBy = parameters.SortBy?.ToLower();
         var isDescending = parameters.SortDirection?.ToLower() == "desc";
 
@@ -482,7 +488,7 @@ public class ServiceService : IServiceService
             _ => query.OrderByDescending(s => s.CreatedOn)
         };
 
-        // 7. Paging
+        // 8. Paging
         var items = await query
             .Skip((parameters.PageNumber - 1) * parameters.PageSize)
             .Take(parameters.PageSize)

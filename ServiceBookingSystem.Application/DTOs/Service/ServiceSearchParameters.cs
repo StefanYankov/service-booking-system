@@ -13,4 +13,5 @@ public class ServiceSearchParameters : PagingAndSortingParameters
     public decimal? MaxPrice { get; set; }
     public int? CategoryId { get; set; }
     public bool? IsOnline { get; set; }
+    public string? City { get; set; }
 }
