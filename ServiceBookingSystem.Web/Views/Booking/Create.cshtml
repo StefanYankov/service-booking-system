@@ -60,55 +60,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/booking.js" asp-append-version="true"></script>
     <script>
         $(document).ready(function () {
-            var serviceId = @Model.ServiceId;
-            var dateInput = $('#bookingDate');
-            var timeSelect = $('#bookingTime');
-
-            function loadSlots() {
-                var selectedDate = dateInput.val();
-                if (!selectedDate) {
-                    timeSelect.prop('disabled', true).html('<option value="">Select a date first</option>');
-                    return;
-                }
-
-                timeSelect.prop('disabled', true).html('<option value="">Loading...</option>');
-
-                $.get('/api/availability/slots', { serviceId: serviceId, date: selectedDate })
-                    .done(function (slots) {
-                        timeSelect.empty();
-                        if (slots.length === 0) {
-                            timeSelect.html('<option value="">No slots available</option>');
-                        } else {
-                            timeSelect.append('<option value="">Select a time</option>');
-                            $.each(slots, function (i, slot) {
-                                // slot is "HH:mm:ss" or similar TimeOnly string
-                                // Format it nicely
-                                var timeParts = slot.split(':');
-                                var hour = parseInt(timeParts[0]);
-                                var minute = timeParts[1];
-                                var ampm = hour >= 12 ? 'PM' : 'AM';
-                                var displayHour = hour % 12;
-                                displayHour = displayHour ? displayHour : 12; // the hour '0' should be '12'
-                                var displayTime = displayHour + ':' + minute + ' ' + ampm;
-                                
-                                timeSelect.append($('<option></option>').val(slot).text(displayTime));
-                            });
-                            timeSelect.prop('disabled', false);
-                        }
-                    })
-                    .fail(function () {
-                        timeSelect.html('<option value="">Error loading slots</option>');
-                    });
-            }
-
-            dateInput.change(loadSlots);
-            
-            // Initial load if date is pre-filled
-            if (dateInput.val()) {
-                loadSlots();
-            }
+            initBookingForm(@Model.ServiceId);
         });
     </script>
 }
