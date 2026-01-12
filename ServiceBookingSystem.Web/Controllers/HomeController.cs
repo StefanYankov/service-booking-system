@@ -27,10 +27,8 @@ public class HomeController : Controller
     {
         logger.LogInformation("User is viewing the Home page at {ViewTime}", DateTime.UtcNow);
 
-        // Fetch all categories (using a large page size to get all)
         var categoryResult = await categoryService.GetAllAsync(new PagingAndSortingParameters { PageSize = 100 }, CancellationToken.None);
         
-        // Fetch distinct cities
         var cities = await serviceService.GetDistinctCitiesAsync(CancellationToken.None);
         
         var model = new HomeViewModel

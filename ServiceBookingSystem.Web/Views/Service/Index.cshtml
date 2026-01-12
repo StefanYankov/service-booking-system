@@ -1,13 +1,152 @@
-﻿@{
-    ViewData["Title"] = "Services";
+﻿@model ServiceBookingSystem.Web.Models.ServiceListViewModel
+@{
+    ViewData["Title"] = "Browse Services";
 }
 
-<div class="container">
-    <h1>Services</h1>
-    <p>Search results will appear here.</p>
-    
-    @* Placeholder for Service List *@
-    <div class="alert alert-info">
-        Work in progress: Service listing implementation coming soon.
+<div class="container mt-4">
+    <div class="row">
+        @* --- Sidebar Filters --- *@
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Service" asp-action="Index" method="get">
+                        @* Search Term *@
+                        <div class="mb-3">
+                            <label asp-for="SearchParams.SearchTerm" class="form-label">Keyword</label>
+                            <input asp-for="SearchParams.SearchTerm" class="form-control" placeholder="e.g. Plumber" />
+                        </div>
+
+                        @* Category *@
+                        <div class="mb-3">
+                            <label asp-for="SearchParams.CategoryId" class="form-label">Category</label>
+                            <select asp-for="SearchParams.CategoryId" asp-items="Model.Categories" class="form-select">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+
+                        @* City *@
+                        <div class="mb-3">
+                            <label asp-for="SearchParams.City" class="form-label">City</label>
+                            <select asp-for="SearchParams.City" asp-items="Model.Cities" class="form-select">
+                                <option value="">All Cities</option>
+                            </select>
+                        </div>
+
+                        @* Price Range *@
+                        <div class="mb-3">
+                            <label class="form-label">Price Range</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="SearchParams.MinPrice" class="form-control" placeholder="Min" type="number" />
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="SearchParams.MaxPrice" class="form-control" placeholder="Max" type="number" />
+                            </div>
+                        </div>
+
+                        @* Online Only *@
+                        <div class="mb-3 form-check">
+                            <input asp-for="SearchParams.IsOnline" class="form-check-input" />
+                            <label asp-for="SearchParams.IsOnline" class="form-check-label">Online Services Only</label>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            <a asp-action="Index" class="btn btn-link text-muted mt-2">Clear All</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @* --- Service Grid --- *@
+        <div class="col-md-9">
+            <h2 class="mb-4">Available Services <span class="text-muted fs-5">(@Model.Services.TotalCount found)</span></h2>
+
+            @if (!Model.Services.Items.Any())
+            {
+                <div class="alert alert-warning text-center py-5">
+                    <h4>No services found matching your criteria.</h4>
+                    <p>Try adjusting your filters or search term.</p>
+                </div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    @foreach (var service in Model.Services.Items)
+                    {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm">
+                                @* Placeholder Image logic - replace with real ImageUrl later *@
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <span class="text-muted">No Image</span>
+                                </div>
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <div class="mb-2">
+                                        <span class="badge bg-info text-dark">@service.CategoryName</span>
+                                        @if (service.IsOnline)
+                                        {
+                                            <span class="badge bg-success">Online</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@service.City</span>
+                                        }
+                                    </div>
+                                    
+                                    <h5 class="card-title text-truncate">@service.Name</h5>
+                                    <p class="card-text text-muted small mb-3">
+                                        by @service.ProviderName
+                                    </p>
+                                    <p class="card-text text-truncate" style="max-height: 3em;">
+                                        @service.Description
+                                    </p>
+                                    
+                                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                                        <span class="fs-5 fw-bold text-primary">$@service.Price</span>
+                                        <a href="#" class="btn btn-outline-primary btn-sm">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @* --- Pagination --- *@
+                @if (Model.Services.TotalPages > 1)
+                {
+                    <nav class="mt-5">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(Model.Services.HasPreviousPage ? "" : "disabled")">
+                                <a class="page-link" asp-all-route-data="@(new Dictionary<string, string?> { 
+                                    { "SearchTerm", Model.SearchParams.SearchTerm },
+                                    { "CategoryId", Model.SearchParams.CategoryId?.ToString() },
+                                    { "City", Model.SearchParams.City },
+                                    { "PageNumber", (Model.Services.PageNumber - 1).ToString() }
+                                })">Previous</a>
+                            </li>
+                            
+                            <li class="page-item disabled">
+                                <span class="page-link">Page @Model.Services.PageNumber of @Model.Services.TotalPages</span>
+                            </li>
+
+                            <li class="page-item @(Model.Services.HasNextPage ? "" : "disabled")">
+                                <a class="page-link" asp-all-route-data="@(new Dictionary<string, string?> { 
+                                    { "SearchTerm", Model.SearchParams.SearchTerm },
+                                    { "CategoryId", Model.SearchParams.CategoryId?.ToString() },
+                                    { "City", Model.SearchParams.City },
+                                    { "PageNumber", (Model.Services.PageNumber + 1).ToString() }
+                                })">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+        </div>
     </div>
 </div>
