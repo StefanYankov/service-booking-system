@@ -70,6 +70,10 @@
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
                                     </form>
                                 }
+                                else if (booking.Status == BookingStatus.Completed.ToString())
+                                {
+                                    <a asp-controller="Review" asp-action="Create" asp-route-bookingId="@booking.Id" class="btn btn-sm btn-outline-primary">Leave Review</a>
+                                }
                             </td>
                         </tr>
                     }

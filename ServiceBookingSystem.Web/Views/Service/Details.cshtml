@@ -1,7 +1,7 @@
 ﻿@using ServiceBookingSystem.Data.Common
-@model ServiceBookingSystem.Application.DTOs.Service.ServiceViewDto
+@model ServiceBookingSystem.Web.Models.ServiceDetailsViewModel
 @{
-    ViewData["Title"] = Model.Name;
+    ViewData["Title"] = Model.Service.Name;
 }
 
 <div class="container mt-5">
@@ -15,7 +15,7 @@
                 </div>
                 <div class="card-body text-center">
                     <h5 class="card-title">Provided by</h5>
-                    <p class="card-text fw-bold">@Model.ProviderName</p>
+                    <p class="card-text fw-bold">@Model.Service.ProviderName</p>
                 </div>
             </div>
         </div>
@@ -24,19 +24,19 @@
         <div class="col-md-8">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <h1 class="display-5 fw-bold">@Model.Name</h1>
-                    <span class="badge bg-info text-dark fs-6">@Model.CategoryName</span>
-                    @if (Model.IsOnline)
+                    <h1 class="display-5 fw-bold">@Model.Service.Name</h1>
+                    <span class="badge bg-info text-dark fs-6">@Model.Service.CategoryName</span>
+                    @if (Model.Service.IsOnline)
                     {
                         <span class="badge bg-success fs-6">Online</span>
                     }
                     else
                     {
-                        <span class="badge bg-secondary fs-6">@Model.City</span>
+                        <span class="badge bg-secondary fs-6">@Model.Service.City</span>
                     }
                 </div>
                 <div class="text-end">
-                    <h2 class="text-primary fw-bold">$@Model.Price</h2>
+                    <h2 class="text-primary fw-bold">$@Model.Service.Price</h2>
                     <p class="text-muted">per service</p>
                 </div>
             </div>
@@ -44,14 +44,14 @@
             <hr class="my-4" />
 
             <h4>Description</h4>
-            <p class="lead">@Model.Description</p>
+            <p class="lead">@Model.Service.Description</p>
 
             <div class="row mt-4">
                 <div class="col-md-6">
                     <h5>Details</h5>
                     <ul class="list-unstyled">
-                        <li><strong>Duration:</strong> @Model.DurationInMinutes minutes</li>
-                        <li><strong>Location:</strong> @(Model.IsOnline ? "Online" : $"{Model.StreetAddress}, {Model.City}, {Model.PostalCode}")</li>
+                        <li><strong>Duration:</strong> @Model.Service.DurationInMinutes minutes</li>
+                        <li><strong>Location:</strong> @(Model.Service.IsOnline ? "Online" : $"{Model.Service.StreetAddress}, {Model.Service.City}, {Model.Service.PostalCode}")</li>
                     </ul>
                 </div>
             </div>
@@ -63,17 +63,15 @@
                 {
                     @if (User.IsInRole(RoleConstants.Customer))
                     {
-                        <a asp-controller="Booking" asp-action="Create" asp-route-serviceId="@Model.Id" class="btn btn-primary btn-lg px-5">Book Now</a>
+                        <a asp-controller="Booking" asp-action="Create" asp-route-serviceId="@Model.Service.Id" class="btn btn-primary btn-lg px-5">Book Now</a>
                     }
                     else if (User.IsInRole(RoleConstants.Provider))
                     {
-                        @* Check if owner *@
-                        @* For now, just disable or show message *@
                         <button class="btn btn-secondary btn-lg px-5" disabled>Provider View</button>
                     }
                     else
                     {
-                         <a asp-controller="Booking" asp-action="Create" asp-route-serviceId="@Model.Id" class="btn btn-primary btn-lg px-5">Book Now</a>
+                         <a asp-controller="Booking" asp-action="Create" asp-route-serviceId="@Model.Service.Id" class="btn btn-primary btn-lg px-5">Book Now</a>
                     }
                 }
                 else
@@ -82,6 +80,55 @@
                 }
                 
                 <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Back to List</a>
+            </div>
+            
+            <hr class="my-5" />
+            
+            @* --- Reviews Section --- *@
+            <div id="reviews">
+                <h3>Reviews <span class="text-muted fs-5">(@Model.Reviews.TotalCount)</span></h3>
+                
+                @if (!Model.Reviews.Items.Any())
+                {
+                    <p class="text-muted">No reviews yet. Be the first to book and review!</p>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush mt-3">
+                        @foreach (var review in Model.Reviews.Items)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@review.CustomerName</h5>
+                                    <small class="text-muted">@review.CreatedOn.ToShortDateString()</small>
+                                </div>
+                                <div class="mb-1 text-warning">
+                                    @for (int i = 0; i < review.Rating; i++) { <span>★</span> }
+                                    @for (int i = review.Rating; i < 5; i++) { <span class="text-muted">☆</span> }
+                                </div>
+                                <p class="mb-1">@review.Comment</p>
+                            </div>
+                        }
+                    </div>
+                    
+                    @* Review Pagination *@
+                    @if (Model.Reviews.TotalPages > 1)
+                    {
+                        <nav class="mt-3">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(Model.Reviews.HasPreviousPage ? "" : "disabled")">
+                                    <a class="page-link" asp-action="Details" asp-route-id="@Model.Service.Id" asp-route-pageNumber="@(Model.Reviews.PageNumber - 1)" asp-fragment="reviews">Previous</a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">Page @Model.Reviews.PageNumber of @Model.Reviews.TotalPages</span>
+                                </li>
+                                <li class="page-item @(Model.Reviews.HasNextPage ? "" : "disabled")">
+                                    <a class="page-link" asp-action="Details" asp-route-id="@Model.Service.Id" asp-route-pageNumber="@(Model.Reviews.PageNumber + 1)" asp-fragment="reviews">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
             </div>
         </div>
     </div>
