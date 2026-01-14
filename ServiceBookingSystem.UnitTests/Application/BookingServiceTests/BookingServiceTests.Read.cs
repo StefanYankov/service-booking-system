@@ -12,21 +12,21 @@ public partial class BookingServiceTests
         // Arrange:
         const string customerId = "customer-1";
         const string bookingId = "booking-1";
-        
-        var provider = new ApplicationUser 
+
+        var provider = new ApplicationUser
         {
             Id = "provider-1",
             FirstName = "Test",
             LastName = "Provider"
         };
-        
-        var customer = new ApplicationUser 
+
+        var customer = new ApplicationUser
         {
             Id = customerId,
             FirstName = "Test",
             LastName = "Customer"
         };
-        
+
         var service = new Service
         {
             Id = 1, Name = "Test Service",
@@ -34,15 +34,15 @@ public partial class BookingServiceTests
             ProviderId = "provider-1",
             Provider = provider
         };
-        
-        var booking = new Booking 
-        { 
-            Id = bookingId, 
-            ServiceId = 1, 
-            Service = service, 
-            CustomerId = customerId, 
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            ServiceId = 1,
+            Service = service,
+            CustomerId = customerId,
             Customer = customer,
-            BookingStart = DateTime.UtcNow 
+            BookingStart = DateTime.UtcNow
         };
 
         await dbContext.Users.AddRangeAsync(provider, customer);
@@ -65,21 +65,21 @@ public partial class BookingServiceTests
         // Arrange:
         const string providerId = "provider-1";
         const string bookingId = "booking-1";
-        
-        var provider = new ApplicationUser 
+
+        var provider = new ApplicationUser
         {
             Id = providerId,
             FirstName = "Test",
             LastName = "Provider"
         };
-        
-        var customer = new ApplicationUser 
+
+        var customer = new ApplicationUser
         {
             Id = "customer-1",
             FirstName = "Test",
             LastName = "Customer"
         };
-        
+
         var service = new Service
         {
             Id = 1,
@@ -88,15 +88,15 @@ public partial class BookingServiceTests
             ProviderId = providerId,
             Provider = provider
         };
-        
-        var booking = new Booking 
-        { 
-            Id = bookingId, 
-            ServiceId = 1, 
-            Service = service, 
-            CustomerId = "customer-1", 
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            ServiceId = 1,
+            Service = service,
+            CustomerId = "customer-1",
             Customer = customer,
-            BookingStart = DateTime.UtcNow 
+            BookingStart = DateTime.UtcNow
         };
 
         await dbContext.Users.AddRangeAsync(provider, customer);
@@ -127,21 +127,21 @@ public partial class BookingServiceTests
     {
         // Arrange:
         const string bookingId = "booking-1";
-        
-        var provider = new ApplicationUser 
+
+        var provider = new ApplicationUser
         {
             Id = "provider-1",
             FirstName = "Test",
             LastName = "Provider"
         };
-        
-        var customer = new ApplicationUser 
+
+        var customer = new ApplicationUser
         {
             Id = "customer-1",
             FirstName = "Test",
             LastName = "Customer"
         };
-        
+
         var service = new Service
         {
             Id = 1, Name = "Test Service",
@@ -149,15 +149,15 @@ public partial class BookingServiceTests
             ProviderId = "provider-1",
             Provider = provider
         };
-        
-        var booking = new Booking 
-        { 
-            Id = bookingId, 
-            ServiceId = 1, 
-            Service = service, 
-            CustomerId = "customer-1", 
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            ServiceId = 1,
+            Service = service,
+            CustomerId = "customer-1",
             Customer = customer,
-            BookingStart = DateTime.UtcNow 
+            BookingStart = DateTime.UtcNow
         };
 
         await dbContext.Users.AddRangeAsync(provider, customer);
@@ -177,20 +177,20 @@ public partial class BookingServiceTests
     {
         // Arrange:
         const string customerId = "customer-1";
-        var provider = new ApplicationUser 
+        var provider = new ApplicationUser
         {
             Id = "provider-1",
             FirstName = "Test",
             LastName = "Provider"
         };
-        
-        var customer = new ApplicationUser 
+
+        var customer = new ApplicationUser
         {
             Id = customerId,
             FirstName = "Test",
             LastName = "Customer"
         };
-        
+
         var service = new Service
         {
             Id = 1,
@@ -199,10 +199,10 @@ public partial class BookingServiceTests
             ProviderId = "provider-1",
             Provider = provider
         };
-        
+
         var bookings = new List<Booking>
         {
-            new Booking 
+            new Booking
             {
                 Id = "b1",
                 ServiceId = 1,
@@ -211,7 +211,7 @@ public partial class BookingServiceTests
                 Customer = customer,
                 BookingStart = DateTime.UtcNow
             },
-            new Booking 
+            new Booking
             {
                 Id = "b2",
                 ServiceId = 1,
@@ -220,7 +220,7 @@ public partial class BookingServiceTests
                 Customer = customer,
                 BookingStart = DateTime.UtcNow.AddDays(1)
             },
-            new Booking 
+            new Booking
             {
                 Id = "b3",
                 ServiceId = 1,
@@ -261,20 +261,20 @@ public partial class BookingServiceTests
     {
         // Arrange:
         const string customerId = "customer-1";
-        var provider = new ApplicationUser 
+        var provider = new ApplicationUser
         {
             Id = "provider-1",
             FirstName = "Test",
             LastName = "Provider"
         };
-        
-        var customer = new ApplicationUser 
+
+        var customer = new ApplicationUser
         {
             Id = customerId,
             FirstName = "Test",
             LastName = "Customer"
         };
-        
+
         var service = new Service
         {
             Id = 1,
@@ -283,10 +283,10 @@ public partial class BookingServiceTests
             ProviderId = "provider-1",
             Provider = provider
         };
-        
+
         var bookings = new List<Booking>
         {
-            new Booking 
+            new Booking
             {
                 Id = "b1",
                 ServiceId = 1,
@@ -295,13 +295,14 @@ public partial class BookingServiceTests
                 Customer = customer,
                 BookingStart = DateTime.UtcNow.AddDays(2)
             }, // Latest
-            new Booking { 
+            new Booking
+            {
                 Id = "b2",
                 ServiceId = 1,
                 Service = service,
                 CustomerId = customerId,
                 Customer = customer,
-                BookingStart = DateTime.UtcNow 
+                BookingStart = DateTime.UtcNow
             } // Earliest
         };
 
@@ -330,20 +331,20 @@ public partial class BookingServiceTests
     {
         // Arrange:
         const string providerId = "provider-1";
-        var provider = new ApplicationUser 
+        var provider = new ApplicationUser
         {
             Id = providerId,
             FirstName = "Test",
             LastName = "Provider"
         };
-        
-        var customer = new ApplicationUser 
+
+        var customer = new ApplicationUser
         {
             Id = "customer-1",
             FirstName = "Test",
             LastName = "Customer"
         };
-        
+
         var service = new Service
         {
             Id = 1,
@@ -365,10 +366,10 @@ public partial class BookingServiceTests
                 LastName = "P"
             }
         };
-        
+
         var bookings = new List<Booking>
         {
-            new Booking 
+            new Booking
             {
                 Id = "b1",
                 ServiceId = 1,
@@ -377,7 +378,7 @@ public partial class BookingServiceTests
                 Customer = customer,
                 BookingStart = DateTime.UtcNow
             },
-            new Booking 
+            new Booking
             {
                 Id = "b2",
                 ServiceId = 2,
@@ -413,13 +414,13 @@ public partial class BookingServiceTests
         // Arrange:
         const string customerId = "customer-1";
         const int serviceId = 1;
-        var booking = new Booking 
-        { 
-            Id = "b1", 
-            ServiceId = serviceId, 
-            CustomerId = customerId, 
-            BookingStart = DateTime.UtcNow, 
-            Status = BookingStatus.Completed 
+        var booking = new Booking
+        {
+            Id = "b1",
+            ServiceId = serviceId,
+            CustomerId = customerId,
+            BookingStart = DateTime.UtcNow,
+            Status = BookingStatus.Completed
         };
 
         await dbContext.Bookings.AddAsync(booking);
@@ -438,13 +439,13 @@ public partial class BookingServiceTests
         // Arrange:
         const string customerId = "customer-1";
         const int serviceId = 1;
-        var booking = new Booking 
-        { 
-            Id = "b1", 
-            ServiceId = serviceId, 
-            CustomerId = customerId, 
-            BookingStart = DateTime.UtcNow, 
-            Status = BookingStatus.Confirmed 
+        var booking = new Booking
+        {
+            Id = "b1",
+            ServiceId = serviceId,
+            CustomerId = customerId,
+            BookingStart = DateTime.UtcNow,
+            Status = BookingStatus.Confirmed
         };
 
         await dbContext.Bookings.AddAsync(booking);
@@ -466,7 +467,7 @@ public partial class BookingServiceTests
         // Assert:
         Assert.False(result);
     }
-    
+
     [Fact]
     public async Task GetBookingsByCustomerAsync_WithNoBookings_ShouldReturnEmptyList()
     {
@@ -486,7 +487,7 @@ public partial class BookingServiceTests
         Assert.Equal(0, result.TotalCount);
         Assert.Empty(result.Items);
     }
-    
+
     [Fact]
     public async Task GetBookingsByProviderAsync_WithNoBookings_ShouldReturnEmptyList()
     {
@@ -506,26 +507,26 @@ public partial class BookingServiceTests
         Assert.Equal(0, result.TotalCount);
         Assert.Empty(result.Items);
     }
-    
+
     [Fact]
     public async Task GetBookingsByCustomerAsync_WithPagination_ShouldReturnCorrectPage()
     {
         // Arrange
         const string customerId = "customer-1";
-        var provider = new ApplicationUser 
+        var provider = new ApplicationUser
         {
             Id = "provider-1",
             FirstName = "Test",
             LastName = "Provider"
         };
-        
-        var customer = new ApplicationUser 
+
+        var customer = new ApplicationUser
         {
             Id = customerId,
             FirstName = "Test",
             LastName = "Customer"
         };
-        
+
         var service = new Service
         {
             Id = 1,
@@ -538,14 +539,14 @@ public partial class BookingServiceTests
         var bookings = new List<Booking>();
         for (int i = 1; i <= 20; i++)
         {
-            bookings.Add(new Booking 
-            { 
-                Id = $"b{i}", 
-                ServiceId = 1, 
-                Service = service, 
-                CustomerId = customerId, 
-                Customer = customer, 
-                BookingStart = DateTime.UtcNow.AddDays(i) 
+            bookings.Add(new Booking
+            {
+                Id = $"b{i}",
+                ServiceId = 1,
+                Service = service,
+                CustomerId = customerId,
+                Customer = customer,
+                BookingStart = DateTime.UtcNow.AddDays(i)
             });
         }
 
@@ -570,9 +571,196 @@ public partial class BookingServiceTests
         Assert.Equal(5, result.Items.Count());
         Assert.Equal(2, result.PageNumber);
         Assert.Equal(5, result.PageSize);
-        
+
         // Sort by date asc, page 2 (items 6-10) should start with b6
         Assert.Equal("b6", result.Items.First().Id);
         Assert.Equal("b10", result.Items.Last().Id);
+    }
+
+    [Fact]
+    public async Task GetBookingsByProviderAndCustomerAsync_ShouldReturnOnlySharedBookings()
+    {
+        // Arrange:
+        const string providerId = "provider-1";
+        const string customerId = "customer-1";
+
+        var provider = new ApplicationUser
+        {
+            Id = providerId,
+            FirstName = "P",
+            LastName = "1"
+        };
+
+        var customer = new ApplicationUser
+        {
+            Id = customerId,
+            FirstName = "C",
+            LastName = "1"
+        };
+
+        var otherProvider = new ApplicationUser
+        {
+            Id = "provider-2",
+            FirstName = "P",
+            LastName = "2"
+        };
+
+        var service1 = new Service
+        {
+            Id = 1,
+            Name = "S1",
+            ProviderId = providerId,
+            Provider = provider,
+            Description = "D"
+        };
+        var service2 = new Service
+        {
+            Id = 2,
+            Name = "S2",
+            ProviderId = "provider-2",
+            Provider = otherProvider,
+            Description = "D"
+        };
+
+        var b1 = new Booking
+        {
+            Id = "b1",
+            ServiceId = 1,
+            Service = service1,
+            CustomerId = customerId,
+            Customer = customer, BookingStart = DateTime.UtcNow
+        };
+
+        var b2 = new Booking
+        {
+            Id = "b2",
+            ServiceId = 2,
+            Service = service2,
+            CustomerId = customerId,
+            Customer = customer, BookingStart = DateTime.UtcNow
+        }; // Same customer, different provider
+
+        var b3 = new Booking
+        {
+            Id = "b3",
+            ServiceId = 1,
+            Service = service1,
+            CustomerId = "other-cust" +
+                         "omer",
+            Customer = new ApplicationUser
+            {
+                Id = "other",
+                FirstName = "O",
+                LastName = "C"
+            },
+            BookingStart = DateTime.UtcNow
+        }; // Same provider, different customer
+
+        await dbContext.Users.AddRangeAsync(provider, customer, otherProvider);
+        await dbContext.Services.AddRangeAsync(service1, service2);
+        await dbContext.Bookings.AddRangeAsync(b1, b2, b3);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await bookingService.GetBookingsByProviderAndCustomerAsync(providerId, customerId);
+
+        // Assert:
+        Assert.Single(result);
+        Assert.Equal("b1", result.First().Id);
+    }
+
+    [Fact]
+    public async Task GetBookingsByProviderAndCustomerAsync_WithNoBookings_ShouldReturnEmptyList()
+    {
+        // Arrange:
+        const string providerId = "provider-1";
+        const string customerId = "customer-1";
+
+        var provider = new ApplicationUser
+        {
+            Id = providerId,
+            FirstName = "P",
+            LastName = "1"
+        };
+
+        var customer = new ApplicationUser
+        {
+            Id = customerId,
+            FirstName = "C",
+            LastName = "1"
+        };
+
+        await dbContext.Users.AddRangeAsync(provider, customer);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await bookingService.GetBookingsByProviderAndCustomerAsync(providerId, customerId);
+
+        // Assert:
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetBookingsByProviderAndCustomerAsync_ShouldReturnSortedByDateDesc()
+    {
+        // Arrange:
+        const string providerId = "provider-1";
+        const string customerId = "customer-1";
+
+        var provider = new ApplicationUser
+        {
+            Id = providerId,
+            FirstName = "P",
+            LastName = "1"
+        };
+
+        var customer = new ApplicationUser
+        {
+            Id = customerId,
+            FirstName = "C",
+            LastName = "1"
+        };
+
+        var service = new Service
+        {
+            Id = 1,
+            Name = "S1",
+            ProviderId = providerId,
+            Provider = provider,
+            Description = "D"
+        };
+
+        var b1 = new Booking
+        {
+            Id = "b1",
+            ServiceId = 1,
+            Service = service,
+            CustomerId = customerId,
+            Customer = customer,
+            BookingStart = DateTime.UtcNow.AddDays(-1)
+        };
+
+        var b2 = new Booking
+        {
+            Id = "b2",
+            ServiceId = 1,
+            Service = service,
+            CustomerId = customerId,
+            Customer = customer,
+            BookingStart = DateTime.UtcNow
+        };
+
+        await dbContext.Users.AddRangeAsync(provider, customer);
+        await dbContext.Services.AddAsync(service);
+        await dbContext.Bookings.AddRangeAsync(b1, b2);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await bookingService.GetBookingsByProviderAndCustomerAsync(providerId, customerId);
+
+        // Assert:
+        Assert.Equal(2, result.Count);
+        Assert.Equal("b2", result[0].Id);
+        Assert.Equal("b1", result[1].Id);
     }
 }
