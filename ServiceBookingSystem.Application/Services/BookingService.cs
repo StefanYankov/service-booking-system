@@ -136,6 +136,8 @@ public class BookingService : IBookingService
             ServicePrice = serviceDto.Price,
             CustomerId = booking.CustomerId,
             CustomerName = $"{customerDto.FirstName} {customerDto.LastName}",
+            CustomerEmail = customerDto.Email,
+            CustomerPhone = customerDto.PhoneNumber,
             ProviderId = serviceDto.ProviderId,
             ProviderName = serviceDto.ProviderName,
             BookingStart = booking.BookingStart,
@@ -264,6 +266,8 @@ public class BookingService : IBookingService
             ServicePrice = bookingToUpdate.Service.Price,
             CustomerId = bookingToUpdate.CustomerId,
             CustomerName = $"{bookingToUpdate.Customer.FirstName} {bookingToUpdate.Customer.LastName}",
+            CustomerEmail = bookingToUpdate.Customer.Email,
+            CustomerPhone = bookingToUpdate.Customer.PhoneNumber,
             ProviderId = bookingToUpdate.Service.ProviderId,
             ProviderName = $"{bookingToUpdate.Service.Provider.FirstName} {bookingToUpdate.Service.Provider.LastName}",
             BookingStart = bookingToUpdate.BookingStart,
@@ -309,6 +313,8 @@ public class BookingService : IBookingService
             ServicePrice = booking.Service.Price,
             CustomerId = booking.CustomerId,
             CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            CustomerEmail = booking.Customer.Email,
+            CustomerPhone = booking.Customer.PhoneNumber,
             ProviderId = booking.Service.ProviderId,
             ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
             BookingStart = booking.BookingStart,
@@ -364,6 +370,8 @@ public class BookingService : IBookingService
                 ServicePrice = b.Service.Price,
                 CustomerId = b.CustomerId,
                 CustomerName = $"{b.Customer.FirstName} {b.Customer.LastName}",
+                CustomerEmail = b.Customer.Email,
+                CustomerPhone = b.Customer.PhoneNumber,
                 ProviderId = b.Service.ProviderId,
                 ProviderName = $"{b.Service.Provider.FirstName} {b.Service.Provider.LastName}",
                 BookingStart = b.BookingStart,
@@ -423,6 +431,8 @@ public class BookingService : IBookingService
                 ServicePrice = b.Service.Price,
                 CustomerId = b.CustomerId,
                 CustomerName = $"{b.Customer.FirstName} {b.Customer.LastName}",
+                CustomerEmail = b.Customer.Email,
+                CustomerPhone = b.Customer.PhoneNumber,
                 ProviderId = b.Service.ProviderId,
                 ProviderName = $"{b.Service.Provider.FirstName} {b.Service.Provider.LastName}",
                 BookingStart = b.BookingStart,
@@ -433,6 +443,43 @@ public class BookingService : IBookingService
             .ToListAsync(cancellationToken);
 
         return new PagedResult<BookingViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<BookingViewDto>> GetBookingsByProviderAndCustomerAsync(string providerId, string customerId,
+        CancellationToken cancellationToken = default)
+    {
+        this.logger
+            .LogDebug("Retrieving bookings between provider {ProviderId} and customer {CustomerId}",
+                providerId, customerId);
+
+        var bookings = await this.dbContext.Bookings
+            .AsNoTracking()
+            .Include(b => b.Service)
+            .ThenInclude(s => s.Provider)
+            .Include(b => b.Customer)
+            .Where(b => b.Service.ProviderId == providerId && b.CustomerId == customerId)
+            .OrderByDescending(b => b.BookingStart)
+            .Select(b => new BookingViewDto
+            {
+                Id = b.Id,
+                ServiceId = b.ServiceId,
+                ServiceName = b.Service.Name,
+                ServicePrice = b.Service.Price,
+                CustomerId = b.CustomerId,
+                CustomerName = $"{b.Customer.FirstName} {b.Customer.LastName}",
+                CustomerEmail = b.Customer.Email,
+                CustomerPhone = b.Customer.PhoneNumber,
+                ProviderId = b.Service.ProviderId,
+                ProviderName = $"{b.Service.Provider.FirstName} {b.Service.Provider.LastName}",
+                BookingStart = b.BookingStart,
+                Status = b.Status.ToString(),
+                Notes = b.Notes,
+                CreatedOn = b.CreatedOn
+            })
+            .ToListAsync(cancellationToken);
+
+        return bookings;
     }
 
     /// <inheritdoc/>
@@ -490,6 +537,8 @@ public class BookingService : IBookingService
             ServicePrice = booking.Service.Price,
             CustomerId = booking.CustomerId,
             CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            CustomerEmail = booking.Customer.Email,
+            CustomerPhone = booking.Customer.PhoneNumber,
             ProviderId = booking.Service.ProviderId,
             ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
             BookingStart = booking.BookingStart,
@@ -555,6 +604,8 @@ public class BookingService : IBookingService
             ServicePrice = booking.Service.Price,
             CustomerId = booking.CustomerId,
             CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            CustomerEmail = booking.Customer.Email,
+            CustomerPhone = booking.Customer.PhoneNumber,
             ProviderId = booking.Service.ProviderId,
             ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
             BookingStart = booking.BookingStart,
@@ -621,6 +672,8 @@ public class BookingService : IBookingService
             ServicePrice = booking.Service.Price,
             CustomerId = booking.CustomerId,
             CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            CustomerEmail = booking.Customer.Email,
+            CustomerPhone = booking.Customer.PhoneNumber,
             ProviderId = booking.Service.ProviderId,
             ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
             BookingStart = booking.BookingStart,
@@ -696,6 +749,8 @@ public class BookingService : IBookingService
             ServicePrice = booking.Service.Price,
             CustomerId = booking.CustomerId,
             CustomerName = $"{booking.Customer.FirstName} {booking.Customer.LastName}",
+            CustomerEmail = booking.Customer.Email,
+            CustomerPhone = booking.Customer.PhoneNumber,
             ProviderId = booking.Service.ProviderId,
             ProviderName = $"{booking.Service.Provider.FirstName} {booking.Service.Provider.LastName}",
             BookingStart = booking.BookingStart,

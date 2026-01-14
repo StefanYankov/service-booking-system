@@ -1,4 +1,5 @@
 ﻿@using ServiceBookingSystem.Core.Constants
+@using ServiceBookingSystem.Data.Common
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,6 +26,21 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Service" asp-action="Index">Services</a>
                     </li>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        @if (User.IsInRole(RoleConstants.Customer))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Booking" asp-action="Index">My Bookings</a>
+                            </li>
+                        }
+                        @if (User.IsInRole(RoleConstants.Provider))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Booking" asp-action="Received">Received Bookings</a>
+                            </li>
+                        }
+                    }
                 </ul>
                 <partial name="_LoginPartial" />
             </div>

@@ -66,29 +66,37 @@ The project has a solid architectural foundation, with the following key pattern
     -   ASP.NET Core Identity configured with custom `ApplicationUser` and `ApplicationRole` entities.
     -   **Hybrid Auth**: Supports Cookies for MVC views and **JWT (JSON Web Tokens)** for API endpoints.
     -   **Role-Based Access Control (RBAC)**: Granular permissions for Admin, Provider, and Customer.
+    -   **Email Confirmation**: Registration flow includes email verification (via SendGrid or Logger).
 3.  **Data Persistence Patterns**:
     -   A complete domain model with a flexible base entity hierarchy (`BaseEntity`, `DeletableEntity`).
     -   A **Soft-Delete** pattern implemented using EF Core's Global Query Filters.
 4.  **Core Business Services**:
     -   **User Management**: Registration, Profile Management, Password Security, and Admin controls (Ban/Unban, Role Management).
-    -   **Service Management**: Full CRUD for services, including Image Uploads, Categorization, and Global Search (filtering by price, category, status).
+    -   **Service Management**: Full CRUD for services, including Image Uploads, Categorization, and Global Search (filtering by price, category, status, city).
     -   **Booking System**: A complete lifecycle engine handling Creation, Confirmation, Declining, Cancellation, Rescheduling, and Completion.
     -   **Availability Engine**: Complex logic to determine valid booking slots based on service duration and operating hours.
     -   **Reviews**: Post-service rating and commenting system.
-5.  **API Layer**:
+5.  **MVC Frontend**:
+    -   **Service Catalog**: Public browsing and searching of services with dynamic filtering.
+    -   **Booking Flow**: Interactive booking wizard with a dynamic time slot picker powered by AJAX.
+    -   **Dashboards**: Dedicated "My Bookings" (Customer) and "Received Bookings" (Provider) dashboards for managing requests.
+    -   **Provider CRM**: View customer details and history for received bookings.
+6.  **API Layer**:
     -   **RESTful API**: Exposes core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
     -   **Search & Discovery**: Filtering endpoints for finding services.
     -   **Admin API**: Endpoints for user and system management.
     -   **Validation**: Input validation using Data Annotations and `ModelState` error reporting.
-6.  **Infrastructure Layer & External Services**:
+7.  **Infrastructure Layer & External Services**:
     -   **Email Notifications**: Automated transactional emails (Booking Received, Confirmed, Rescheduled) using `SendGrid` (production) or `NullEmailService` (development).
     -   **Cloud Storage**: Integration with **Cloudinary** for image hosting and transformation.
     -   **Templating**: `ITemplateService` for rendering HTML email templates.
-7.  **Database Seeding**: A decoupled, composite seeder pattern for essential data (`Roles`, `Administrator`).
-8.  **Testing**:
+8.  **Database Seeding**: 
+    -   A decoupled, composite seeder pattern for essential data (`Roles`, `Administrator`).
+    -   **Demo Data**: A `DemoDataSeeder` that populates the development database with sample Providers, Services, and Operating Hours for rapid testing.
+9.  **Testing**:
     -   **Unit Tests**: High coverage using xUnit and Moq for business logic.
     -   **Integration Tests**: Tests using **Testcontainers (SQL Server)** and **Respawn** to verify the full stack against a real database.
-9.  **Logging**: Configured Serilog for structured logging to both the console and rolling files.
+10. **Logging**: Configured Serilog for structured logging to both the console and rolling files.
 
 ## Technology Stack
 
@@ -96,6 +104,7 @@ The project has a solid architectural foundation, with the following key pattern
 -   **Data Access:** Entity Framework Core 9
 -   **Database:** Microsoft SQL Server
 -   **Authentication:** ASP.NET Core Identity, JWT Bearer
+-   **Frontend:** ASP.NET Core MVC, Razor Pages, Bootstrap 5, jQuery
 -   **Testing:** xUnit, Moq, Testcontainers, Respawn
 -   **Logging:** Serilog
 -   **Email:** SendGrid
@@ -124,6 +133,13 @@ The project has a solid architectural foundation, with the following key pattern
     dotnet user-secrets set "Cloudinary:ApiKey" "YOUR_CLOUDINARY_API_KEY"
     dotnet user-secrets set "Cloudinary:ApiSecret" "YOUR_CLOUDINARY_API_SECRET"
     ```
+
+### Running the Application
+
+1.  **Database Setup:** The application automatically applies migrations and seeds data on startup.
+    *   **Note:** If you want to reset the demo data (Services, Availability), drop your local database, and the `DemoDataSeeder` will recreate it on the next run.
+2.  **Run:** `dotnet run --project ServiceBookingSystem.Web`
+3.  **Access:** Open `https://localhost:7045` (or the port shown in your console).
 
 ## Testing
 

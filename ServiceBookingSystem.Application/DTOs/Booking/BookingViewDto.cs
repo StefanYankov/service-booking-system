@@ -14,6 +14,10 @@ public class BookingViewDto
     
     public string CustomerName { get; set; } = null!;
     
+    public string? CustomerEmail { get; set; }
+    
+    public string? CustomerPhone { get; set; }
+    
     public string ProviderId { get; set; } = null!;
     
     public string ProviderName { get; set; } = null!;

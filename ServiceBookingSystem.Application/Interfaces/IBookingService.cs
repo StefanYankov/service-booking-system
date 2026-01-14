@@ -38,7 +38,7 @@ public interface IBookingService
     Task<BookingViewDto?> GetBookingByIdAsync(string bookingId, string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a paged list of bookings for a specific customer.
+    /// Retrieves a paginated list of bookings for a specific customer.
     /// </summary>
     /// <param name="customerId">The customer's ID.</param>
     /// <param name="parameters">Paging and sorting options.</param>
@@ -47,13 +47,23 @@ public interface IBookingService
     Task<PagedResult<BookingViewDto>> GetBookingsByCustomerAsync(string customerId, PagingAndSortingParameters parameters, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a paged list of bookings for a specific provider (services they own).
+    /// Retrieves a paginated list of bookings for a specific provider (services they own).
     /// </summary>
     /// <param name="providerId">The provider's ID.</param>
     /// <param name="parameters">Paging and sorting options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A paged result of bookings.</returns>
     Task<PagedResult<BookingViewDto>> GetBookingsByProviderAsync(string providerId, PagingAndSortingParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a list of bookings between a specific provider and customer.
+    /// Used for the Provider to see history with a specific client.
+    /// </summary>
+    /// <param name="providerId">The provider's ID.</param>
+    /// <param name="customerId">The customer's ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of bookings.</returns>
+    Task<List<BookingViewDto>> GetBookingsByProviderAndCustomerAsync(string providerId, string customerId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Confirms a pending booking (Provider only).
