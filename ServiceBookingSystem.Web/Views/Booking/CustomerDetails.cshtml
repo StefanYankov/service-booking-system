@@ -1,0 +1,81 @@
+﻿@using ServiceBookingSystem.Data.Entities.Domain
+@model ServiceBookingSystem.Web.Models.ProviderCustomerDetailsViewModel
+@{
+    ViewData["Title"] = "Customer Details";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">Customer Profile</h4>
+        </div>
+        <div class="card-body">
+            <h2 class="card-title">@Model.CustomerName</h2>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> <a href="mailto:@Model.Email">@Model.Email</a></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Phone:</strong> <a href="tel:@Model.PhoneNumber">@Model.PhoneNumber</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mb-3">Booking History with this Customer</h3>
+    @if (!Model.Bookings.Any())
+    {
+        <div class="alert alert-light">No booking history found.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Service</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var booking in Model.Bookings)
+                    {
+                        <tr>
+                            <td>@booking.ServiceName</td>
+                            <td>@booking.BookingStart.ToString("g")</td>
+                            <td>
+                                @if (booking.Status == BookingStatus.Pending.ToString())
+                                {
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                }
+                                else if (booking.Status == BookingStatus.Confirmed.ToString())
+                                {
+                                    <span class="badge bg-success">Confirmed</span>
+                                }
+                                else if (booking.Status == BookingStatus.Declined.ToString())
+                                {
+                                    <span class="badge bg-danger">Declined</span>
+                                }
+                                else if (booking.Status == BookingStatus.Cancelled.ToString())
+                                {
+                                    <span class="badge bg-secondary">Cancelled</span>
+                                }
+                                else if (booking.Status == BookingStatus.Completed.ToString())
+                                {
+                                    <span class="badge bg-primary">Completed</span>
+                                }
+                            </td>
+                            <td>$@booking.Price</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    
+    <div class="mt-3">
+        <a asp-action="Received" class="btn btn-outline-secondary">Back to Received Bookings</a>
+    </div>
+</div>
