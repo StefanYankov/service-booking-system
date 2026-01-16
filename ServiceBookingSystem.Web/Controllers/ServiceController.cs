@@ -115,7 +115,10 @@ public class ServiceController : Controller
     public async Task<IActionResult> MyServices(int pageNumber = 1)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var parameters = new PagingAndSortingParameters
         {
@@ -168,7 +171,10 @@ public class ServiceController : Controller
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -205,12 +211,21 @@ public class ServiceController : Controller
     public async Task<IActionResult> Edit(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var service = await serviceService.GetServiceByIdAsync(id);
-        if (service == null) return NotFound();
+        if (service == null)
+        {
+            return NotFound();
+        }
 
-        if (service.ProviderId != userId) return Forbid();
+        if (service.ProviderId != userId)
+        {
+            return Forbid();
+        }
 
         var categories = await categoryService.GetAllAsync(new PagingAndSortingParameters { PageSize = 100 });
 
@@ -228,7 +243,7 @@ public class ServiceController : Controller
             City = service.City,
             PostalCode = service.PostalCode,
             Categories = categories.Items.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList(),
-            ExistingImages = service.Images // Populate existing images
+            ExistingImages = service.Images
         };
 
         return View(model);
@@ -245,13 +260,19 @@ public class ServiceController : Controller
             model.Categories = categories.Items.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
             // Reload images if validation fails
             var service = await serviceService.GetServiceByIdAsync(model.Id);
-            if (service != null) model.ExistingImages = service.Images;
-            
+            if (service != null)
+            {
+                model.ExistingImages = service.Images;
+            }
+
             return View(model);
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -290,8 +311,11 @@ public class ServiceController : Controller
             model.Categories = categories.Items.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
             // Reload images
             var service = await serviceService.GetServiceByIdAsync(model.Id);
-            if (service != null) model.ExistingImages = service.Images;
-            
+            if (service != null)
+            {
+                model.ExistingImages = service.Images;
+            }
+
             return View(model);
         }
     }
@@ -302,7 +326,10 @@ public class ServiceController : Controller
     public async Task<IActionResult> DeleteImage(int serviceId, int imageId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -324,7 +351,10 @@ public class ServiceController : Controller
     public async Task<IActionResult> SetThumbnail(int serviceId, int imageId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -346,7 +376,10 @@ public class ServiceController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
