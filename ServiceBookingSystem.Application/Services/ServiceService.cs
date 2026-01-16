@@ -263,6 +263,7 @@ public class ServiceService : IServiceService
             .AsNoTracking()
             .Include(s => s.Provider)
             .Include(s => s.Category)
+            .Include(s => s.Images)
             .FirstOrDefaultAsync(s => s.Id == serviceId, cancellationToken);
 
         if (service == null)
@@ -270,6 +271,8 @@ public class ServiceService : IServiceService
             logger.LogInformation("Service with ID: {ServiceId} not found.", serviceId);
             return null;
         }
+
+        var mainImage = service.Images.FirstOrDefault(i => i.IsThumbnail) ?? service.Images.FirstOrDefault();
 
         var dto = new ServiceViewDto
         {
@@ -286,7 +289,14 @@ public class ServiceService : IServiceService
             ProviderId = service.ProviderId,
             ProviderName = $"{service.Provider.FirstName} {service.Provider.LastName}",
             CategoryId = service.CategoryId,
-            CategoryName = service.Category.Name
+            CategoryName = service.Category.Name,
+            MainImageUrl = mainImage?.ImageUrl,
+            Images = service.Images.Select(i => new ServiceImageDto
+            {
+                Id = i.Id,
+                ImageUrl = i.ImageUrl,
+                IsThumbnail = i.IsThumbnail
+            }).ToList()
         };
 
         logger.LogInformation("Successfully fetched Service {ServiceId}", serviceId);
@@ -311,6 +321,7 @@ public class ServiceService : IServiceService
         var query = baseQuery
             .Include(s => s.Provider)
             .Include(s => s.Category)
+            .Include(s => s.Images)
             .AsQueryable();
 
         var sortBy = parameters.SortBy?.ToLower();
@@ -350,7 +361,8 @@ public class ServiceService : IServiceService
                 ProviderId = s.ProviderId,
                 ProviderName = $"{s.Provider.FirstName} {s.Provider.LastName}",
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.Name
+                CategoryName = s.Category.Name,
+                MainImageUrl = s.Images.FirstOrDefault(i => i.IsThumbnail) != null ? s.Images.FirstOrDefault(i => i.IsThumbnail)!.ImageUrl : s.Images.FirstOrDefault() != null ? s.Images.FirstOrDefault()!.ImageUrl : null
             })
             .ToListAsync(cancellationToken);
 
@@ -377,6 +389,7 @@ public class ServiceService : IServiceService
         var query = baseQuery
             .Include(s => s.Provider)
             .Include(s => s.Category)
+            .Include(s => s.Images)
             .AsQueryable();
 
         var sortBy = parameters.SortBy?.ToLower();
@@ -415,7 +428,8 @@ public class ServiceService : IServiceService
                 ProviderId = s.ProviderId,
                 ProviderName = $"{s.Provider.FirstName} {s.Provider.LastName}",
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.Name
+                CategoryName = s.Category.Name,
+                MainImageUrl = s.Images.FirstOrDefault(i => i.IsThumbnail) != null ? s.Images.FirstOrDefault(i => i.IsThumbnail)!.ImageUrl : s.Images.FirstOrDefault() != null ? s.Images.FirstOrDefault()!.ImageUrl : null
             })
             .ToListAsync(cancellationToken);
 
@@ -432,6 +446,7 @@ public class ServiceService : IServiceService
             .AsNoTracking()
             .Include(s => s.Provider)
             .Include(s => s.Category)
+            .Include(s => s.Images)
             .AsQueryable();
 
         // 1. Search Term (Name, Description, Category)
@@ -507,7 +522,8 @@ public class ServiceService : IServiceService
                 ProviderId = s.ProviderId,
                 ProviderName = $"{s.Provider.FirstName} {s.Provider.LastName}",
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.Name
+                CategoryName = s.Category.Name,
+                MainImageUrl = s.Images.FirstOrDefault(i => i.IsThumbnail) != null ? s.Images.FirstOrDefault(i => i.IsThumbnail)!.ImageUrl : s.Images.FirstOrDefault() != null ? s.Images.FirstOrDefault()!.ImageUrl : null
             })
             .ToListAsync(cancellationToken);
 
@@ -587,6 +603,44 @@ public class ServiceService : IServiceService
     }
 
     /// <inheritdoc/>
+    public async Task SetThumbnailAsync(int serviceId, string userId, int imageId, CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Attempting to set thumbnail for Service {ServiceId} to Image {ImageId} by User {UserId}", serviceId, imageId, userId);
+
+        var service = await dbContext.Services
+            .Include(s => s.Images)
+            .FirstOrDefaultAsync(s => s.Id == serviceId, cancellationToken);
+
+        if (service == null)
+        {
+            throw new EntityNotFoundException(nameof(Service), serviceId);
+        }
+
+        if (service.ProviderId != userId)
+        {
+            throw new AuthorizationException(userId, $"Set Thumbnail for Service {serviceId}");
+        }
+
+        var targetImage = service.Images.FirstOrDefault(i => i.Id == imageId);
+        if (targetImage == null)
+        {
+            throw new EntityNotFoundException(nameof(ServiceImage), imageId);
+        }
+
+        // Reset others
+        foreach (var img in service.Images)
+        {
+            img.IsThumbnail = false;
+        }
+
+        // Set new thumbnail
+        targetImage.IsThumbnail = true;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Thumbnail set for Service {ServiceId} to Image {ImageId}", serviceId, imageId);
+    }
+
+    /// <inheritdoc/>
     public async Task<List<string>> GetDistinctCitiesAsync(CancellationToken cancellationToken = default)
     {
         logger.LogDebug("Fetching distinct cities from services");
@@ -594,7 +648,7 @@ public class ServiceService : IServiceService
         var cities = await dbContext.Services
             .AsNoTracking()
             .Where(s => !string.IsNullOrEmpty(s.City))
-            .Select(s => s.City)
+            .Select(s => s.City!)
             .Distinct()
             .OrderBy(c => c)
             .ToListAsync(cancellationToken);

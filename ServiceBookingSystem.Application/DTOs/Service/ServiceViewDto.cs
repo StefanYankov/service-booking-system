@@ -35,4 +35,6 @@ public class ServiceViewDto
     public double? AverageRating { get; set; }
     
     public int? TotalReviews { get; set; }
+    
+    public List<ServiceImageDto> Images { get; set; } = new();
 }

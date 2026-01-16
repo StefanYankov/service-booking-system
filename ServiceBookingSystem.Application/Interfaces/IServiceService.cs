@@ -92,7 +92,17 @@ public interface IServiceService
     Task DeleteImageAsync(int serviceId, string userId, int imageId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a list of all distinct cities where services are offered.
+    /// Sets a specific image as the main thumbnail for the service.
+    /// </summary>
+    /// <param name="serviceId">The service ID.</param>
+    /// <param name="userId">The provider's ID (for authorization).</param>
+    /// <param name="imageId">The image ID to set as thumbnail.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task SetThumbnailAsync(int serviceId, string userId, int imageId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a list of distinct cities where services are offered.
+    /// Used for populating search filters.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of city names.</returns>
