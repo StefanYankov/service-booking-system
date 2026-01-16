@@ -887,7 +887,7 @@ public partial class ServiceServiceTests
             CategoryId = 1,
             City = "Varna"
         };
-        
+
         var service3 = new Service
         {
             Name = "S3",
@@ -896,7 +896,7 @@ public partial class ServiceServiceTests
             CategoryId = 1,
             City = "Sofia"
         }; // Duplicate
-        
+
         var service4 = new Service
         {
             Name = "S4",
@@ -931,7 +931,7 @@ public partial class ServiceServiceTests
             FirstName = "P",
             LastName = "1"
         };
-        
+
         var category = new Category
         {
             Id = 1,
@@ -939,28 +939,28 @@ public partial class ServiceServiceTests
         };
 
         var service1 = new Service
-            { 
-                Name = "S1",
-                Description = "D",
-                ProviderId = "p1",
-                CategoryId = 1,
-                City = "Sofia" 
-            };
+        {
+            Name = "S1",
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Sofia"
+        };
         var service2 = new Service
         {
             Name = "S2",
-                Description = "D",
-                ProviderId = "p1",
-                CategoryId = 1, 
-                City = null
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = null
         }; // Null
         var service3 = new Service
         {
             Name = "S3",
-                Description = "D",
-                ProviderId = "p1",
-                CategoryId = 1,
-                City = ""
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = ""
         }; // Empty
         var service4 = new Service
         {
@@ -1009,40 +1009,40 @@ public partial class ServiceServiceTests
             FirstName = "P",
             LastName = "1"
         };
-        
+
         var category = new Category
         {
             Id = 1,
             Name = "Cat"
         };
-        
-        var service1 = new Service 
+
+        var service1 = new Service
         {
             Name = "S1",
-                Description = "D",
-                ProviderId = "p1",
-                CategoryId = 1,
-                City = "Sofia"
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Sofia"
         };
-        
-        var service2 = new Service 
+
+        var service2 = new Service
         {
             Name = "S2",
-                Description = "D",
-                ProviderId = "p1",
-                CategoryId = 1,
-                City = "Varna"
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Varna"
         };
-        
-        var service3 = new Service 
+
+        var service3 = new Service
         {
             Name = "S3",
-                Description = "D",
-                ProviderId = "p1",
-                CategoryId = 1,
-                City = "Sofia"
+            Description = "D",
+            ProviderId = "p1",
+            CategoryId = 1,
+            City = "Sofia"
         };
-        
+
 
         await dbContext.Users.AddAsync(provider);
         await dbContext.Categories.AddAsync(category);
@@ -1057,5 +1057,66 @@ public partial class ServiceServiceTests
         // Assert:
         Assert.Equal(2, result.TotalCount);
         Assert.All(result.Items, s => Assert.Equal("Sofia", s.City));
+    }
+
+    [Fact]
+    public async Task GetServiceByIdAsync_ShouldIncludeImages()
+    {
+        // Arrange:
+        const string providerId = "provider-id";
+        const int serviceId = 1;
+
+        var provider = new ApplicationUser
+        {
+            Id = providerId,
+            FirstName = "John",
+            LastName = "Doe"
+        };
+
+        var category = new Category
+        {
+            Id = 1,
+            Name = "Test Category"
+        };
+
+        var service = new Service
+        {
+            Id = serviceId,
+            Name = "Test Service",
+            Description = "Description",
+            ProviderId = providerId,
+            CategoryId = 1
+        };
+
+        var image1 = new ServiceImage
+        {
+            Id = 1,
+            ServiceId = serviceId,
+            ImageUrl = "url1"
+        };
+
+        var image2 = new ServiceImage
+        {
+            Id = 2,
+            ServiceId = serviceId,
+            ImageUrl = "url2"
+        };
+
+
+        await this.dbContext.Users.AddAsync(provider);
+        await this.dbContext.Categories.AddAsync(category);
+        await this.dbContext.Services.AddAsync(service);
+        await this.dbContext.ServiceImages.AddRangeAsync(image1, image2);
+        await this.dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await this.serviceService.GetServiceByIdAsync(serviceId);
+
+        // Assert:
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Images.Count);
+        Assert.Contains(result.Images, i => i.ImageUrl == "url1");
+        Assert.Contains(result.Images, i => i.ImageUrl == "url2");
+        Assert.Equal("url1", result.MainImageUrl); // First one should be main
     }
 }
