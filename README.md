@@ -80,6 +80,8 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Service Catalog**: Public browsing and searching of services with dynamic filtering.
     -   **Booking Flow**: Interactive booking wizard with a dynamic time slot picker powered by AJAX.
     -   **Dashboards**: Dedicated "My Bookings" (Customer) and "Received Bookings" (Provider) dashboards for managing requests.
+    -   **Provider Portal**: "My Services" dashboard allowing providers to Create, Edit, and Delete their offerings.
+    -   **Image Gallery**: Integrated image management in the Service Edit form, allowing uploads, deletions, and thumbnail selection.
     -   **Provider CRM**: View customer details and history for received bookings.
 6.  **API Layer**:
     -   **RESTful API**: Exposes core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
