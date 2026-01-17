@@ -1,0 +1,133 @@
+﻿@using ServiceBookingSystem.Web.Models
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+    var changePasswordModel = ViewData["ChangePasswordModel"] as ChangePasswordViewModel ?? new ChangePasswordViewModel();
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <span class="display-1 text-secondary"><i class="bi bi-person-circle"></i></span>
+                    </div>
+                    <h4>@Model.FirstName @Model.LastName</h4>
+                    <p class="text-muted">@Model.Email</p>
+                    <div>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <span class="badge bg-info text-dark">@role</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Security</h5>
+                    <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Personal Information</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Update" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="FirstName" class="form-label"></label>
+                                <input asp-for="FirstName" class="form-control" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LastName" class="form-label"></label>
+                                <input asp-for="LastName" class="form-control" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <div class="form-text">Changing your email may require re-confirmation.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="ChangePassword" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="@changePasswordModel.OldPassword" class="form-label"></label>
+                        <input asp-for="@changePasswordModel.OldPassword" name="OldPassword" class="form-control" />
+                        <span asp-validation-for="@changePasswordModel.OldPassword" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="@changePasswordModel.NewPassword" class="form-label"></label>
+                        <input asp-for="@changePasswordModel.NewPassword" name="NewPassword" class="form-control" />
+                        <span asp-validation-for="@changePasswordModel.NewPassword" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="@changePasswordModel.ConfirmPassword" class="form-label"></label>
+                        <input asp-for="@changePasswordModel.ConfirmPassword" name="ConfirmPassword" class="form-control" />
+                        <span asp-validation-for="@changePasswordModel.ConfirmPassword" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @if (ViewData.ModelState.ErrorCount > 0 && ViewData["ChangePasswordModel"] != null)
+    {
+        <script>
+            $(document).ready(function() {
+                var myModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+                myModal.show();
+            });
+        </script>
+    }
+}
