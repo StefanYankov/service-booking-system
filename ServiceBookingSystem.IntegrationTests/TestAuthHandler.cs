@@ -27,6 +27,7 @@ namespace ServiceBookingSystem.IntegrationTests;
 /// <br/>
 /// <code>
 /// client.DefaultRequestHeaders.Add("X-Test-UserId", "user-guid-123");
+/// client.DefaultRequestHeaders.Add("X-Test-Role", "Administrator"); // Optional
 /// var response = await client.GetAsync("/Protected/Route");
 /// </code>
 /// </remarks>
@@ -49,14 +50,23 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
             return Task.FromResult(AuthenticateResult.Fail("No User ID header found. Authentication failed."));
         }
 
-        // Create the User Principal
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim(ClaimTypes.Name, "Test User"),
-            new Claim(ClaimTypes.Role, "Customer"), // Default role, can be enhanced to read from header if needed
-            new Claim(ClaimTypes.Role, "Provider")  // Adding Provider role too for flexibility in simple tests, or make it dynamic
+            new Claim(ClaimTypes.Name, "Test User")
         };
+
+        // Check for Role header
+        if (Request.Headers.TryGetValue("X-Test-Role", out var role))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+        }
+        else
+        {
+            // Default roles if not specified (backward compatibility)
+            claims.Add(new Claim(ClaimTypes.Role, "Customer"));
+            claims.Add(new Claim(ClaimTypes.Role, "Provider"));
+        }
 
         var identity = new ClaimsIdentity(claims, AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);

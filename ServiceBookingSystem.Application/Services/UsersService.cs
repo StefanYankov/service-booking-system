@@ -210,7 +210,8 @@ public class UsersService : IUsersService
                 LastName = user.LastName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                Roles = await userManager.GetRolesAsync(user)
+                Roles = await userManager.GetRolesAsync(user),
+                IsDisabled = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow
             });
         }
 
@@ -242,6 +243,7 @@ public class UsersService : IUsersService
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
             Roles = userRoles,
+            IsDisabled = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow
         };
 
         return userDto;
@@ -272,7 +274,8 @@ public class UsersService : IUsersService
                 Email = user.Email!,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                IsDisabled = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow
             });
         }
 
