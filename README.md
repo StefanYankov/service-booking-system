@@ -83,6 +83,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Provider Portal**: "My Services" dashboard allowing providers to Create, Edit, and Delete their offerings.
     -   **Image Gallery**: Integrated image management in the Service Edit form, allowing uploads, deletions, and thumbnail selection.
     -   **Provider CRM**: View customer details and history for received bookings.
+    -   **Admin Area**: Dedicated Admin Dashboard using **AdminLTE** theme for User Management (List, Ban/Unban) and system oversight.
 6.  **API Layer**:
     -   **RESTful API**: Exposes core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
     -   **Search & Discovery**: Filtering endpoints for finding services.
@@ -106,7 +107,7 @@ The project has a solid architectural foundation, with the following key pattern
 -   **Data Access:** Entity Framework Core 9
 -   **Database:** Microsoft SQL Server
 -   **Authentication:** ASP.NET Core Identity, JWT Bearer
--   **Frontend:** ASP.NET Core MVC, Razor Pages, Bootstrap 5, jQuery
+-   **Frontend:** ASP.NET Core MVC, Razor Pages, Bootstrap 5, jQuery, AdminLTE
 -   **Testing:** xUnit, Moq, Testcontainers, Respawn
 -   **Logging:** Serilog
 -   **Email:** SendGrid
