@@ -1,0 +1,101 @@
+﻿@using ServiceBookingSystem.Application.DTOs.Identity.User
+@using ServiceBookingSystem.Application.DTOs.Shared
+@using ServiceBookingSystem.Data.Common
+@model PagedResult<UserViewDto>
+@{
+    ViewData["Title"] = "User Management";
+    var searchTerm = ViewData["SearchTerm"] as string;
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Users</h3>
+        <div class="card-tools">
+            <form method="get" asp-action="Users">
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <input type="text" name="searchTerm" class="form-control float-right" placeholder="Search" value="@searchTerm">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-default">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card-body table-responsive p-0">
+        <table class="table table-hover text-nowrap">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Items)
+                {
+                    <tr>
+                        <td>@user.Email</td>
+                        <td>@user.FirstName @user.LastName</td>
+                        <td>
+                            @foreach (var role in user.Roles)
+                            {
+                                <span class="badge bg-secondary">@role</span>
+                            }
+                        </td>
+                        <td>
+                            @if (user.IsDisabled)
+                            {
+                                <span class="badge bg-danger">Disabled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!user.Roles.Contains(RoleConstants.Administrator))
+                            {
+                                @if (user.IsDisabled)
+                                {
+                                    <form asp-action="EnableUser" asp-route-id="@user.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i> Enable
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="DisableUser" asp-route-id="@user.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to disable this user?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-ban"></i> Disable
+                                        </button>
+                                    </form>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer clearfix">
+        @if (Model.TotalPages > 1)
+        {
+            <ul class="pagination pagination-sm m-0 float-right">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="Users" asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-searchTerm="@searchTerm">&laquo;</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Page @Model.PageNumber of @Model.TotalPages</span>
+                </li>
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="Users" asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-searchTerm="@searchTerm">&raquo;</a>
+                </li>
+            </ul>
+        }
+    </div>
+</div>
