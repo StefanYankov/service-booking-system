@@ -84,6 +84,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Image Gallery**: Integrated image management in the Service Edit form, allowing uploads, deletions, and thumbnail selection.
     -   **Provider CRM**: View customer details and history for received bookings.
     -   **Admin Area**: Dedicated Admin Dashboard using **AdminLTE** theme for User Management (List, Ban/Unban) and system oversight.
+    -   **Profile Management**: Integrated profile page for updating personal details and changing passwords.
 6.  **API Layer**:
     -   **RESTful API**: Exposes core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
     -   **Search & Discovery**: Filtering endpoints for finding services.
