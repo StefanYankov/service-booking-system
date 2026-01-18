@@ -66,16 +66,16 @@
                             <td>
                                 @if (booking.Status == BookingStatus.Pending.ToString())
                                 {
-                                    <form asp-action="Confirm" asp-route-id="@booking.Id" method="post" class="d-inline">
+                                    <form asp-controller="Booking" asp-action="Confirm" asp-area="" asp-route-id="@booking.Id" method="post" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-success">Confirm</button>
                                     </form>
-                                    <form asp-action="Decline" asp-route-id="@booking.Id" method="post" class="d-inline">
+                                    <form asp-controller="Booking" asp-action="Decline" asp-area="" asp-route-id="@booking.Id" method="post" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-danger">Decline</button>
                                     </form>
                                 }
                                 else if (booking.Status == BookingStatus.Confirmed.ToString())
                                 {
-                                    <form asp-action="Complete" asp-route-id="@booking.Id" method="post" class="d-inline" onsubmit="return confirm('Mark this booking as completed?');">
+                                    <form asp-controller="Booking" asp-action="Complete" asp-area="" asp-route-id="@booking.Id" method="post" class="d-inline" onsubmit="return confirm('Mark this booking as completed?');">
                                         <button type="submit" class="btn btn-sm btn-primary">Complete</button>
                                     </form>
                                 }

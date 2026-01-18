@@ -66,9 +66,10 @@
                             <td>
                                 @if (booking.Status == BookingStatus.Pending.ToString() || booking.Status == BookingStatus.Confirmed.ToString())
                                 {
-                                    <form asp-action="Cancel" asp-route-id="@booking.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                    <form asp-controller="Booking" asp-action="Cancel" asp-area="" asp-route-id="@booking.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
                                     </form>
+                                    <a asp-controller="Booking" asp-action="Reschedule" asp-area="" asp-route-id="@booking.Id" class="btn btn-sm btn-outline-warning">Reschedule</a>
                                 }
                                 else if (booking.Status == BookingStatus.Completed.ToString())
                                 {

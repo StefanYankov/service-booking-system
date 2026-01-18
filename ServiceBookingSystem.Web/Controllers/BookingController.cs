@@ -11,7 +11,6 @@ using ServiceBookingSystem.Web.Models;
 namespace ServiceBookingSystem.Web.Controllers;
 
 [Authorize]
-[Route("[controller]")]
 public class BookingController : Controller
 {
     private readonly IBookingService bookingService;
@@ -35,7 +34,7 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Customer)]
-    [HttpGet("Create")]
+    [HttpGet]
     public async Task<IActionResult> Create(int serviceId)
     {
         var service = await serviceService.GetServiceByIdAsync(serviceId);
@@ -56,7 +55,7 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Customer)]
-    [HttpPost("Create")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(BookingCreateViewModel model)
     {
@@ -93,14 +92,11 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Customer)]
-    [HttpGet("Confirmation/{id}")]
+    [HttpGet]
     public async Task<IActionResult> Confirmation(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         var booking = await bookingService.GetBookingByIdAsync(id, userId);
         if (booking == null)
@@ -123,7 +119,7 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Customer)]
-    [HttpGet("GetSlots")]
+    [HttpGet]
     public async Task<IActionResult> GetSlots(int serviceId, DateTime date)
     {
         var slots = await availabilityService.GetAvailableSlotsAsync(serviceId, date);
@@ -131,14 +127,11 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Customer)]
-    [HttpGet("Index")]
+    [HttpGet]
     public async Task<IActionResult> Index(int pageNumber = 1)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         var parameters = new PagingAndSortingParameters
         {
@@ -168,14 +161,11 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Provider)]
-    [HttpGet("Received")]
+    [HttpGet]
     public async Task<IActionResult> Received(int pageNumber = 1)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         var parameters = new PagingAndSortingParameters
         {
@@ -207,21 +197,15 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Provider)]
-    [HttpGet("CustomerDetails/{customerId}")]
+    [HttpGet]
     public async Task<IActionResult> CustomerDetails(string customerId)
     {
         var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (providerId == null)
-        {
-            return Unauthorized();
-        }
+        if (providerId == null) return Unauthorized();
 
         // 1. Get Customer Info
         var customer = await usersService.GetUserByIdAsync(customerId);
-        if (customer == null)
-        {
-            return NotFound();
-        }
+        if (customer == null) return NotFound();
 
         // 2. Get Bookings between Provider and Customer
         var bookings = await bookingService.GetBookingsByProviderAndCustomerAsync(providerId, customerId);
@@ -246,15 +230,12 @@ public class BookingController : Controller
         return View(model);
     }
 
-    [HttpPost("Cancel")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         try
         {
@@ -275,15 +256,12 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Provider)]
-    [HttpPost("Confirm")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Confirm(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         try
         {
@@ -300,15 +278,12 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Provider)]
-    [HttpPost("Decline")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Decline(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         try
         {
@@ -325,15 +300,12 @@ public class BookingController : Controller
     }
 
     [Authorize(Roles = RoleConstants.Provider)]
-    [HttpPost("Complete")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Complete(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         try
         {
@@ -349,20 +321,14 @@ public class BookingController : Controller
         return RedirectToAction(nameof(Received));
     }
 
-    [HttpGet("Reschedule/{id}")]
+    [HttpGet]
     public async Task<IActionResult> Reschedule(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         var booking = await bookingService.GetBookingByIdAsync(id, userId);
-        if (booking == null)
-        {
-            return NotFound();
-        }
+        if (booking == null) return NotFound();
 
         // Only allow rescheduling if Pending or Confirmed
         if (booking.Status != BookingStatus.Pending.ToString() && booking.Status != BookingStatus.Confirmed.ToString())
@@ -384,7 +350,7 @@ public class BookingController : Controller
         return View(model);
     }
 
-    [HttpPost("Reschedule")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reschedule(RescheduleViewModel model)
     {
@@ -394,10 +360,7 @@ public class BookingController : Controller
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        if (userId == null) return Unauthorized();
 
         try
         {
@@ -406,7 +369,7 @@ public class BookingController : Controller
             var dto = new BookingUpdateDto
             {
                 Id = model.BookingId,
-                BookingStart = newStart // Fixed: Property name matches DTO
+                BookingStart = newStart
             };
 
             await bookingService.UpdateBookingAsync(dto, userId);

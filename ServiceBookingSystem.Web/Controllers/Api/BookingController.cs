@@ -6,6 +6,7 @@ using ServiceBookingSystem.Application.Interfaces;
 
 namespace ServiceBookingSystem.Web.Controllers.Api;
 
+[Area("Api")]
 [Authorize]
 public class BookingController : BaseApiController
 {
