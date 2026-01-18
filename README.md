@@ -138,6 +138,16 @@ The project has a solid architectural foundation, with the following key pattern
     dotnet user-secrets set "Cloudinary:ApiKey" "YOUR_CLOUDINARY_API_KEY"
     dotnet user-secrets set "Cloudinary:ApiSecret" "YOUR_CLOUDINARY_API_SECRET"
     ```
+4.  **Email Configuration (Null vs Real):**
+    The application supports two modes for email delivery:
+    *   **Development (NullEmailService):** By default, emails are **not sent**. Instead, the email content (To, Subject, Body) is logged to the console. This is useful for testing without spamming real addresses.
+    *   **Production (SendGrid):** To send real emails, configure the following in `appsettings.json` or User Secrets:
+        ```json
+        "EmailSettings": {
+          "EnableRealEmail": true,
+          "SendGridApiKey": "YOUR_API_KEY"
+        }
+        ```
 
 ### Running the Application
 
