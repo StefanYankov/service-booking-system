@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using ServiceBookingSystem.Core.Constants;
 
 namespace ServiceBookingSystem.Web.Models;
 
-public class BookingCreateViewModel
+public class BookingCreateViewModel : ITimeSlotPickerModel
 {
     [Required]
     public int ServiceId { get; set; }
@@ -13,17 +14,16 @@ public class BookingCreateViewModel
 
     [Required]
     [DataType(DataType.Date)]
-    [Display(Name = "Date")]
-    public DateTime Date { get; set; } = DateTime.Today.AddDays(1);
+    public DateTime Date { get; set; }
 
     [Required]
-    [Display(Name = "Time Slot")]
     public TimeSpan Time { get; set; }
 
-    [StringLength(500)]
-    [Display(Name = "Notes for Provider")]
+    [StringLength(ValidationConstraints.Booking.NotesMaxLength)]
     public string? Notes { get; set; }
-    
-    // Helper to combine for the Controller
-    public DateTime GetBookingStart() => Date.Date.Add(Time);
+
+    public DateTime GetBookingStart()
+    {
+        return Date.Date.Add(Time);
+    }
 }

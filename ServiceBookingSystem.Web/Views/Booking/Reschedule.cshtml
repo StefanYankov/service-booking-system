@@ -1,0 +1,48 @@
+﻿@model ServiceBookingSystem.Web.Models.RescheduleViewModel
+@{
+    ViewData["Title"] = "Reschedule Booking";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0">Reschedule Booking</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-light border">
+                        <h5>@Model.ServiceName</h5>
+                        <p class="mb-0">Current Time: <strong>@Model.CurrentStart.ToString("f")</strong></p>
+                    </div>
+
+                    <form asp-action="Reschedule" method="post">
+                        <input type="hidden" asp-for="BookingId" />
+                        <input type="hidden" asp-for="ServiceId" />
+                        <input type="hidden" asp-for="ServiceName" />
+                        <input type="hidden" asp-for="CurrentStart" />
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <partial name="_TimeSlotPicker" />
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-warning btn-lg">Confirm New Time</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/booking.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function () {
+            initBookingForm(@Model.ServiceId);
+        });
+    </script>
+}
