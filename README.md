@@ -70,12 +70,14 @@ The project has a solid architectural foundation, with the following key pattern
 3.  **Data Persistence Patterns**:
     -   A complete domain model with a flexible base entity hierarchy (`BaseEntity`, `DeletableEntity`).
     -   A **Soft-Delete** pattern implemented using EF Core's Global Query Filters.
+    -   **Operating Hours**: Flexible schema for defining service availability per day of week.
 4.  **Core Business Services**:
     -   **User Management**: Registration, Profile Management, Password Security, and Admin controls (Ban/Unban, Role Management).
-    -   **Service Management**: Full CRUD for services, including Image Uploads, Categorization, and Global Search (filtering by price, category, status, city).
-    -   **Booking System**: A complete lifecycle engine handling Creation, Confirmation, Declining, Cancellation, Rescheduling, and Completion.
-    -   **Availability Engine**: Complex logic to determine valid booking slots based on service duration and operating hours.
+    -   **Service Management**: Full CRUD for services, including **Multi-Image Gallery** (with thumbnail selection), Categorization, and Global Search.
+    -   **Booking System**: A complete lifecycle engine handling Creation, Confirmation, Declining, Cancellation, **Rescheduling**, and Completion.
+    -   **Availability Engine**: Complex logic to determine valid booking slots based on service duration, operating hours, and existing bookings.
     -   **Reviews**: Post-service rating and commenting system.
+    -   **Notifications**: `INotificationService` orchestrates email delivery using `ITemplateService` for HTML rendering.
 5.  **MVC Frontend**:
     -   **Service Catalog**: Public browsing and searching of services with dynamic filtering.
     -   **Booking Flow**: Interactive booking wizard with a dynamic time slot picker powered by AJAX.
@@ -92,7 +94,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Admin API**: Endpoints for user and system management.
     -   **Validation**: Input validation using Data Annotations and `ModelState` error reporting.
 7.  **Infrastructure Layer & External Services**:
-    -   **Email Notifications**: Automated transactional emails (Booking Received, Confirmed, Rescheduled) using `SendGrid` (production) or `NullEmailService` (development).
+    -   **Email Notifications**: Automated transactional emails (Booking Created, Confirmed, Declined, Cancelled, Rescheduled) using `SendGrid` (production) or `NullEmailService` (development).
     -   **Cloud Storage**: Integration with **Cloudinary** for image hosting and transformation.
     -   **Templating**: `ITemplateService` for rendering HTML email templates.
 8.  **Database Seeding**: 
@@ -101,6 +103,7 @@ The project has a solid architectural foundation, with the following key pattern
 9.  **Testing**:
     -   **Unit Tests**: High coverage using xUnit and Moq for business logic.
     -   **Integration Tests**: Tests using **Testcontainers (SQL Server)** and **Respawn** to verify the full stack against a real database.
+    -   **Test Infrastructure**: Custom `TestAuthHandler` for role simulation and `MockAntiforgery` for simplified controller testing.
 10. **Logging**: Configured Serilog for structured logging to both the console and rolling files.
 
 ## Technology Stack
@@ -109,7 +112,7 @@ The project has a solid architectural foundation, with the following key pattern
 -   **Data Access:** Entity Framework Core 9
 -   **Database:** Microsoft SQL Server
 -   **Authentication:** ASP.NET Core Identity, JWT Bearer
--   **Frontend:** ASP.NET Core MVC, Razor Pages, Bootstrap 5, jQuery, AdminLTE
+-   **Frontend:** ASP.NET Core MVC, Razor Pages, Bootstrap 5, jQuery, **AdminLTE**
 -   **Testing:** xUnit, Moq, Testcontainers, Respawn
 -   **Logging:** Serilog
 -   **Email:** SendGrid
