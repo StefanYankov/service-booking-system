@@ -7,6 +7,7 @@ using ServiceBookingSystem.Data.Common;
 
 namespace ServiceBookingSystem.Web.Controllers.Api;
 
+[Area("Api")]
 [Authorize(Roles = RoleConstants.Administrator)]
 [Route("api/admin")]
 public class AdminController : BaseApiController

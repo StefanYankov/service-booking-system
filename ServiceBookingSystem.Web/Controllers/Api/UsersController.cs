@@ -8,6 +8,7 @@ namespace ServiceBookingSystem.Web.Controllers.Api;
 /// <summary>
 /// Manages user profile operations.
 /// </summary>
+[Area("Api")]
 [Authorize]
 public class UsersController : BaseApiController
 {

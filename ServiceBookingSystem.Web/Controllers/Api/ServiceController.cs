@@ -7,6 +7,7 @@ using ServiceBookingSystem.Data.Common;
 
 namespace ServiceBookingSystem.Web.Controllers.Api;
 
+[Area("Api")]
 public class ServiceController : BaseApiController
 {
     private readonly IServiceService serviceService;

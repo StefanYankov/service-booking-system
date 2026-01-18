@@ -134,7 +134,7 @@ public class NotificationService : INotificationService
             
             var templateParams = new Dictionary<string, string>
             {
-                { "RecipientName", recipient.FirstName },
+                { "UserName", recipient.FirstName },
                 { "ServiceName", booking.Service.Name },
                 { "NewDate", booking.BookingStart.ToString("f") },
                 { "OldDate", oldDate.ToString("f") }

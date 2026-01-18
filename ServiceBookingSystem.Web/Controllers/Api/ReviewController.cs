@@ -9,6 +9,7 @@ namespace ServiceBookingSystem.Web.Controllers.Api;
 /// <summary>
 /// Manages review operations including creation, updates, and retrieval.
 /// </summary>
+[Area("Api")]
 public class ReviewController : BaseApiController
 {
     private readonly IReviewService reviewService;

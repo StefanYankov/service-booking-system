@@ -7,6 +7,7 @@ namespace ServiceBookingSystem.Web.Controllers.Api;
 /// <summary>
 /// Provides endpoints for checking service availability and retrieving open time slots.
 /// </summary>
+[Area("Api")]
 public class AvailabilityController : BaseApiController
 {
     private readonly IAvailabilityService availabilityService;

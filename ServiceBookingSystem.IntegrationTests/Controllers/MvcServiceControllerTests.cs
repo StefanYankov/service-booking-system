@@ -31,6 +31,9 @@ public class MvcServiceControllerTests : BaseIntegrationTest
         var provider = await SeedProviderAsync();
         var category = await SeedCategoryAsync();
         var client = CreateAuthenticatedClient(provider.Id, imageServiceMock.Object);
+        
+        // Force English culture
+        client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en-US"));
 
         var getResponse = await client.GetAsync("/Service/Create");
         var html = await getResponse.Content.ReadAsStringAsync();
@@ -40,7 +43,7 @@ public class MvcServiceControllerTests : BaseIntegrationTest
         {
             { "Name", "New Service" },
             { "Description", "A brand new service description." },
-            { "Price", "50.00" },
+            { "Price", "50" },
             { "DurationInMinutes", "60" },
             { "CategoryId", category.Id.ToString() },
             { "IsOnline", "true" },
@@ -51,6 +54,11 @@ public class MvcServiceControllerTests : BaseIntegrationTest
         var response = await client.PostAsync("/Service/Create", new FormUrlEncodedContent(formData));
 
         // Assert
+        if (response.StatusCode != HttpStatusCode.Redirect && response.StatusCode != HttpStatusCode.Found)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Output.WriteLine($"Response Content: {errorContent}"); 
+        }
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Contains("/Service/MyServices", response.Headers.Location!.ToString());
         
@@ -68,6 +76,7 @@ public class MvcServiceControllerTests : BaseIntegrationTest
         var service = await SeedServiceAsync(provider.Id);
         
         var client = CreateAuthenticatedClient(provider.Id, imageServiceMock.Object);
+        client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en-US"));
 
         // Mock Image Service
         imageServiceMock.Setup(x => x.AddImageAsync(It.IsAny<Microsoft.AspNetCore.Http.IFormFile>()))

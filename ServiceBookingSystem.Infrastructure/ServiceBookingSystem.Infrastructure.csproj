@@ -9,11 +9,15 @@
     <ItemGroup>
         <None Remove="Messaging\Templates\AccountDisabled.html" />
         <None Remove="Messaging\Templates\ConfirmEmail.html" />
+        <None Remove="Messaging\Templates\BookingRescheduled.html" />
+        <None Remove="Messaging\Templates\BookingCancelled.html" />
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Include="Messaging\Templates\AccountDisabled.html" />
         <EmbeddedResource Include="Messaging\Templates\ConfirmEmail.html" />
+        <EmbeddedResource Include="Messaging\Templates\BookingRescheduled.html" />
+        <EmbeddedResource Include="Messaging\Templates\BookingCancelled.html" />
     </ItemGroup>
 
     <ItemGroup>

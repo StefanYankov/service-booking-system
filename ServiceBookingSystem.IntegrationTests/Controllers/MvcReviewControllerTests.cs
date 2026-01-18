@@ -57,6 +57,39 @@ public class MvcReviewControllerTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task Get_Create_WithInvalidBookingId_ReturnsNotFound()
+    {
+        // Arrange
+        var customer = await SeedCustomerAsync();
+        var client = CreateAuthenticatedClient(customer.Id);
+
+        // Act
+        var response = await client.GetAsync("/Review/Create/invalid-id");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Get_Create_AsProvider_ReturnsForbidden()
+    {
+        // Arrange
+        var provider = await SeedProviderAsync();
+        var service = await SeedServiceAsync(provider.Id);
+
+        var customer = await SeedCustomerAsync();
+        var booking = await SeedBookingAsync(customer.Id, service.Id, BookingStatus.Completed);
+        
+        var client = CreateAuthenticatedClient(provider.Id, RoleConstants.Provider);
+
+        // Act
+        var response = await client.GetAsync($"/Review/Create/{booking.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Post_Create_WithValidData_RedirectsToService()
     {
         // Arrange
@@ -67,10 +100,6 @@ public class MvcReviewControllerTests : BaseIntegrationTest
 
         var client = CreateAuthenticatedClient(customer.Id);
 
-        // Get the form to extract token (optional if we mock it, but good practice)
-        // Since we use TestAuthHandler, we bypass the Login form, but the Review form still has AntiForgery.
-        // However, TestAuthHandler doesn't disable AntiForgery validation.
-        // We need to extract the token from the GET request to the Review page.
         var getResponse = await client.GetAsync($"/Review/Create/{booking.Id}");
         var html = await getResponse.Content.ReadAsStringAsync();
         var token = ExtractAntiForgeryToken(html);
@@ -112,8 +141,8 @@ public class MvcReviewControllerTests : BaseIntegrationTest
         {
             { "BookingId", booking.Id },
             { "ServiceId", service.Id.ToString() },
-            { "Rating", "0" }, // Invalid: Min 1
-            { "Comment", "Short" }, // Invalid: Min 10 chars
+            { "Rating", "0" }, 
+            { "Comment", "Short" },
             { "__RequestVerificationToken", token }
         };
 
@@ -121,14 +150,51 @@ public class MvcReviewControllerTests : BaseIntegrationTest
         var response = await client.PostAsync("/Review/Create", new FormUrlEncodedContent(formData));
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode); // Redisplays form
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Rating must be between 1 and 5 stars", content); // Validation message
+        Assert.Contains("Rating must be between 1 and 5 stars", content);
+    }
+
+    [Fact]
+    public async Task Post_Create_DuplicateReview_ReturnsViewWithErrors()
+    {
+        // Arrange
+        var customer = await SeedCustomerAsync();
+        var provider = await SeedProviderAsync();
+        var service = await SeedServiceAsync(provider.Id);
+        var booking = await SeedBookingAsync(customer.Id, service.Id, BookingStatus.Completed);
+
+        var client = CreateAuthenticatedClient(customer.Id);
+
+        var review = new Review { BookingId = booking.Id, ServiceId = service.Id, CustomerId = customer.Id, Rating = 5, Comment = "First review" };
+        await DbContext.Reviews.AddAsync(review);
+        await DbContext.SaveChangesAsync();
+
+        var getResponse = await client.GetAsync($"/Review/Create/{booking.Id}");
+        var html = await getResponse.Content.ReadAsStringAsync();
+        var token = ExtractAntiForgeryToken(html);
+
+        var formData = new Dictionary<string, string>
+        {
+            { "BookingId", booking.Id },
+            { "ServiceId", service.Id.ToString() },
+            { "Rating", "4" },
+            { "Comment", "Second review attempt" },
+            { "__RequestVerificationToken", token }
+        };
+
+        // Act
+        var response = await client.PostAsync("/Review/Create", new FormUrlEncodedContent(formData));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadAsStringAsync();
+        Assert.Contains("already exists", content);
     }
 
     // --- Helpers ---
 
-    private HttpClient CreateAuthenticatedClient(string userId)
+    private HttpClient CreateAuthenticatedClient(string userId, string? role = null)
     {
         var client = Factory.WithWebHostBuilder(builder =>
         {
@@ -144,6 +210,10 @@ public class MvcReviewControllerTests : BaseIntegrationTest
         }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
         client.DefaultRequestHeaders.Add("X-Test-UserId", userId);
+        if (role != null)
+        {
+            client.DefaultRequestHeaders.Add("X-Test-Role", role);
+        }
         return client;
     }
 
