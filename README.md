@@ -85,6 +85,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Provider CRM**: View customer details and history for received bookings.
     -   **Admin Area**: Dedicated Admin Dashboard using **AdminLTE** theme for User Management (List, Ban/Unban) and system oversight.
     -   **Profile Management**: Integrated profile page for updating personal details and changing passwords.
+    -   **Rescheduling**: Customers can reschedule pending or confirmed bookings to a new available time slot.
 6.  **API Layer**:
     -   **RESTful API**: Exposes core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
     -   **Search & Discovery**: Filtering endpoints for finding services.
