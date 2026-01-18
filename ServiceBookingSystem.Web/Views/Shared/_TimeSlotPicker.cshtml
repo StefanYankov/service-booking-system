@@ -1,0 +1,21 @@
+﻿@model ServiceBookingSystem.Web.Models.ITimeSlotPickerModel
+@* 
+    Expects a model implementing ITimeSlotPickerModel.
+    The parent view must include 'booking.js' and call initBookingForm(serviceId).
+*@
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="Date" class="form-label"></label>
+        <input asp-for="Date" class="form-control" type="date" id="bookingDate" />
+        <span asp-validation-for="Date" class="text-danger"></span>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <label asp-for="Time" class="form-label"></label>
+        <select asp-for="Time" class="form-select" id="bookingTime" disabled>
+            <option value="">Select a date first</option>
+        </select>
+        <span asp-validation-for="Time" class="text-danger"></span>
+    </div>
+</div>

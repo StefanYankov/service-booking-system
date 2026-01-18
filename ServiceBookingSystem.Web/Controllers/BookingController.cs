@@ -5,6 +5,7 @@ using ServiceBookingSystem.Application.DTOs.Booking;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Data.Common;
+using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Web.Models;
 
 namespace ServiceBookingSystem.Web.Controllers;
@@ -96,7 +97,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Confirmation(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var booking = await bookingService.GetBookingByIdAsync(id, userId);
         if (booking == null)
@@ -131,7 +135,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Index(int pageNumber = 1)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var parameters = new PagingAndSortingParameters
         {
@@ -165,7 +172,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Received(int pageNumber = 1)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var parameters = new PagingAndSortingParameters
         {
@@ -201,11 +211,17 @@ public class BookingController : Controller
     public async Task<IActionResult> CustomerDetails(string customerId)
     {
         var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (providerId == null) return Unauthorized();
+        if (providerId == null)
+        {
+            return Unauthorized();
+        }
 
         // 1. Get Customer Info
         var customer = await usersService.GetUserByIdAsync(customerId);
-        if (customer == null) return NotFound();
+        if (customer == null)
+        {
+            return NotFound();
+        }
 
         // 2. Get Bookings between Provider and Customer
         var bookings = await bookingService.GetBookingsByProviderAndCustomerAsync(providerId, customerId);
@@ -235,7 +251,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Cancel(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -261,7 +280,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Confirm(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -283,7 +305,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Decline(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -305,7 +330,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Complete(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -319,5 +347,82 @@ public class BookingController : Controller
         }
 
         return RedirectToAction(nameof(Received));
+    }
+
+    [HttpGet("Reschedule/{id}")]
+    public async Task<IActionResult> Reschedule(string id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var booking = await bookingService.GetBookingByIdAsync(id, userId);
+        if (booking == null)
+        {
+            return NotFound();
+        }
+
+        // Only allow rescheduling if Pending or Confirmed
+        if (booking.Status != BookingStatus.Pending.ToString() && booking.Status != BookingStatus.Confirmed.ToString())
+        {
+            TempData["ErrorMessage"] = "Cannot reschedule this booking.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var model = new RescheduleViewModel
+        {
+            BookingId = booking.Id,
+            ServiceId = booking.ServiceId,
+            ServiceName = booking.ServiceName,
+            CurrentStart = booking.BookingStart,
+            Date = booking.BookingStart.Date,
+            Time = booking.BookingStart.TimeOfDay
+        };
+
+        return View(model);
+    }
+
+    [HttpPost("Reschedule")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Reschedule(RescheduleViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var newStart = model.Date.Add(model.Time);
+            
+            var dto = new BookingUpdateDto
+            {
+                Id = model.BookingId,
+                BookingStart = newStart // Fixed: Property name matches DTO
+            };
+
+            await bookingService.UpdateBookingAsync(dto, userId);
+            TempData["SuccessMessage"] = "Booking rescheduled successfully.";
+            
+            if (User.IsInRole(RoleConstants.Provider))
+            {
+                return RedirectToAction(nameof(Received));
+            }
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to reschedule booking {BookingId}", model.BookingId);
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
+        }
     }
 }
