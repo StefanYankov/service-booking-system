@@ -49,7 +49,7 @@ public class BookingController : Controller
             ServiceName = service.Name,
             ServicePrice = service.Price,
             ProviderName = service.ProviderName,
-            Date = DateTime.Today // Initialize to today
+            Date = DateTime.Today
         };
 
         return View(model);
@@ -97,7 +97,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Confirmation(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var booking = await bookingService.GetBookingByIdAsync(id, userId);
         if (booking == null)
@@ -132,7 +135,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Index(int pageNumber = 1)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var parameters = new PagingAndSortingParameters
         {
@@ -166,7 +172,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Received(int pageNumber = 1)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var parameters = new PagingAndSortingParameters
         {
@@ -202,11 +211,17 @@ public class BookingController : Controller
     public async Task<IActionResult> CustomerDetails(string customerId)
     {
         var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (providerId == null) return Unauthorized();
+        if (providerId == null)
+        {
+            return Unauthorized();
+        }
 
         // 1. Get Customer Info
         var customer = await usersService.GetUserByIdAsync(customerId);
-        if (customer == null) return NotFound();
+        if (customer == null)
+        {
+            return NotFound();
+        }
 
         // 2. Get Bookings between Provider and Customer
         var bookings = await bookingService.GetBookingsByProviderAndCustomerAsync(providerId, customerId);
@@ -236,7 +251,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Cancel(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -262,7 +280,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Confirm(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -284,7 +305,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Decline(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -306,7 +330,10 @@ public class BookingController : Controller
     public async Task<IActionResult> Complete(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
@@ -326,10 +353,16 @@ public class BookingController : Controller
     public async Task<IActionResult> Reschedule(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         var booking = await bookingService.GetBookingByIdAsync(id, userId);
-        if (booking == null) return NotFound();
+        if (booking == null)
+        {
+            return NotFound();
+        }
 
         // Only allow rescheduling if Pending or Confirmed
         if (booking.Status != BookingStatus.Pending.ToString() && booking.Status != BookingStatus.Confirmed.ToString())
@@ -361,7 +394,10 @@ public class BookingController : Controller
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
         try
         {
