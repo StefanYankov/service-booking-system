@@ -81,10 +81,16 @@
                     {
                         <div class="col">
                             <div class="card h-100 shadow-sm">
-                                @* Placeholder Image logic - replace with real ImageUrl later *@
-                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                                    <span class="text-muted">No Image</span>
-                                </div>
+                                @if (!string.IsNullOrEmpty(service.MainImageUrl))
+                                {
+                                    <img src="@service.MainImageUrl" class="card-img-top" alt="@service.Name" style="height: 200px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <span class="text-muted">No Image</span>
+                                    </div>
+                                }
                                 
                                 <div class="card-body d-flex flex-column">
                                     <div class="mb-2">

@@ -258,7 +258,6 @@ public class ServiceController : Controller
         {
             var categories = await categoryService.GetAllAsync(new PagingAndSortingParameters { PageSize = 100 });
             model.Categories = categories.Items.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
-            // Reload images if validation fails
             var service = await serviceService.GetServiceByIdAsync(model.Id);
             if (service != null)
             {
@@ -293,14 +292,14 @@ public class ServiceController : Controller
 
             await serviceService.UpdateServiceAsync(dto, userId);
 
-            // Handle Image Upload
             if (model.NewImage != null)
             {
                 await serviceService.AddImageAsync(model.Id, userId, model.NewImage);
             }
 
             TempData["SuccessMessage"] = "Service updated successfully!";
-            return RedirectToAction(nameof(MyServices));
+            
+            return RedirectToAction(nameof(Edit), new { id = model.Id });
         }
         catch (Exception ex)
         {
@@ -309,7 +308,6 @@ public class ServiceController : Controller
             
             var categories = await categoryService.GetAllAsync(new PagingAndSortingParameters { PageSize = 100 });
             model.Categories = categories.Items.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
-            // Reload images
             var service = await serviceService.GetServiceByIdAsync(model.Id);
             if (service != null)
             {

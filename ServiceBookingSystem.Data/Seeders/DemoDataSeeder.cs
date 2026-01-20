@@ -36,7 +36,7 @@ public class DemoDataSeeder
         
         if (await userManager.FindByEmailAsync(provider.Email) == null)
         {
-            await userManager.CreateAsync(provider, "Password123!");
+            await userManager.CreateAsync(provider, "Provider123!");
             await userManager.AddToRoleAsync(provider, RoleConstants.Provider);
         }
         else
@@ -44,7 +44,27 @@ public class DemoDataSeeder
             provider = await userManager.FindByEmailAsync(provider.Email);
         }
 
-        // 2. Create Categories
+        // 2. Create Customer
+        var customer = new ApplicationUser
+        {
+            UserName = "customer@demo.com",
+            Email = "customer@demo.com",
+            FirstName = "Alice",
+            LastName = "Wonderland",
+            EmailConfirmed = true
+        };
+
+        if (await userManager.FindByEmailAsync(customer.Email) == null)
+        {
+            await userManager.CreateAsync(customer, "Customer123!");
+            await userManager.AddToRoleAsync(customer, RoleConstants.Customer);
+        }
+        else
+        {
+            customer = await userManager.FindByEmailAsync(customer.Email);
+        }
+
+        // 3. Create Categories
         var categories = new List<Category>
         {
             new() { Name = "Plumbing", Description = "Pipe repairs and installation" },
@@ -65,7 +85,7 @@ public class DemoDataSeeder
         var plumbing = dbContext.Categories.First(c => c.Name == "Plumbing");
         var electrical = dbContext.Categories.First(c => c.Name == "Electrical");
 
-        // 3. Create Services
+        // 4. Create Services
         var services = new List<Service>
         {
             new()
@@ -104,7 +124,7 @@ public class DemoDataSeeder
                 DurationInMinutes = 30,
                 CategoryId = electrical.Id,
                 ProviderId = provider.Id,
-                City = "Varna",
+                City = "Varna", // Even online services might have a base city
                 StreetAddress = "Virtual",
                 PostalCode = "9000",
                 IsOnline = true,
@@ -115,7 +135,7 @@ public class DemoDataSeeder
         await dbContext.Services.AddRangeAsync(services);
         await dbContext.SaveChangesAsync();
 
-        // 4. Create Operating Hours (Mon-Fri, 9am-5pm) for EACH service
+        // 5. Create Operating Hours (Mon-Fri, 9am-5pm) for EACH service
         var operatingHours = new List<OperatingHour>();
         foreach (var service in services)
         {
@@ -131,6 +151,18 @@ public class DemoDataSeeder
             }
         }
         await dbContext.OperatingHours.AddRangeAsync(operatingHours);
+        await dbContext.SaveChangesAsync();
+
+        // 6. Create a Booking for the Customer
+        var booking = new Booking
+        {
+            CustomerId = customer!.Id,
+            ServiceId = services[0].Id, // Emergency Pipe Repair
+            BookingStart = DateTime.UtcNow.AddDays(2).Date.AddHours(10), // Future booking
+            Status = BookingStatus.Pending,
+            Notes = "Please come ASAP!"
+        };
+        await dbContext.Bookings.AddAsync(booking);
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation("Demo data seeding completed.");
