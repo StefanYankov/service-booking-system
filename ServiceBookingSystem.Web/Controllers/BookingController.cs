@@ -48,7 +48,8 @@ public class BookingController : Controller
             ServiceId = service.Id,
             ServiceName = service.Name,
             ServicePrice = service.Price,
-            ProviderName = service.ProviderName
+            ProviderName = service.ProviderName,
+            Date = DateTime.Today // Initialize to today
         };
 
         return View(model);
@@ -143,6 +144,7 @@ public class BookingController : Controller
 
         var bookingsResult = await bookingService.GetBookingsByCustomerAsync(userId, parameters);
         
+        // Map DTO to ViewModel
         var items = bookingsResult.Items.Select(b => new CustomerBookingViewModel
         {
             Id = b.Id,
@@ -176,12 +178,13 @@ public class BookingController : Controller
 
         var bookingsResult = await bookingService.GetBookingsByProviderAsync(userId, parameters);
         
+        // Map DTO to ViewModel
         var items = bookingsResult.Items.Select(b => new ProviderBookingViewModel
         {
             Id = b.Id,
             ServiceName = b.ServiceName,
             CustomerName = b.CustomerName,
-            CustomerId = b.CustomerId,
+            CustomerId = b.CustomerId, // Needed for link
             CustomerEmail = b.CustomerEmail,
             CustomerPhone = b.CustomerPhone,
             BookingStart = b.BookingStart,
@@ -201,11 +204,14 @@ public class BookingController : Controller
         var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (providerId == null) return Unauthorized();
 
+        // 1. Get Customer Info
         var customer = await usersService.GetUserByIdAsync(customerId);
         if (customer == null) return NotFound();
 
+        // 2. Get Bookings between Provider and Customer
         var bookings = await bookingService.GetBookingsByProviderAndCustomerAsync(providerId, customerId);
 
+        // 3. Map to ViewModel
         var model = new ProviderCustomerDetailsViewModel
         {
             CustomerId = customer.Id,
@@ -325,6 +331,7 @@ public class BookingController : Controller
         var booking = await bookingService.GetBookingByIdAsync(id, userId);
         if (booking == null) return NotFound();
 
+        // Only allow rescheduling if Pending or Confirmed
         if (booking.Status != BookingStatus.Pending.ToString() && booking.Status != BookingStatus.Confirmed.ToString())
         {
             TempData["ErrorMessage"] = "Cannot reschedule this booking.";
