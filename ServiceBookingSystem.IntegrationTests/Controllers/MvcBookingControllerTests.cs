@@ -19,6 +19,28 @@ public class MvcBookingControllerTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task Get_Create_ReturnsViewWithDefaultDate()
+    {
+        // Arrange
+        var customer = await SeedCustomerAsync();
+        var provider = await SeedProviderAsync();
+        var service = await SeedServiceAsync(provider.Id);
+        
+        var client = CreateAuthenticatedClient(customer.Id, RoleConstants.Customer);
+
+        // Act
+        var response = await client.GetAsync($"/Booking/Create?serviceId={service.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadAsStringAsync();
+        
+        // Check if the date input has today's date (yyyy-MM-dd)
+        var today = DateTime.Today.ToString("yyyy-MM-dd");
+        Assert.Contains($"value=\"{today}\"", content);
+    }
+
+    [Fact]
     public async Task Get_Index_ContainsCorrectCancelUrl()
     {
         // Arrange
