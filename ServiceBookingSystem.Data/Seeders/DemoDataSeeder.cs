@@ -104,7 +104,7 @@ public class DemoDataSeeder
                 DurationInMinutes = 30,
                 CategoryId = electrical.Id,
                 ProviderId = provider.Id,
-                City = "Varna", // Even online services might have a base city
+                City = "Varna",
                 StreetAddress = "Virtual",
                 PostalCode = "9000",
                 IsOnline = true,

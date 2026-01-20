@@ -26,24 +26,20 @@ note as ConventionNote
 end note
 
 ' --- Identity & User Management ---
-' These are core to the domain, so we show them with key properties.
 
 class ApplicationUser {
   + string Id
   + string FirstName
   + string LastName
   + string Email
-  + string PhoneNumber
 }
 
 class ApplicationRole {
   + string Id
   + string Name
-  + string? Description
 }
 
 ' --- Core Domain Entities ---
-' We only list the properties unique to each business concept.
 
 class Category {
   + string Name
@@ -52,8 +48,8 @@ class Category {
 
 class Service {
   + string Name
-  + string Description
   + decimal Price
+  + int DurationInMinutes
   + bool IsOnline
   + bool IsActive
 }
@@ -69,26 +65,35 @@ class ServiceImage {
   + bool IsThumbnail
 }
 
+class Booking {
+  + DateTime BookingStart
+  + BookingStatus Status
+  + string? Notes
+}
+
 class Review {
   + int Rating
   + string? Comment
 }
 
-
 ' --- Relationships ---
-' Using standard UML cardinality: * means "many" (0 or more)
 
-' Identity Relationship
+' Identity
 ApplicationUser "*" -- "*" ApplicationRole : (has)
 
-' Business Relationships
-ApplicationUser "1" -- "*" Service : (Provider)
-ApplicationUser "1" -- "*" Review : (Customer)
-
+' Service Management
 Category "1" -- "*" Service
-
+ApplicationUser "1" -- "*" Service : (Provider)
 Service "1" -- "*" OperatingHour
 Service "1" -- "*" ServiceImage
-Service "1" -- "*" Review
+
+' Booking Flow
+ApplicationUser "1" -- "*" Booking : (Customer)
+Service "1" -- "*" Booking
+Booking "1" -- "0..1" Review : (Feedback)
+
+' Review links (redundant but explicit in DB)
+ApplicationUser "1" -- "*" Review : (Author)
+Service "1" -- "*" Review : (Target)
 
 @enduml
