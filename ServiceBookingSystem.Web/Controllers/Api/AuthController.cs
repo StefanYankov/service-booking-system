@@ -11,6 +11,7 @@ namespace ServiceBookingSystem.Web.Controllers.Api;
 /// Controller responsible for handling authentication requests (Login, Register, Password Management).
 /// It issues JWT tokens for valid credentials.
 /// </summary>
+[Area("Api")]
 public class AuthController : BaseApiController
 {
     private readonly UserManager<ApplicationUser> userManager;

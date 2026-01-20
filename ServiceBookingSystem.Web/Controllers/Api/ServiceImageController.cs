@@ -5,6 +5,7 @@ using ServiceBookingSystem.Core.Constants;
 
 namespace ServiceBookingSystem.Web.Controllers.Api;
 
+[Area("Api")]
 [Authorize]
 [Route("api/services/{serviceId}/images")]
 public class ServiceImageController : BaseApiController
@@ -84,6 +85,28 @@ public class ServiceImageController : BaseApiController
         if (userId == null) return Unauthorized();
 
         await this.serviceService.DeleteImageAsync(serviceId, userId, imageId, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Sets a specific image as the thumbnail for the service.
+    /// </summary>
+    /// <param name="serviceId">The ID of the service.</param>
+    /// <param name="imageId">The ID of the image to set as thumbnail.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No Content.</returns>
+    [HttpPut("{imageId}/thumbnail")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SetThumbnail(int serviceId, int imageId, CancellationToken cancellationToken)
+    {
+        var userId = this.GetCurrentUserId();
+        logger.LogDebug("API: SetThumbnail request for Image {ImageId} in Service {ServiceId} by User {UserId}", imageId, serviceId, userId);
+
+        if (userId == null) return Unauthorized();
+
+        await this.serviceService.SetThumbnailAsync(serviceId, userId, imageId, cancellationToken);
         return NoContent();
     }
 }
