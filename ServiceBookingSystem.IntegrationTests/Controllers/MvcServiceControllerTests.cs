@@ -43,7 +43,7 @@ public class MvcServiceControllerTests : BaseIntegrationTest
         {
             { "Name", "New Service" },
             { "Description", "A brand new service description." },
-            { "Price", "50" },
+            { "Price", "50" }, // Use integer to avoid culture issues
             { "DurationInMinutes", "60" },
             { "CategoryId", category.Id.ToString() },
             { "IsOnline", "true" },
@@ -111,7 +111,7 @@ public class MvcServiceControllerTests : BaseIntegrationTest
             Output.WriteLine($"Response Content: {errorContent}"); 
         }
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("/Service/MyServices", response.Headers.Location!.ToString());
+        Assert.Contains($"/Service/Edit/{service.Id}", response.Headers.Location!.ToString());
         
         // Verify DB
         var image = DbContext.ServiceImages.FirstOrDefault(i => i.ServiceId == service.Id);
