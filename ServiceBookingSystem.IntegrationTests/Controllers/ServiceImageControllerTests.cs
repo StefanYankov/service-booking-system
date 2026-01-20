@@ -10,6 +10,7 @@ using Moq;
 using ServiceBookingSystem.Application.DTOs.Identity;
 using ServiceBookingSystem.Application.DTOs.Image;
 using ServiceBookingSystem.Application.Interfaces.Infrastructure;
+using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
 using Xunit.Abstractions;
@@ -126,6 +127,86 @@ public class ServiceImageControllerTests : BaseIntegrationTest
         imageServiceMock.Verify(x => x.DeleteImageAsync("123"), Times.Once);
     }
 
+    [Fact]
+    public async Task SetThumbnail_WithValidId_ShouldReturn204NoContent()
+    {
+        // Arrange:
+        const string providerEmail = "provider@test.com";
+        const string password = "Password123!";
+        await SeedProviderAndServiceAsync(providerEmail, password);
+        
+        var service = this.DbContext.Services.First();
+        var image1 = new ServiceImage { ServiceId = service.Id, ImageUrl = "url1", PublicId = "1", IsThumbnail = false };
+        var image2 = new ServiceImage { ServiceId = service.Id, ImageUrl = "url2", PublicId = "2", IsThumbnail = true };
+        await this.DbContext.ServiceImages.AddRangeAsync(image1, image2);
+        await this.DbContext.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync(providerEmail, password);
+        var client = CreateClientWithMock();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act: Set image1 as thumbnail
+        var response = await client.PutAsync($"/api/services/{service.Id}/images/{image1.Id}/thumbnail", null);
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        
+        // Verify DB
+        this.DbContext.ChangeTracker.Clear();
+        var dbImage1 = await this.DbContext.ServiceImages.FindAsync(image1.Id);
+        var dbImage2 = await this.DbContext.ServiceImages.FindAsync(image2.Id);
+        
+        Assert.True(dbImage1!.IsThumbnail);
+        Assert.False(dbImage2!.IsThumbnail);
+    }
+
+    [Fact]
+    public async Task SetThumbnail_AsNonOwner_ShouldReturn403Forbidden()
+    {
+        // Arrange:
+        const string ownerEmail = "owner@test.com";
+        const string attackerEmail = "attacker@test.com";
+        const string password = "Password123!";
+        
+        await SeedProviderAndServiceAsync(ownerEmail, password);
+        await SeedProviderAndServiceAsync(attackerEmail, password); // Creates another provider/service
+
+        var ownerService = this.DbContext.Services.First(s => s.Provider.Email == ownerEmail);
+        var image = new ServiceImage { ServiceId = ownerService.Id, ImageUrl = "url", PublicId = "1" };
+        await this.DbContext.ServiceImages.AddAsync(image);
+        await this.DbContext.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync(attackerEmail, password);
+        var client = CreateClientWithMock();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act:
+        var response = await client.PutAsync($"/api/services/{ownerService.Id}/images/{image.Id}/thumbnail", null);
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SetThumbnail_WithInvalidImageId_ShouldReturn404NotFound()
+    {
+        // Arrange:
+        const string providerEmail = "provider@test.com";
+        const string password = "Password123!";
+        await SeedProviderAndServiceAsync(providerEmail, password);
+        
+        var service = this.DbContext.Services.First();
+        var token = await GetAuthTokenAsync(providerEmail, password);
+        var client = CreateClientWithMock();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act:
+        var response = await client.PutAsync($"/api/services/{service.Id}/images/999/thumbnail", null);
+
+        // Assert:
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     private async Task SeedProviderAndServiceAsync(string email, string password)
     {
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -137,11 +218,11 @@ public class ServiceImageControllerTests : BaseIntegrationTest
             LastName = "Provider"
         };
         await userManager.CreateAsync(provider, password);
-        await userManager.AddToRoleAsync(provider, "Provider");
+        await userManager.AddToRoleAsync(provider, RoleConstants.Provider);
 
         var category = new Category
         {
-            Name = "Cat",
+            Name = $"Cat_{Guid.NewGuid()}", // Unique name
             Description = "Desc"
         };
         await this.DbContext.Categories.AddAsync(category);
