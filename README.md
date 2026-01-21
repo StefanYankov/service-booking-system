@@ -73,6 +73,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Operating Hours**: Flexible schema for defining service availability per day of week.
 4.  **Core Business Services**:
     -   **User Management**: Registration, Profile Management, Password Security, and Admin controls (Ban/Unban, Role Management).
+    -   **Category Management**: Admin-only CRUD for service categories.
     -   **Service Management**: Full CRUD for services, including **Multi-Image Gallery** (with thumbnail selection), Categorization, and Global Search.
     -   **Booking System**: A complete lifecycle engine handling Creation, Confirmation, Declining, Cancellation, **Rescheduling**, and Completion.
     -   **Availability Engine**: Complex logic to determine valid booking slots based on service duration, operating hours, and existing bookings.
@@ -93,7 +94,7 @@ The project has a solid architectural foundation, with the following key pattern
 6.  **API Layer**:
     -   **RESTful API**: Exposes core functionalities (Auth, Users, Services, Bookings, Availability, Reviews).
     -   **Search & Discovery**: Filtering endpoints for finding services.
-    -   **Admin API**: Endpoints for user and system management.
+    -   **Admin API**: Endpoints for user, category, and system management.
     -   **Validation**: Input validation using Data Annotations and `ModelState` error reporting.
 7.  **Infrastructure Layer & External Services**:
     -   **Email Notifications**: Automated transactional emails (Booking Created, Confirmed, Declined, Cancelled, Rescheduled) using `SendGrid` (production) or `NullEmailService` (development).
