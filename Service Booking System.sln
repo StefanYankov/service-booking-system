@@ -15,8 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{B73B7717-4
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "diagrams", "diagrams", "{31AF065D-1CA3-483E-A924-580FB0A67B8B}"
 	ProjectSection(SolutionItems) = preProject
-		docs\diagrams\01-Domain-Model-Schema.puml = docs\diagrams\01-Domain-Model-Schema.puml
-		docs\diagrams\02-Use-Case-Diagram.puml = docs\diagrams\02-Use-Case-Diagram.puml
 		docs\diagrams\01-Domain-Model-Schema-High_Level_Domain_Model.png = docs\diagrams\01-Domain-Model-Schema-High_Level_Domain_Model.png
 		docs\diagrams\02-Use-Case-Diagram-Use_Case_Diagram.png = docs\diagrams\02-Use-Case-Diagram-Use_Case_Diagram.png
 	EndProjectSection
