@@ -88,17 +88,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        $(document).ready(function() {
-            function toggleAddress() {
-                if ($('#isOnlineCheck').is(':checked')) {
-                    $('#addressFields').hide();
-                } else {
-                    $('#addressFields').show();
-                }
-            }
-            $('#isOnlineCheck').change(toggleAddress);
-            toggleAddress(); // Initial state
-        });
-    </script>
+    <script src="~/js/service-form.js" asp-append-version="true"></script>
 }

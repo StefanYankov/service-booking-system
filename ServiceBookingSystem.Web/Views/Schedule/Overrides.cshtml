@@ -118,15 +118,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        function toggleHours() {
-            const isDayOff = document.getElementById('isDayOff').checked;
-            const hoursDiv = document.getElementById('customHours');
-            if (isDayOff) {
-                hoursDiv.classList.add('d-none');
-            } else {
-                hoursDiv.classList.remove('d-none');
-            }
-        }
-    </script>
+    <script src="~/js/schedule.js" asp-append-version="true"></script>
 }
