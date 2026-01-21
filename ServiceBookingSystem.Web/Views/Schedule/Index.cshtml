@@ -69,44 +69,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        function toggleDay(index) {
-            const isClosed = document.getElementById(`closed_${index}`).checked;
-            const container = document.getElementById(`segments_list_${index}`);
-            const addBtn = document.getElementById(`add_btn_${index}`);
-            
-            if (isClosed) {
-                container.classList.add('d-none');
-                addBtn.classList.add('d-none');
-            } else {
-                container.classList.remove('d-none');
-                addBtn.classList.remove('d-none');
-            }
-        }
-
-        function removeSegment(btn) {
-            const row = btn.closest('.segment-row');
-            const container = row.parentElement;
-            // Don't remove the last one, just clear it or hide it? 
-            // Better to allow removing all, but then IsClosed should be checked?
-            // For simplicity, just remove.
-            row.remove();
-        }
-
-        function addSegment(dayIndex) {
-            const container = document.getElementById(`segments_list_${dayIndex}`);
-            const count = container.querySelectorAll('.segment-row').length;
-            
-            const html = `
-                <div class="input-group mb-2 segment-row">
-                    <span class="input-group-text">Start</span>
-                    <input type="time" class="form-control" name="Days[${dayIndex}].Segments[${count}].Start" value="09:00" />
-                    <span class="input-group-text">End</span>
-                    <input type="time" class="form-control" name="Days[${dayIndex}].Segments[${count}].End" value="17:00" />
-                    <button type="button" class="btn btn-outline-danger" onclick="removeSegment(this)">Remove</button>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', html);
-        }
-    </script>
+    <script src="~/js/schedule.js" asp-append-version="true"></script>
 }
