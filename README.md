@@ -76,6 +76,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Service Management**: Full CRUD for services, including **Multi-Image Gallery** (with thumbnail selection), Categorization, and Global Search.
     -   **Booking System**: A complete lifecycle engine handling Creation, Confirmation, Declining, Cancellation, **Rescheduling**, and Completion.
     -   **Availability Engine**: Complex logic to determine valid booking slots based on service duration, operating hours, and existing bookings.
+    -   **Advanced Availability**: Support for **Holidays** (blocked dates) and **Custom Operating Hours** (overrides) for specific dates.
     -   **Reviews**: Post-service rating and commenting system.
     -   **Notifications**: `INotificationService` orchestrates email delivery using `ITemplateService` for HTML rendering.
 5.  **MVC Frontend**:
@@ -84,6 +85,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Dashboards**: Dedicated "My Bookings" (Customer) and "Received Bookings" (Provider) dashboards for managing requests.
     -   **Provider Portal**: "My Services" dashboard allowing providers to Create, Edit, and Delete their offerings.
     -   **Image Gallery**: Integrated image management in the Service Edit form, allowing uploads, deletions, and thumbnail selection.
+    -   **Schedule Management**: UI for providers to manage weekly hours and date-specific overrides.
     -   **Provider CRM**: View customer details and history for received bookings.
     -   **Admin Area**: Dedicated Admin Dashboard using **AdminLTE** theme for User Management (List, Ban/Unban) and system oversight.
     -   **Profile Management**: Integrated profile page for updating personal details and changing passwords.
