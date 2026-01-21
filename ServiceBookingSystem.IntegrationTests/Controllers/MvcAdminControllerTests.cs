@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Data.Common;
+using ServiceBookingSystem.Data.Entities.Domain;
 using ServiceBookingSystem.Data.Entities.Identity;
 using Xunit.Abstractions;
 
@@ -111,6 +112,76 @@ public class MvcAdminControllerTests : BaseIntegrationTest
 
         // Assert:
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // --- Category Tests ---
+
+    [Fact]
+    public async Task Get_Categories_AsAdmin_ReturnsView()
+    {
+        // Arrange
+        var admin = await SeedAdminAsync();
+        var client = CreateAuthenticatedClient(admin.Id, RoleConstants.Administrator);
+
+        // Act
+        var response = await client.GetAsync("/Admin/Category/Index");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Manage Categories", content);
+    }
+
+    [Fact]
+    public async Task Post_CreateCategory_AsAdmin_RedirectsToIndex()
+    {
+        // Arrange
+        var admin = await SeedAdminAsync();
+        var client = CreateAuthenticatedClient(admin.Id, RoleConstants.Administrator);
+
+        var formData = new Dictionary<string, string>
+        {
+            { "Name", "New MVC Cat" },
+            { "Description", "Desc" }
+        };
+
+        // Act
+        var response = await client.PostAsync("/Admin/Category/Create", new FormUrlEncodedContent(formData));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("/Admin/Category", response.Headers.Location!.ToString());
+        
+        DbContext.ChangeTracker.Clear();
+        var cat = DbContext.Categories.FirstOrDefault(c => c.Name == "New MVC Cat");
+        Assert.NotNull(cat);
+    }
+
+    [Fact]
+    public async Task Post_DeleteCategory_AsAdmin_RedirectsToIndex()
+    {
+        // Arrange
+        var admin = await SeedAdminAsync();
+        var category = new Category { Name = "To Delete", Description = "D" };
+        DbContext.Categories.Add(category);
+        await DbContext.SaveChangesAsync();
+
+        var client = CreateAuthenticatedClient(admin.Id, RoleConstants.Administrator);
+
+        var formData = new Dictionary<string, string>
+        {
+            { "id", category.Id.ToString() }
+        };
+
+        // Act
+        var response = await client.PostAsync("/Admin/Category/Delete", new FormUrlEncodedContent(formData));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        
+        DbContext.ChangeTracker.Clear();
+        var deleted = await DbContext.Categories.FindAsync(category.Id);
+        Assert.Null(deleted);
     }
 
     // --- Helpers ---
