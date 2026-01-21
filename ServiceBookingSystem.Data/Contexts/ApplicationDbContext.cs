@@ -29,6 +29,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Category> Categories { get; set; }
     public DbSet<Service> Services { get; set; }
     public DbSet<OperatingHour> OperatingHours { get; set; }
+    public DbSet<OperatingSegment> OperatingSegments { get; set; }
+    public DbSet<ScheduleOverride> ScheduleOverrides { get; set; }
+    public DbSet<OverrideSegment> OverrideSegments { get; set; }
     public DbSet<ServiceImage> ServiceImages { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Booking> Bookings { get; set; }
@@ -72,8 +75,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         }
         
         // --- Cascade Soft-Delete Behavior for Required Children ---
+        // Ensure children are hidden if their parent is soft-deleted
+        
         builder.Entity<OperatingHour>()
             .HasQueryFilter(oh => !oh.Service.IsDeleted);
+
+        builder.Entity<OperatingSegment>()
+            .HasQueryFilter(os => !os.OperatingHour.Service.IsDeleted); // Check Grandparent
+
+        builder.Entity<ScheduleOverride>()
+            .HasQueryFilter(so => !so.Service.IsDeleted);
+
+        builder.Entity<OverrideSegment>()
+            .HasQueryFilter(os => !os.ScheduleOverride.Service.IsDeleted); // Check Grandparent
 
         builder.Entity<ServiceImage>()
             .HasQueryFilter(si => !si.Service.IsDeleted);

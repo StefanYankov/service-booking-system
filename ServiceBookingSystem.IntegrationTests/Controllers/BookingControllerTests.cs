@@ -72,8 +72,10 @@ public class BookingControllerTests : BaseIntegrationTest
         {
             ServiceId = service.Id,
             DayOfWeek = bookingStart.DayOfWeek,
-            StartTime = new TimeOnly(0, 0),
-            EndTime = new TimeOnly(23, 59)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) }
+            }
         };
         await this.DbContext.OperatingHours.AddAsync(operatingHour);
         await this.DbContext.SaveChangesAsync();
@@ -304,8 +306,10 @@ public class BookingControllerTests : BaseIntegrationTest
         {
             ServiceId = service.Id,
             DayOfWeek = bookingStart.DayOfWeek,
-            StartTime = new TimeOnly(0, 0),
-            EndTime = new TimeOnly(23, 59)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) }
+            }
         };
         await this.DbContext.OperatingHours.AddAsync(operatingHour);
         await this.DbContext.SaveChangesAsync();
@@ -639,7 +643,7 @@ public class BookingControllerTests : BaseIntegrationTest
         await this.DbContext.Services.AddAsync(service);
         await this.DbContext.SaveChangesAsync();
 
-        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = newStart.DayOfWeek, StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) };
+        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = newStart.DayOfWeek, Segments = new List<OperatingSegment> { new() { StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) } } };
         await this.DbContext.OperatingHours.AddAsync(operatingHour);
         await this.DbContext.SaveChangesAsync();
 
@@ -713,7 +717,7 @@ public class BookingControllerTests : BaseIntegrationTest
         await this.DbContext.Services.AddAsync(service);
         await this.DbContext.SaveChangesAsync();
 
-        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = newStart.DayOfWeek, StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) };
+        var operatingHour = new OperatingHour { ServiceId = service.Id, DayOfWeek = newStart.DayOfWeek, Segments = new List<OperatingSegment> { new() { StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59) } } };
         await this.DbContext.OperatingHours.AddAsync(operatingHour);
         await this.DbContext.SaveChangesAsync();
 

@@ -1,0 +1,112 @@
+﻿@model ServiceBookingSystem.Web.Models.ScheduleViewModel
+@{
+    ViewData["Title"] = "Manage Schedule";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Weekly Schedule: @Model.ServiceName</h2>
+        <div>
+            <a asp-action="Overrides" asp-route-serviceId="@Model.ServiceId" class="btn btn-outline-primary">Manage Holidays & Overrides</a>
+            <a asp-controller="Service" asp-action="MyServices" class="btn btn-outline-secondary">Back to Services</a>
+        </div>
+    </div>
+
+    <form asp-action="UpdateWeekly" method="post">
+        <input type="hidden" asp-for="ServiceId" />
+        <input type="hidden" asp-for="ServiceName" />
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                @for (int i = 0; i < Model.Days.Count; i++)
+                {
+                    <div class="row mb-3 py-2 border-bottom">
+                        <div class="col-md-2 d-flex align-items-center">
+                            <input type="hidden" asp-for="Days[i].DayOfWeek" />
+                            <h5 class="mb-0">@Model.Days[i].DayOfWeek</h5>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="Days[i].IsClosed" id="closed_@i" onchange="toggleDay(@i)">
+                                <label class="form-check-label" for="closed_@i">Closed</label>
+                            </div>
+                        </div>
+                        <div class="col-md-8" id="segments_container_@i">
+                            <div id="segments_list_@i" class="@(Model.Days[i].IsClosed ? "d-none" : "")">
+                                @for (int j = 0; j < Model.Days[i].Segments.Count; j++)
+                                {
+                                    <div class="input-group mb-2 segment-row">
+                                        <span class="input-group-text">Start</span>
+                                        <input type="time" class="form-control" asp-for="Days[i].Segments[j].Start" />
+                                        <span class="input-group-text">End</span>
+                                        <input type="time" class="form-control" asp-for="Days[i].Segments[j].End" />
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeSegment(this)">Remove</button>
+                                    </div>
+                                }
+                                @if (!Model.Days[i].Segments.Any())
+                                {
+                                    @* Default empty row if no segments *@
+                                    <div class="input-group mb-2 segment-row">
+                                        <span class="input-group-text">Start</span>
+                                        <input type="time" class="form-control" name="Days[@i].Segments[0].Start" value="09:00" />
+                                        <span class="input-group-text">End</span>
+                                        <input type="time" class="form-control" name="Days[@i].Segments[0].End" value="17:00" />
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeSegment(this)">Remove</button>
+                                    </div>
+                                }
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success mt-1 @(Model.Days[i].IsClosed ? "d-none" : "")" id="add_btn_@i" onclick="addSegment(@i)">+ Add Shift</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-primary btn-lg">Save Schedule</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleDay(index) {
+            const isClosed = document.getElementById(`closed_${index}`).checked;
+            const container = document.getElementById(`segments_list_${index}`);
+            const addBtn = document.getElementById(`add_btn_${index}`);
+            
+            if (isClosed) {
+                container.classList.add('d-none');
+                addBtn.classList.add('d-none');
+            } else {
+                container.classList.remove('d-none');
+                addBtn.classList.remove('d-none');
+            }
+        }
+
+        function removeSegment(btn) {
+            const row = btn.closest('.segment-row');
+            const container = row.parentElement;
+            // Don't remove the last one, just clear it or hide it? 
+            // Better to allow removing all, but then IsClosed should be checked?
+            // For simplicity, just remove.
+            row.remove();
+        }
+
+        function addSegment(dayIndex) {
+            const container = document.getElementById(`segments_list_${dayIndex}`);
+            const count = container.querySelectorAll('.segment-row').length;
+            
+            const html = `
+                <div class="input-group mb-2 segment-row">
+                    <span class="input-group-text">Start</span>
+                    <input type="time" class="form-control" name="Days[${dayIndex}].Segments[${count}].Start" value="09:00" />
+                    <span class="input-group-text">End</span>
+                    <input type="time" class="form-control" name="Days[${dayIndex}].Segments[${count}].End" value="17:00" />
+                    <button type="button" class="btn btn-outline-danger" onclick="removeSegment(this)">Remove</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+    </script>
+}

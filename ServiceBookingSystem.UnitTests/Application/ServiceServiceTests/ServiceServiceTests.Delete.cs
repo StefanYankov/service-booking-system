@@ -112,8 +112,10 @@ public partial class ServiceServiceTests
         {
             ServiceId = service.Id,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         var image = new ServiceImage
         {
@@ -165,8 +167,10 @@ public partial class ServiceServiceTests
         {
             ServiceId = service.Id,
             DayOfWeek = DayOfWeek.Tuesday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         var image = new ServiceImage
         {

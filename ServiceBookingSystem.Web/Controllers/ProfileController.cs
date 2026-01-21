@@ -48,7 +48,7 @@ public class ProfileController : Controller
         var model = new ProfileViewModel
         {
             Id = user.Id,
-            Email = user.Email,
+            Email = user.Email ?? string.Empty,
             FirstName = user.FirstName,
             LastName = user.LastName,
             PhoneNumber = user.PhoneNumber,
@@ -145,7 +145,7 @@ public class ProfileController : Controller
             var profileModel = new ProfileViewModel
             {
                 Id = user.Id,
-                Email = user.Email,
+                Email = user.Email ?? string.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 PhoneNumber = user.PhoneNumber,
@@ -191,7 +191,7 @@ public class ProfileController : Controller
         var profileReload = new ProfileViewModel
         {
             Id = userReload!.Id,
-            Email = userReload.Email,
+            Email = userReload.Email ?? string.Empty,
             FirstName = userReload.FirstName,
             LastName = userReload.LastName,
             PhoneNumber = userReload.PhoneNumber,
