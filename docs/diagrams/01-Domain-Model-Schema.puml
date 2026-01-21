@@ -56,6 +56,19 @@ class Service {
 
 class OperatingHour {
   + DayOfWeek DayOfWeek
+}
+
+class OperatingSegment {
+  + TimeOnly StartTime
+  + TimeOnly EndTime
+}
+
+class ScheduleOverride {
+  + DateOnly Date
+  + bool IsDayOff
+}
+
+class OverrideSegment {
   + TimeOnly StartTime
   + TimeOnly EndTime
 }
@@ -85,6 +98,9 @@ ApplicationUser "*" -- "*" ApplicationRole : (has)
 Category "1" -- "*" Service
 ApplicationUser "1" -- "*" Service : (Provider)
 Service "1" -- "*" OperatingHour
+OperatingHour "1" -- "*" OperatingSegment
+Service "1" -- "*" ScheduleOverride
+ScheduleOverride "1" -- "*" OverrideSegment
 Service "1" -- "*" ServiceImage
 
 ' Booking Flow

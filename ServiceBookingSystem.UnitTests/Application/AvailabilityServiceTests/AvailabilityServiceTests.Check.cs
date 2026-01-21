@@ -1,66 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
-using ServiceBookingSystem.Application.Services;
-using ServiceBookingSystem.Core.Exceptions;
-using ServiceBookingSystem.Data.Contexts;
+﻿using ServiceBookingSystem.Core.Exceptions;
 using ServiceBookingSystem.Data.Entities.Domain;
-using ServiceBookingSystem.Data.Entities.Identity;
 
-namespace ServiceBookingSystem.UnitTests.Application;
+namespace ServiceBookingSystem.UnitTests.Application.AvailabilityServiceTests;
 
-public class AvailabilityServiceTests : IDisposable
+public partial class AvailabilityServiceTests
 {
-    private readonly DbContextOptions<ApplicationDbContext> dbContextOptions;
-    private readonly ApplicationDbContext dbContext;
-    private readonly AvailabilityService availabilityService;
-
-    public AvailabilityServiceTests()
-    {
-        dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: $"AvailabilityTests_{Guid.NewGuid()}")
-            .Options;
-        dbContext = new ApplicationDbContext(dbContextOptions);
-        var logger = new Mock<ILogger<AvailabilityService>>().Object;
-        availabilityService = new AvailabilityService(dbContext, logger);
-    }
-
-    private async Task SeedServiceAndProvider()
-    {
-        var provider = new ApplicationUser { 
-            Id = "provider-1",
-            FirstName = "Test",
-            LastName = "Provider"
-        };
-        
-        var category = new Category
-        {
-            Id = 1,
-            Name = "Test Category"
-        };
-        
-        var service = new Service
-        {
-            Id = 1,
-            Name = "Test Service",
-            Description = "Test Desc",
-            DurationInMinutes = 60,
-            ProviderId = "provider-1",
-            CategoryId = 1
-        };
-
-        await dbContext.Users.AddAsync(provider);
-        await dbContext.Categories.AddAsync(category);
-        await dbContext.Services.AddAsync(service);
-        await dbContext.SaveChangesAsync();
-    }
-    
-    public void Dispose()
-    {
-        dbContext.Database.EnsureDeleted();
-        dbContext.Dispose();
-    }
-
     [Fact]
     public async Task IsSlotAvailableAsync_WhenServiceNotFound_ShouldThrowEntityNotFoundException()
     {
@@ -96,8 +40,10 @@ public class AvailabilityServiceTests : IDisposable
         {
             ServiceId = 1,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         await dbContext.OperatingHours.AddAsync(operatingHour);
         await dbContext.SaveChangesAsync();
@@ -128,8 +74,10 @@ public class AvailabilityServiceTests : IDisposable
         {
             ServiceId = 1,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         
         await dbContext.OperatingHours.AddAsync(operatingHour);
@@ -158,8 +106,10 @@ public class AvailabilityServiceTests : IDisposable
         {
             ServiceId = 1,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         
         await dbContext.OperatingHours.AddAsync(operatingHour);
@@ -201,8 +151,10 @@ public class AvailabilityServiceTests : IDisposable
         {
             ServiceId = 1,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         
         await dbContext.OperatingHours.AddAsync(operatingHour);
@@ -242,8 +194,10 @@ public class AvailabilityServiceTests : IDisposable
         {
             ServiceId = 1,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         await dbContext.OperatingHours.AddAsync(operatingHour);
 
@@ -282,8 +236,10 @@ public class AvailabilityServiceTests : IDisposable
         {
             ServiceId = 1,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(17, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         
         await dbContext.OperatingHours.AddAsync(operatingHour);
@@ -310,23 +266,18 @@ public class AvailabilityServiceTests : IDisposable
     {
         // Arrange:
         await SeedServiceAndProvider();
-        var morningShift = new OperatingHour
+        var operatingHour = new OperatingHour
         {
             ServiceId = 1,
             DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(9, 0),
-            EndTime = new TimeOnly(12, 0)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(12, 0) },
+                new() { StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(17, 0) }
+            }
         };
         
-        var afternoonShift = new OperatingHour
-        {
-            ServiceId = 1,
-            DayOfWeek = DayOfWeek.Monday,
-            StartTime = new TimeOnly(13, 0),
-            EndTime = new TimeOnly(17, 0)
-        };
-        
-        await dbContext.OperatingHours.AddRangeAsync(morningShift, afternoonShift);
+        await dbContext.OperatingHours.AddAsync(operatingHour);
         await dbContext.SaveChangesAsync();
 
         var nextMonday = DateTime.UtcNow.AddDays(1);
@@ -374,19 +325,21 @@ public class AvailabilityServiceTests : IDisposable
         { 
             ServiceId = 1, 
             DayOfWeek = date.DayOfWeek, 
-            StartTime = new TimeOnly(9, 0), 
-            EndTime = new TimeOnly(12, 0) 
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(12, 0) }
+            }
         };
         
         await dbContext.OperatingHours.AddAsync(hours);
         await dbContext.SaveChangesAsync();
 
         // Act:
-        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+        var result = (await availabilityService.GetAvailableSlotsAsync(1, date)).ToList();
 
         // Assert:
         // 9-10, 10-11, 11-12. (3 slots)
-        Assert.Equal(3, result.Count());
+        Assert.Equal(3, result.Count);
         Assert.Contains(new TimeOnly(9, 0), result);
         Assert.Contains(new TimeOnly(10, 0), result);
         Assert.Contains(new TimeOnly(11, 0), result);
@@ -402,8 +355,10 @@ public class AvailabilityServiceTests : IDisposable
         { 
             ServiceId = 1, 
             DayOfWeek = date.DayOfWeek, 
-            StartTime = new TimeOnly(9, 0), 
-            EndTime = new TimeOnly(12, 0) 
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(12, 0) }
+            }
         };
         
         // Booking from 10:00 to 11:00
@@ -420,11 +375,11 @@ public class AvailabilityServiceTests : IDisposable
         await dbContext.SaveChangesAsync();
 
         // Act:
-        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+        var result = (await availabilityService.GetAvailableSlotsAsync(1, date)).ToList();
 
         // Assert:
         // 9-10 (Free), 10-11 (Taken), 11-12 (Free)
-        Assert.Equal(2, result.Count());
+        Assert.Equal(2, result.Count);
         Assert.Contains(new TimeOnly(9, 0), result);
         Assert.DoesNotContain(new TimeOnly(10, 0), result);
         Assert.Contains(new TimeOnly(11, 0), result);
@@ -440,8 +395,10 @@ public class AvailabilityServiceTests : IDisposable
         { 
             ServiceId = 1, 
             DayOfWeek = date.DayOfWeek, 
-            StartTime = new TimeOnly(9, 0), 
-            EndTime = new TimeOnly(12, 0) // 3 hours
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(12, 0) } // 3 hours
+            }
         };
         
         // Update service duration to 4 hours (240 mins)
@@ -468,8 +425,10 @@ public class AvailabilityServiceTests : IDisposable
         { 
             ServiceId = 1, 
             DayOfWeek = date.DayOfWeek, 
-            StartTime = new TimeOnly(9, 0), 
-            EndTime = new TimeOnly(17, 0) // 8 hours (9-17)
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) } // 8 hours (9-17)
+            }
         };
         
         // Update service duration to 8 hours (480 mins)
@@ -481,10 +440,179 @@ public class AvailabilityServiceTests : IDisposable
 
         // Act:
         // This test ensures no infinite loop occurs
-        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+        var result = (await availabilityService.GetAvailableSlotsAsync(1, date)).ToList();
 
         // Assert:
         Assert.Single(result);
         Assert.Equal(new TimeOnly(9, 0), result.First());
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_WithHolidayOverride_ShouldReturnEmpty()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1).Date;
+        
+        // Standard hours exist
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
+        };
+        
+        // Override: Holiday
+        var holiday = new ScheduleOverride
+        {
+            ServiceId = 1,
+            Date = DateOnly.FromDateTime(date),
+            IsDayOff = true
+        };
+
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.ScheduleOverrides.AddAsync(holiday);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+
+        // Assert:
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_WithCustomHoursOverride_ShouldUseCustomHours()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1).Date;
+        
+        // Standard hours: 9-17
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
+        };
+        
+        // Override: 10-12 (Half day)
+        var overrideSchedule = new ScheduleOverride
+        {
+            ServiceId = 1,
+            Date = DateOnly.FromDateTime(date),
+            IsDayOff = false,
+            Segments = new List<OverrideSegment>
+            {
+                new() { StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(12, 0) }
+            }
+        };
+
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.ScheduleOverrides.AddAsync(overrideSchedule);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = (await availabilityService.GetAvailableSlotsAsync(1, date)).ToList();
+
+        // Assert:
+        // Service duration is 60 mins.
+        // Slots: 10-11, 11-12. (2 slots)
+        Assert.Equal(2, result.Count);
+        Assert.Contains(new TimeOnly(10, 0), result);
+        Assert.Contains(new TimeOnly(11, 0), result);
+        Assert.DoesNotContain(new TimeOnly(9, 0), result); // Standard start
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_WithOverrideSplitShift_ShouldReturnSplitSlots()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1).Date;
+        
+        // Standard hours: 9-17
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
+        };
+        
+        // Override: 10-12 AND 14-16
+        var overrideSchedule = new ScheduleOverride
+        {
+            ServiceId = 1,
+            Date = DateOnly.FromDateTime(date),
+            IsDayOff = false,
+            Segments = new List<OverrideSegment>
+            {
+                new() { StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(12, 0) },
+                new() { StartTime = new TimeOnly(14, 0), EndTime = new TimeOnly(16, 0) }
+            }
+        };
+
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.ScheduleOverrides.AddAsync(overrideSchedule);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = (await availabilityService.GetAvailableSlotsAsync(1, date)).ToList();
+
+        // Assert:
+        // Slots: 10-11, 11-12, 14-15, 15-16. (4 slots)
+        Assert.Equal(4, result.Count);
+        Assert.Contains(new TimeOnly(10, 0), result);
+        Assert.Contains(new TimeOnly(11, 0), result);
+        Assert.Contains(new TimeOnly(14, 0), result);
+        Assert.Contains(new TimeOnly(15, 0), result);
+        Assert.DoesNotContain(new TimeOnly(12, 0), result); // Lunch break
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_WithOverrideNotDayOffButNoSegments_ShouldReturnEmpty()
+    {
+        // Arrange:
+        await SeedServiceAndProvider();
+        var date = DateTime.UtcNow.AddDays(1).Date;
+        
+        // Standard hours: 9-17
+        var hours = new OperatingHour 
+        { 
+            ServiceId = 1, 
+            DayOfWeek = date.DayOfWeek, 
+            Segments = new List<OperatingSegment>
+            {
+                new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+            }
+        };
+        
+        // Override: Not DayOff, but empty segments (effectively closed)
+        var overrideSchedule = new ScheduleOverride
+        {
+            ServiceId = 1,
+            Date = DateOnly.FromDateTime(date),
+            IsDayOff = false,
+            Segments = new List<OverrideSegment>()
+        };
+
+        await dbContext.OperatingHours.AddAsync(hours);
+        await dbContext.ScheduleOverrides.AddAsync(overrideSchedule);
+        await dbContext.SaveChangesAsync();
+
+        // Act:
+        var result = await availabilityService.GetAvailableSlotsAsync(1, date);
+
+        // Assert:
+        Assert.Empty(result);
     }
 }

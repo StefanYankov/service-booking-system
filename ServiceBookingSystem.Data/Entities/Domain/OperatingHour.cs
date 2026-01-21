@@ -4,26 +4,20 @@ using ServiceBookingSystem.Data.Entities.Common;
 namespace ServiceBookingSystem.Data.Entities.Domain;
 
 /// <summary>
-/// Represents a single block of time on a specific day of the week when a service is available.
-/// This entity is auditable but not soft-deletable, as its existence is purely relational
-/// to its parent Service. If an operating hour is removed, it is hard-deleted.
+/// Represents the configuration for a specific day of the week (e.g., "Mondays").
+/// It contains a collection of time segments (shifts) for that day.
 /// </summary>
 public class OperatingHour : AuditableEntity<int>
 {
     /// <summary>
-    /// Gets or sets the day of the week for this time block.
+    /// Gets or sets the day of the week for this configuration.
     /// </summary>
     public DayOfWeek DayOfWeek { get; set; }
 
     /// <summary>
-    /// Gets or sets the start time of the operating block.
+    /// Gets or sets the collection of time segments (shifts) for this day.
     /// </summary>
-    public TimeOnly StartTime { get; set; }
-
-    /// <summary>
-    /// Gets or sets the end time of the operating block.
-    /// </summary>
-    public TimeOnly EndTime { get; set; }
+    public ICollection<OperatingSegment> Segments { get; set; } = new List<OperatingSegment>();
 
     // --- Foreign Keys and Navigation Properties ---
 

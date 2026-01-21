@@ -1,0 +1,132 @@
+﻿@model ServiceBookingSystem.Web.Models.ScheduleOverrideListViewModel
+@{
+    ViewData["Title"] = "Manage Overrides";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Holidays & Overrides: @Model.ServiceName</h2>
+        <a asp-action="Index" asp-route-serviceId="@Model.ServiceId" class="btn btn-outline-secondary">Back to Weekly Schedule</a>
+    </div>
+
+    <div class="row">
+        @* --- Add New Override --- *@
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Add Exception</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddOverride" method="post">
+                        <input type="hidden" name="ServiceId" value="@Model.ServiceId" />
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="Date" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="isDayOff" name="IsDayOff" value="true" onchange="toggleHours()" checked />
+                            <label class="form-check-label" for="isDayOff">Closed (Holiday)</label>
+                        </div>
+
+                        <div id="customHours" class="d-none">
+                            <div class="mb-3">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" name="StartTime" class="form-control" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">End Time</label>
+                                <input type="time" name="EndTime" class="form-control" />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Add Override</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @* --- List of Overrides --- *@
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Upcoming Exceptions</h5>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Overrides.Any())
+                    {
+                        <p class="text-muted text-center py-4">No overrides configured.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Hours</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Overrides)
+                                    {
+                                        <tr>
+                                            <td>@item.Date.ToShortDateString()</td>
+                                            <td>
+                                                @if (item.IsDayOff)
+                                                {
+                                                    <span class="badge bg-danger">Closed</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning text-dark">Custom Hours</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (item.IsDayOff)
+                                                {
+                                                    <span>-</span>
+                                                }
+                                                else
+                                                {
+                                                    foreach (var seg in item.Segments)
+                                                    {
+                                                        <div>@seg.Start.ToString(@"hh\:mm") - @seg.End.ToString(@"hh\:mm")</div>
+                                                    }
+                                                }
+                                            </td>
+                                            <td>
+                                                <form asp-action="DeleteOverride" method="post" onsubmit="return confirm('Delete this override?');">
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <input type="hidden" name="serviceId" value="@Model.ServiceId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleHours() {
+            const isDayOff = document.getElementById('isDayOff').checked;
+            const hoursDiv = document.getElementById('customHours');
+            if (isDayOff) {
+                hoursDiv.classList.add('d-none');
+            } else {
+                hoursDiv.classList.remove('d-none');
+            }
+        }
+    </script>
+}

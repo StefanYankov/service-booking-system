@@ -141,13 +141,16 @@ public class DemoDataSeeder
         {
             for (int day = 1; day <= 5; day++) // Monday to Friday
             {
-                operatingHours.Add(new OperatingHour
+                var hour = new OperatingHour
                 {
                     ServiceId = service.Id,
                     DayOfWeek = (DayOfWeek)day,
-                    StartTime = new TimeOnly(9, 0),
-                    EndTime = new TimeOnly(17, 0)
-                });
+                    Segments = new List<OperatingSegment>
+                    {
+                        new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+                    }
+                };
+                operatingHours.Add(hour);
             }
         }
         await dbContext.OperatingHours.AddRangeAsync(operatingHours);

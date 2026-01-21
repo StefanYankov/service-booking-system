@@ -225,8 +225,10 @@ public class MvcBookingRescheduleTests : BaseIntegrationTest
             {
                 ServiceId = serviceId,
                 DayOfWeek = day,
-                StartTime = new TimeOnly(9, 0),
-                EndTime = new TimeOnly(17, 0)
+                Segments = new List<OperatingSegment>
+                {
+                    new() { StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) }
+                }
             };
             await DbContext.OperatingHours.AddAsync(hour);
         }
