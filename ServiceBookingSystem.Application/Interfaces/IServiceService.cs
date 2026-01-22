@@ -107,4 +107,21 @@ public interface IServiceService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of city names.</returns>
     Task<List<string>> GetDistinctCitiesAsync(CancellationToken cancellationToken = default);
+
+    // --- Admin Methods ---
+
+    /// <summary>
+    /// Retrieves a paginated list of all services (including inactive and soft-deleted) for administrative oversight.
+    /// </summary>
+    /// <param name="parameters">Pagination and sorting parameters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paged result of admin service view models.</returns>
+    Task<PagedResult<ServiceAdminViewDto>> GetServicesForAdminAsync(PagingAndSortingParameters parameters, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Soft-deletes a service by an Administrator, bypassing ownership checks.
+    /// </summary>
+    /// <param name="serviceId">The ID of the service to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task DeleteServiceByAdminAsync(int serviceId, CancellationToken cancellationToken = default);
 }

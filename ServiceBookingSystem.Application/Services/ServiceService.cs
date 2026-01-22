@@ -655,4 +655,84 @@ public class ServiceService : IServiceService
 
         return cities;
     }
+
+    // --- Admin Methods ---
+
+    /// <inheritdoc/>
+    public async Task<PagedResult<ServiceAdminViewDto>> GetServicesForAdminAsync(PagingAndSortingParameters parameters, CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Admin fetching all services. Page: {Page}, Size: {Size}", parameters.PageNumber, parameters.PageSize);
+
+        var baseQuery = dbContext.Services
+            .IgnoreQueryFilters() // Include soft-deleted services
+            .AsNoTracking();
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
+
+        var query = baseQuery
+            .Include(s => s.Provider)
+            .Include(s => s.Category)
+            .Include(s => s.Images)
+            .AsQueryable();
+
+        // Sorting
+        var sortBy = parameters.SortBy?.ToLower();
+        var isDescending = parameters.SortDirection?.ToLower() == "desc";
+
+        query = sortBy switch
+        {
+            "name" => isDescending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
+            "provider" => isDescending ? query.OrderByDescending(s => s.Provider.Email) : query.OrderBy(s => s.Provider.Email),
+            "created" => isDescending ? query.OrderByDescending(s => s.CreatedOn) : query.OrderBy(s => s.CreatedOn),
+            _ => query.OrderByDescending(s => s.CreatedOn)
+        };
+
+        var items = await query
+            .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
+            .Select(s => new ServiceAdminViewDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Description = s.Description,
+                Price = s.Price,
+                DurationInMinutes = s.DurationInMinutes,
+                CategoryName = s.Category.Name,
+                ProviderName = $"{s.Provider.FirstName} {s.Provider.LastName}",
+                ProviderEmail = s.Provider.Email!,
+                ImageUrl = s.Images.FirstOrDefault(i => i.IsThumbnail) != null ? s.Images.FirstOrDefault(i => i.IsThumbnail)!.ImageUrl : s.Images.FirstOrDefault() != null ? s.Images.FirstOrDefault()!.ImageUrl : string.Empty,
+                IsActive = s.IsActive,
+                IsDeleted = s.IsDeleted,
+                CreatedOn = s.CreatedOn
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ServiceAdminViewDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
+    }
+
+    /// <inheritdoc/>
+    public async Task DeleteServiceByAdminAsync(int serviceId, CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Admin attempting to delete Service {ServiceId}", serviceId);
+
+        var service = await dbContext.Services
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(s => s.Id == serviceId, cancellationToken);
+
+        if (service == null)
+        {
+            logger.LogWarning("Admin delete failed: Service {ServiceId} not found.", serviceId);
+            throw new EntityNotFoundException(nameof(Service), serviceId);
+        }
+
+        if (service.IsDeleted)
+        {
+            logger.LogInformation("Service {ServiceId} is already deleted.", serviceId);
+            return;
+        }
+
+        dbContext.SoftDelete(service);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Service {ServiceId} was soft-deleted by Admin.", serviceId);
+    }
 }
