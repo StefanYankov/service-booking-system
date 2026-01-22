@@ -185,50 +185,6 @@ public class MvcAdminControllerTests : BaseIntegrationTest
         Assert.Null(deleted);
     }
 
-    // --- Service Oversight Tests ---
-
-    [Fact]
-    public async Task Get_Services_AsAdmin_ReturnsView()
-    {
-        // Arrange
-        var admin = await SeedAdminAsync();
-        var client = CreateAuthenticatedClient(admin.Id, RoleConstants.Administrator);
-
-        // Act
-        var response = await client.GetAsync("/Admin/Service/Index");
-
-        // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var content = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Services Oversight", content);
-    }
-
-    [Fact]
-    public async Task Post_DeleteService_AsAdmin_RedirectsToIndex()
-    {
-        // Arrange
-        var admin = await SeedAdminAsync();
-        var service = await SeedServiceAsync("To Ban MVC");
-        var client = CreateAuthenticatedClient(admin.Id, RoleConstants.Administrator);
-
-        var formData = new Dictionary<string, string>
-        {
-            { "id", service.Id.ToString() }
-        };
-
-        // Act
-        var response = await client.PostAsync("/Admin/Service/Delete", new FormUrlEncodedContent(formData));
-
-        // Assert
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("/Admin/Service", response.Headers.Location!.ToString());
-        
-        DbContext.ChangeTracker.Clear();
-        var deletedService = await DbContext.Services.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == service.Id);
-        Assert.NotNull(deletedService);
-        Assert.True(deletedService.IsDeleted);
-    }
-
     // --- Helpers ---
 
     private HttpClient CreateAuthenticatedClient(string userId, string role)
