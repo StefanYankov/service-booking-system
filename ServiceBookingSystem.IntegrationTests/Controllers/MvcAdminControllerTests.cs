@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Entities.Domain;
@@ -235,5 +236,18 @@ public class MvcAdminControllerTests : BaseIntegrationTest
         await userManager.CreateAsync(user, "Password123!");
         await userManager.AddToRoleAsync(user, RoleConstants.Provider);
         return user;
+    }
+
+    private async Task<Service> SeedServiceAsync(string name)
+    {
+        var provider = await SeedProviderAsync();
+        var category = new Category { Name = $"Cat_{Guid.NewGuid()}", Description = "D" };
+        await DbContext.Categories.AddAsync(category);
+        await DbContext.SaveChangesAsync();
+
+        var service = new Service { Name = name, Description = "D", ProviderId = provider.Id, CategoryId = category.Id, Price = 10, DurationInMinutes = 60 };
+        await DbContext.Services.AddAsync(service);
+        await DbContext.SaveChangesAsync();
+        return service;
     }
 }
