@@ -41,13 +41,13 @@ The application is built using a layered architecture to ensure a clean separati
 
 The following diagram provides a high-level overview of the system's functionality and the roles of its different users.
 
-![02-Use-Case-Diagram.png](docs/diagrams/docs/diagrams/02-Use-Case-Diagram.png)
+![Use Case Diagram](docs/diagrams/docs/diagrams/02-Use-Case-Diagram.png)
 
 ### Domain Model Diagram
 
 The database schema is designed to support the core features of the application. It utilizes a flexible base entity hierarchy and a robust soft-delete pattern to ensure data integrity and history.
 
-![01-Domain-Model-Schema.png](docs/diagrams/docs/diagrams/01-Domain-Model-Schema.png)
+![Domain Model Diagram](docs/diagrams/docs/diagrams/01-Domain-Model-Schema.png)
 
 *(The project's `/docs/diagrams` folder contains the detailed PlantUML source files for these diagrams.)*
 
@@ -75,6 +75,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **User Management**: Registration, Profile Management, Password Security, and Admin controls (Ban/Unban, Role Management).
     -   **Category Management**: Admin-only CRUD for service categories.
     -   **Service Management**: Full CRUD for services, including **Multi-Image Gallery** (with thumbnail selection), Categorization, and Global Search.
+    -   **Service Oversight**: Admin capability to view all services and ban (soft-delete) inappropriate ones.
     -   **Booking System**: A complete lifecycle engine handling Creation, Confirmation, Declining, Cancellation, **Rescheduling**, and Completion.
     -   **Availability Engine**: Complex logic to determine valid booking slots based on service duration, operating hours, and existing bookings.
     -   **Advanced Availability**: Support for **Holidays** (blocked dates) and **Custom Operating Hours** (overrides) for specific dates.

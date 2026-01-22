@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Data.Common;
 using ServiceBookingSystem.Data.Entities.Domain;
@@ -184,6 +185,50 @@ public class MvcAdminControllerTests : BaseIntegrationTest
         Assert.Null(deleted);
     }
 
+    // --- Service Oversight Tests ---
+
+    [Fact]
+    public async Task Get_Services_AsAdmin_ReturnsView()
+    {
+        // Arrange
+        var admin = await SeedAdminAsync();
+        var client = CreateAuthenticatedClient(admin.Id, RoleConstants.Administrator);
+
+        // Act
+        var response = await client.GetAsync("/Admin/Service/Index");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Services Oversight", content);
+    }
+
+    [Fact]
+    public async Task Post_DeleteService_AsAdmin_RedirectsToIndex()
+    {
+        // Arrange
+        var admin = await SeedAdminAsync();
+        var service = await SeedServiceAsync("To Ban MVC");
+        var client = CreateAuthenticatedClient(admin.Id, RoleConstants.Administrator);
+
+        var formData = new Dictionary<string, string>
+        {
+            { "id", service.Id.ToString() }
+        };
+
+        // Act
+        var response = await client.PostAsync("/Admin/Service/Delete", new FormUrlEncodedContent(formData));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("/Admin/Service", response.Headers.Location!.ToString());
+        
+        DbContext.ChangeTracker.Clear();
+        var deletedService = await DbContext.Services.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.Id == service.Id);
+        Assert.NotNull(deletedService);
+        Assert.True(deletedService.IsDeleted);
+    }
+
     // --- Helpers ---
 
     private HttpClient CreateAuthenticatedClient(string userId, string role)
@@ -235,5 +280,18 @@ public class MvcAdminControllerTests : BaseIntegrationTest
         await userManager.CreateAsync(user, "Password123!");
         await userManager.AddToRoleAsync(user, RoleConstants.Provider);
         return user;
+    }
+
+    private async Task<Service> SeedServiceAsync(string name)
+    {
+        var provider = await SeedProviderAsync();
+        var category = new Category { Name = $"Cat_{Guid.NewGuid()}", Description = "D" };
+        await DbContext.Categories.AddAsync(category);
+        await DbContext.SaveChangesAsync();
+
+        var service = new Service { Name = name, Description = "D", ProviderId = provider.Id, CategoryId = category.Id, Price = 10, DurationInMinutes = 60 };
+        await DbContext.Services.AddAsync(service);
+        await DbContext.SaveChangesAsync();
+        return service;
     }
 }

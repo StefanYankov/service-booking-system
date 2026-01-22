@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServiceBookingSystem.Application.DTOs.Identity.User;
+using ServiceBookingSystem.Application.DTOs.Service;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Data.Common;
@@ -13,13 +14,20 @@ namespace ServiceBookingSystem.Web.Controllers.Api;
 public class AdminController : BaseApiController
 {
     private readonly IUsersService usersService;
+    private readonly IServiceService serviceService;
     private readonly ILogger<AdminController> logger;
 
-    public AdminController(IUsersService usersService, ILogger<AdminController> logger)
+    public AdminController(
+        IUsersService usersService,
+        IServiceService serviceService,
+        ILogger<AdminController> logger)
     {
         this.usersService = usersService;
+        this.serviceService = serviceService;
         this.logger = logger;
     }
+
+    // --- User Management ---
 
     /// <summary>
     /// Retrieves a paginated list of all users.
@@ -124,5 +132,34 @@ public class AdminController : BaseApiController
         }
 
         return Ok();
+    }
+
+    // --- Service Management ---
+
+    /// <summary>
+    /// Retrieves a paginated list of all services (including inactive/deleted) for oversight.
+    /// </summary>
+    [HttpGet("services")]
+    [ProducesResponseType(typeof(PagedResult<ServiceAdminViewDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<ServiceAdminViewDto>>> GetAllServices(
+        [FromQuery] PagingAndSortingParameters parameters,
+        CancellationToken cancellationToken)
+    {
+        logger.LogDebug("API: Admin GetAllServices request");
+        var result = await this.serviceService.GetServicesForAdminAsync(parameters, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Soft-deletes (bans) a service.
+    /// </summary>
+    [HttpDelete("services/{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteService(int id, CancellationToken cancellationToken)
+    {
+        logger.LogDebug("API: Admin DeleteService request for {ServiceId}", id);
+        await this.serviceService.DeleteServiceByAdminAsync(id, cancellationToken);
+        return NoContent();
     }
 }
