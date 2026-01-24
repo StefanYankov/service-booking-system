@@ -81,6 +81,7 @@ The project has a solid architectural foundation, with the following key pattern
     -   **Advanced Availability**: Support for **Holidays** (blocked dates) and **Custom Operating Hours** (overrides) for specific dates.
     -   **Reviews**: Post-service rating and commenting system.
     -   **Notifications**: `INotificationService` orchestrates email delivery using `ITemplateService` for HTML rendering.
+    -   **Real-time Notifications**: Implemented **SignalR** to provide instant toast notifications to users (e.g., a provider receiving a new booking request).
 5.  **MVC Frontend**:
     -   **Service Catalog**: Public browsing and searching of services with dynamic filtering.
     -   **Booking Flow**: Interactive booking wizard with a dynamic time slot picker powered by AJAX.
@@ -117,6 +118,7 @@ The project has a solid architectural foundation, with the following key pattern
 -   **Database:** Microsoft SQL Server
 -   **Authentication:** ASP.NET Core Identity, JWT Bearer
 -   **Frontend:** ASP.NET Core MVC, Razor Pages, Bootstrap 5, jQuery, **AdminLTE**
+-   **Real-time:** SignalR
 -   **Testing:** xUnit, Moq, Testcontainers, Respawn
 -   **Logging:** Serilog
 -   **Email:** SendGrid
