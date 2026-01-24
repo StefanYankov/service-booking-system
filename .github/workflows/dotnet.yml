@@ -1,0 +1,39 @@
+﻿# Name of the workflow (appears in GitHub Actions tab)
+name: .NET Build & Test
+
+# Triggers: When does this run?
+on:
+  push:
+    branches: [ "master" ] # Run on pushes to master (after merge)
+  pull_request:
+    branches: [ "master" ] # Run on PRs targeting master (before merge)
+
+jobs:
+  build:
+    # The OS to run on. Ubuntu is standard and includes Docker (needed for Testcontainers).
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout the code from the repository
+    - uses: actions/checkout@v4
+
+    # 2. Install .NET 9 SDK
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    # 3. Restore Dependencies (NuGet packages)
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # 4. Build the Solution (Release configuration)
+    # --no-restore: Skips restore since we just did it
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    # 5. Run Tests
+    # This runs ALL tests in the solution (Unit & Integration).
+    # Docker is available by default on ubuntu-latest, so Testcontainers will work automatically.
+    - name: Test
+      run: dotnet test --configuration Release --no-build --verbosity normal
