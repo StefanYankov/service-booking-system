@@ -5,6 +5,7 @@ using Serilog;
 using ServiceBookingSystem.Data;
 using ServiceBookingSystem.Data.Contexts;
 using ServiceBookingSystem.Infrastructure;
+using ServiceBookingSystem.Infrastructure.Hubs;
 using ServiceBookingSystem.Web.Extensions;
 using ServiceBookingSystem.Web.Middleware;
 
@@ -27,6 +28,9 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // --- JWT Authentication Configuration ---
 builder.Services.AddApiAuthentication(builder.Configuration);
+
+// --- SignalR ---
+builder.Services.AddSignalR();
 
 // --- Register Global Exception Handler ---
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -103,6 +107,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.MapControllerRoute(
     name: "areas",

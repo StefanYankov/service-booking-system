@@ -19,7 +19,7 @@ namespace ServiceBookingSystem.IntegrationTests;
 /// <b>How it works:</b>
 /// <br/>
 /// 1. This handler is registered in the Test Server's DI container (via WebApplicationFactory.WithWebHostBuilder).
-/// 2. It intercepts requests and looks for a custom header (e.g., "X-Test-UserId").
+/// 2. It intercepts requests and looks for a custom header (e.g., "X-Test-UserId") OR query string (for SignalR).
 /// 3. If found, it creates a ClaimsPrincipal for that User ID and assigns it to HttpContext.User.
 /// 4. The Controller then sees the user as "Authenticated" without needing a real login or cookie.
 /// <br/>
@@ -44,22 +44,44 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        // Check for the custom header
-        if (!Request.Headers.TryGetValue("X-Test-UserId", out var userId))
+        string? userId = null;
+
+        // 1. Try header first (works for normal HTTP API calls)
+        if (Request.Headers.TryGetValue("X-Test-UserId", out var headerUserId))
         {
-            return Task.FromResult(AuthenticateResult.Fail("No User ID header found. Authentication failed."));
+            userId = headerUserId.ToString();
+        }
+        // 2. Fallback to query string (needed for WebSocket handshake)
+        else if (Request.Query.TryGetValue("testUserId", out var queryUserId))
+        {
+            userId = queryUserId.ToString();
+        }
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Task.FromResult(AuthenticateResult.Fail("No User ID (header or query) found. Authentication failed."));
         }
 
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Name, "Test User")
         };
 
-        // Check for Role header
-        if (Request.Headers.TryGetValue("X-Test-Role", out var role))
+        // Role – same logic, header → query
+        string? role = null;
+        if (Request.Headers.TryGetValue("X-Test-Role", out var headerRole))
         {
-            claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+            role = headerRole.ToString();
+        }
+        else if (Request.Query.TryGetValue("testRole", out var queryRole))
+        {
+            role = queryRole.ToString();
+        }
+
+        if (!string.IsNullOrEmpty(role))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
         }
         else
         {
