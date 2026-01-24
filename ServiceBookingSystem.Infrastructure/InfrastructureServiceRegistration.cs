@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Application.Interfaces;
 using ServiceBookingSystem.Application.Interfaces.Infrastructure;
 using ServiceBookingSystem.Infrastructure.FileStorage;
+using ServiceBookingSystem.Infrastructure.Hubs;
 using ServiceBookingSystem.Infrastructure.Messaging;
 using ServiceBookingSystem.Infrastructure.Settings;
 using ServiceBookingSystem.Infrastructure.Templating;
@@ -37,6 +39,12 @@ public static class InfrastructureServiceRegistration
         // --- File Storage (Cloudinary) ---
         services.Configure<CloudinarySettings>(configuration.GetSection("Cloudinary"));
         services.AddTransient<IImageService, CloudinaryImageService>();
+
+        // --- Real-Time Notifications (SignalR) ---
+        services.AddTransient<IRealTimeNotificationService, SignalRNotificationService>();
+        
+        // Ensure SignalR uses the correct User ID claim
+        services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
         return services;
     }

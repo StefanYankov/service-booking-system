@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using ServiceBookingSystem.Application.DTOs.Booking;
 using ServiceBookingSystem.Application.DTOs.Shared;
 using ServiceBookingSystem.Application.Interfaces;
+using ServiceBookingSystem.Application.Interfaces.Infrastructure;
 using ServiceBookingSystem.Core.Constants;
 using ServiceBookingSystem.Core.Exceptions;
 using ServiceBookingSystem.Data.Contexts;
@@ -19,6 +20,7 @@ public class BookingService : IBookingService
     private readonly IAvailabilityService availabilityService;
     private readonly IUsersService usersService;
     private readonly INotificationService notificationService;
+    private readonly IRealTimeNotificationService realTimeNotificationService;
 
     public BookingService(
         ApplicationDbContext dbContext,
@@ -26,7 +28,8 @@ public class BookingService : IBookingService
         IServiceService serviceService,
         IAvailabilityService availabilityService,
         IUsersService usersService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IRealTimeNotificationService realTimeNotificationService)
     {
         this.dbContext = dbContext;
         this.logger = logger;
@@ -34,6 +37,7 @@ public class BookingService : IBookingService
         this.availabilityService = availabilityService;
         this.usersService = usersService;
         this.notificationService = notificationService;
+        this.realTimeNotificationService = realTimeNotificationService;
     }
 
     /// <inheritdoc/>
@@ -111,7 +115,6 @@ public class BookingService : IBookingService
                     "Booking {BookingId} created successfully for Service {ServiceId} by Customer {CustomerId}.",
                     booking.Id, dto.ServiceId, customerId);
             
-            // Reload booking with navigation properties for notification
             var bookingForNotification = await this.dbContext.Bookings
                 .Include(b => b.Service)
                 .ThenInclude(s => s.Provider)
@@ -119,6 +122,16 @@ public class BookingService : IBookingService
                 .FirstAsync(b => b.Id == booking.Id, cancellationToken);
             
             await this.notificationService.NotifyBookingCreatedAsync(bookingForNotification);
+
+            try
+            {
+                await this.realTimeNotificationService.SendToUserAsync(serviceDto.ProviderId, 
+                    $"New booking request for {serviceDto.Name}!", cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Failed to send real-time notification to Provider {ProviderId}", serviceDto.ProviderId);
+            }
         }
         catch (Exception ex)
         {
@@ -248,6 +261,16 @@ public class BookingService : IBookingService
             if (isReschedule)
             {
                 await this.notificationService.NotifyBookingRescheduledAsync(bookingToUpdate, oldStart);
+                
+                try
+                {
+                    await this.realTimeNotificationService.SendToUserAsync(bookingToUpdate.Service.ProviderId, 
+                        $"Booking rescheduled for {bookingToUpdate.Service.Name}!", cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    this.logger.LogError(ex, "Failed to send real-time notification to Provider {ProviderId}", bookingToUpdate.Service.ProviderId);
+                }
             }
         }
         catch (Exception ex)
@@ -528,6 +551,16 @@ public class BookingService : IBookingService
                 bookingId, providerId);
         
         await this.notificationService.NotifyBookingConfirmedAsync(booking);
+        
+        try
+        {
+            await this.realTimeNotificationService.SendToUserAsync(booking.CustomerId, 
+                $"Your booking for {booking.Service.Name} has been confirmed!", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Failed to send real-time notification to Customer {CustomerId}", booking.CustomerId);
+        }
 
         var dto = new BookingViewDto
         {
@@ -595,6 +628,16 @@ public class BookingService : IBookingService
                 bookingId, providerId);
         
         await this.notificationService.NotifyBookingDeclinedAsync(booking);
+        
+        try
+        {
+            await this.realTimeNotificationService.SendToUserAsync(booking.CustomerId, 
+                $"Your booking for {booking.Service.Name} was declined.", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Failed to send real-time notification to Customer {CustomerId}", booking.CustomerId);
+        }
 
         var dto = new BookingViewDto
         {
@@ -663,6 +706,20 @@ public class BookingService : IBookingService
         // Determine who cancelled to notify the other party
         bool cancelledByProvider = (userId == booking.Service.ProviderId);
         await this.notificationService.NotifyBookingCancelledAsync(booking, cancelledByProvider);
+        
+        try
+        {
+            string targetUserId = cancelledByProvider ? booking.CustomerId : booking.Service.ProviderId;
+            string message = cancelledByProvider 
+                ? $"Your booking for {booking.Service.Name} was cancelled by the provider." 
+                : $"Booking for {booking.Service.Name} was cancelled by the customer.";
+            
+            await this.realTimeNotificationService.SendToUserAsync(targetUserId, message, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Failed to send real-time notification for cancellation");
+        }
 
         var dto = new BookingViewDto
         {

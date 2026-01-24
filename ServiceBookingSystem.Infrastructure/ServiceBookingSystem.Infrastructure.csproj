@@ -11,6 +11,10 @@
         <None Remove="Messaging\Templates\ConfirmEmail.html" />
         <None Remove="Messaging\Templates\BookingRescheduled.html" />
         <None Remove="Messaging\Templates\BookingCancelled.html" />
+        <None Remove="Messaging\Templates\BookingCreatedCustomer.html" />
+        <None Remove="Messaging\Templates\BookingCreatedProvider.html" />
+        <None Remove="Messaging\Templates\BookingConfirmed.html" />
+        <None Remove="Messaging\Templates\BookingDeclined.html" />
     </ItemGroup>
 
     <ItemGroup>
@@ -18,6 +22,10 @@
         <EmbeddedResource Include="Messaging\Templates\ConfirmEmail.html" />
         <EmbeddedResource Include="Messaging\Templates\BookingRescheduled.html" />
         <EmbeddedResource Include="Messaging\Templates\BookingCancelled.html" />
+        <EmbeddedResource Include="Messaging\Templates\BookingCreatedCustomer.html" />
+        <EmbeddedResource Include="Messaging\Templates\BookingCreatedProvider.html" />
+        <EmbeddedResource Include="Messaging\Templates\BookingConfirmed.html" />
+        <EmbeddedResource Include="Messaging\Templates\BookingDeclined.html" />
     </ItemGroup>
 
     <ItemGroup>
