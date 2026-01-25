@@ -35,5 +35,11 @@ jobs:
     # 5. Run Tests
     # This runs ALL tests in the solution (Unit & Integration).
     # Docker is available by default on ubuntu-latest, so Testcontainers will work automatically.
+    # We inject secrets as Environment Variables.
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal
+      env:
+        Cloudinary__CloudName: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+        Cloudinary__ApiKey: ${{ secrets.CLOUDINARY_API_KEY }}
+        Cloudinary__ApiSecret: ${{ secrets.CLOUDINARY_API_SECRET }}
+        Jwt__Key: ${{ secrets.JWT_KEY }}
