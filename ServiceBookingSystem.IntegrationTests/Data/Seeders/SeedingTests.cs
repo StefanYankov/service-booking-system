@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceBookingSystem.Data.Common;
@@ -26,19 +25,19 @@ public class SeedingTests : BaseIntegrationTest
         var providerRoleExists = await roleManager.RoleExistsAsync(RoleConstants.Provider);
         var customerRoleExists = await roleManager.RoleExistsAsync(RoleConstants.Customer);
 
-        adminRoleExists.Should().BeTrue("the Administrator role is essential for system management.");
-        providerRoleExists.Should().BeTrue("the Provider role is essential for offering services.");
-        customerRoleExists.Should().BeTrue("the Customer role is essential for booking services.");  
+        Assert.True(adminRoleExists, "the Administrator role is essential for system management.");
+        Assert.True(providerRoleExists, "the Provider role is essential for offering services.");
+        Assert.True(customerRoleExists, "the Customer role is essential for booking services.");  
 
         var adminSeeder = this.ServiceProvider.GetRequiredService<AdministratorSeeder>();
         await adminSeeder.SeedAsync(this.ServiceProvider);
         
         var userManager = this.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var adminUser = await userManager.FindByEmailAsync("admin@servicebooking.com");
-        adminUser.Should().NotBeNull("a default administrator user should be created.");
+        Assert.NotNull(adminUser); // "a default administrator user should be created."
         
         var isAdmin = await userManager.IsInRoleAsync(adminUser, RoleConstants.Administrator);
-        isAdmin.Should().BeTrue("the default user must be assigned the Administrator role.");
+        Assert.True(isAdmin, "the default user must be assigned the Administrator role.");
     }
     
     [Fact]
@@ -57,9 +56,9 @@ public class SeedingTests : BaseIntegrationTest
 
         // Assert:
         var roleCount = await this.DbContext.Roles.CountAsync();
-        roleCount.Should().Be(3, "seeding roles should be an idempotent operation.");
+        Assert.Equal(3, roleCount); // "seeding roles should be an idempotent operation."
 
         var userCount = await this.DbContext.Users.CountAsync();
-        userCount.Should().Be(1, "seeding the administrator should be an idempotent operation.");
+        Assert.Equal(1, userCount); // "seeding the administrator should be an idempotent operation."
     }
 }
